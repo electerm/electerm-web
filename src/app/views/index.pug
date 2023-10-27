@@ -1,0 +1,58 @@
+
+doctype html
+html
+  head
+    meta(charset='UTF-8')
+    meta(http-equiv='x-ua-compatible' content='IE=edge')
+    meta(name='viewport', content='width=device-width, initial-scale=1, shrink-to-fit=no')
+    title #{siteName}
+    style.
+      body {
+        background: #000;
+      }
+      #content-loading {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: #141314 50% 50% no-repeat url("./images/electerm-watermark.png");
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      .electerm-logo-bg {
+        background: transparent 50% 50% no-repeat url("./images/electerm-watermark.png");
+      }
+    - if (!isDev)
+      link(rel='stylesheet', href='css/' + version + '-basic.css')
+      link(rel='stylesheet', href='css/' + version + '-index.css')
+      style(id='theme-css').
+  body
+    - if (isDev)
+      style(id='theme-css').
+    #container
+    #content-loading
+      .morph-shape.iblock.pd3
+        img.iblock.logo-filter(src='images/electerm.png', alt='', height=80)
+    script.
+      window.et = !{JSON.stringify(_global)}
+    - var url = '/src/client/entry-web/basic.js'
+    - if (isDev)
+      //- script(src='/external/react.development.js?' + version)
+      //- script(src='/external/react-dom.development.js?' + version)
+      script(type='module').
+        import RefreshRuntime from '/@react-refresh'
+        RefreshRuntime.injectIntoGlobalHook(window)
+        window.$RefreshReg$ = () => {}
+        window.$RefreshSig$ = () => (type) => type
+        window.__vite_plugin_react_preamble_installed__ = true
+      script(src='/@vite/client', type='module')
+      script(src=url, type='module')
+    - else
+      //- script(src='/external/react.production.min.js?' + version)
+      //- script(src='/external/react-dom.production.min.js?' + version)
+      - var url = src='/js/basic-' + version + '.js'
+      script(src=url, type='module')
+
