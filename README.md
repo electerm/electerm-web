@@ -8,7 +8,7 @@
 
 This is web app version of electerm app, running in browser, almost has the same features as the desktop version.
 
-!!Currently it is in development phase, not suitaable for production use.
+!!Currently it is in development phase, not suitable for production use.
 
 [![GitHub version](https://img.shields.io/github/release/electerm/electerm/all.svg)](https://github.com/electerm/electerm/releases)
 [![Build Status](https://github.com/electerm/electerm/actions/workflows/mac-test-1.yml/badge.svg)](https://github.com/electerm/electerm/actions)
