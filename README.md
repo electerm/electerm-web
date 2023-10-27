@@ -4,7 +4,11 @@
     </a>
 </h1>
 
-# electerm [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Open%20sourced%20terminal%2Fssh%2Fsftp%20client(linux%2C%20mac%2C%20win)&url=https%3A%2F%2Fgithub.com%2Felecterm%2Felecterm&hashtags=electerm,ssh,terminal,sftp)
+# electerm-web [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Open%20sourced%20terminal%2Fssh%2Fsftp%20client(linux%2C%20mac%2C%20win)&url=https%3A%2F%2Fgithub.com%2Felecterm%2Felecterm-web&hashtags=electerm,ssh,terminal,sftp)
+
+This is web app version of electerm app, running in browser, almost has the same features as the desktop version.
+
+!!Currently it is in development phase, not suitaable for production use.
 
 [![GitHub version](https://img.shields.io/github/release/electerm/electerm/all.svg)](https://github.com/electerm/electerm/releases)
 [![Build Status](https://github.com/electerm/electerm/actions/workflows/mac-test-1.yml/badge.svg)](https://github.com/electerm/electerm/actions)
@@ -19,10 +23,6 @@ Open-sourced terminal/ssh/telnet/serialport/sftp client(linux, mac, win).
 <div align="center">
   <img src="https://github.com/electerm/electerm-resource/raw/master/static/images/electerm.gif", alt="" />
 </div>
-
-This is web app version of electerm app, running in browser, almost has the same features as the desktop version.
-
-!!Currently it is in development phase, not suitaable for production use.
 
 ## Features
 
