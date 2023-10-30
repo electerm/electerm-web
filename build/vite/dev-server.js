@@ -13,6 +13,7 @@ import express from 'express'
 import { createServer as createViteServer } from 'vite'
 import conf from './conf.js'
 import { loadDevStylus } from './style.js'
+import os from 'os'
 import copy from 'json-deep-copy'
 import proxy from 'express-http-proxy'
 import fsFunctions from '../../src/app/common/fs-functions.js'
@@ -31,6 +32,7 @@ const base = {
   isMac,
   fsFunctions,
   packInfo: pack,
+  home: os.homedir(),
   server: h,
   stylus: loadDevStylus()
 }

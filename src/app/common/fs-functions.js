@@ -1,4 +1,6 @@
 export default [
+  'readdirOnly',
+  'readdirAndFiles',
   'run',
   'runWinCmd',
   'access',

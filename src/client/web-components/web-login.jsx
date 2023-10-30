@@ -1,5 +1,5 @@
-import { Component } from '../../external/components/common/react-subx'
-import LogoElem from '../../external/components/common/logo-elem.jsx'
+import { Component } from '../../electerm-react/components/common/react-subx'
+import LogoElem from '../../electerm-react/components/common/logo-elem.jsx'
 import {
   Input,
   message,
@@ -9,7 +9,7 @@ import {
   ArrowRightOutlined,
   Loading3QuartersOutlined
 } from '@ant-design/icons'
-import Main from '../../external/components/main/main.jsx'
+import Main from '../../electerm-react/components/main/main.jsx'
 
 const { prefix } = window
 const f = prefix('form')

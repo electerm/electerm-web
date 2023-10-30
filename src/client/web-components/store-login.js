@@ -1,5 +1,5 @@
-import Fetch from '../../external/common/fetch.jsx'
-import { initWsCommon } from '../../external/common/fetch-from-server.js'
+import Fetch from '../../electerm-react/common/fetch.jsx'
+import { initWsCommon } from '../../electerm-react/common/fetch-from-server.js'
 
 export default Store => {
   Store.prototype.getConstants = async function () {

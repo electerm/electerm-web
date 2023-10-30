@@ -113,4 +113,4 @@ dist
 /build/iTerm2-Color-Schemes
 /database
 /electerm_session_logs
-/src/external
+/src/electerm-react

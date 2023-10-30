@@ -1,0 +1,17 @@
+@require '../../electerm-react/css/includes/theme-default'
+
+.dialog-file-item
+  padding 6px 10px
+  &:hover
+    background-color primary
+    color contrastColor(primary)
+  &.selected
+    background-color darken(primary, 30%)
+    color contrastColor(primary)
+.file-dialog-list-wrap
+  height 70vh
+  overflow-y scroll
+.file-dialog-header
+  .sftp-title
+    .anticon-eye-invisible
+      display none

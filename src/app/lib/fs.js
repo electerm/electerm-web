@@ -234,6 +234,27 @@ const closeCustom = async (...args) => {
   })
 }
 
+const readdirOnly = async (path) => {
+  const r = await fss.readdir(path, { withFileTypes: true })
+  return r.filter(dirent => dirent.isDirectory())
+    .map(d => {
+      return {
+        name: d.name,
+        isDirectory: true
+      }
+    })
+}
+
+const readdirAndFiles = async (path) => {
+  const r = await fss.readdir(path, { withFileTypes: true })
+  return r.map(d => {
+    return {
+      name: d.name,
+      isDirectory: d.isDirectory()
+    }
+  })
+}
+
 export const fsExport = Object.assign(
   {},
   fss,
@@ -251,7 +272,9 @@ export const fsExport = Object.assign(
     statCustom,
     openCustom,
     closeCustom,
-    writeCustom
+    writeCustom,
+    readdirOnly,
+    readdirAndFiles
   },
   {
     readdirAsync: (_path) => {

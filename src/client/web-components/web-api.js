@@ -7,7 +7,22 @@ window.api = {
     // message.info('Set ZoomFactor not supported')
   },
   openDialog: (opts) => {
-    // todo
+    return new Promise((resolve, reject) => {
+      window.et.handleDialogEvent = (e) => {
+        if (e?.data?.type === 'handleDialog') {
+          window.removeEventListener('message', window.et.handleDialogEvent)
+          delete window.et.handleDialogEvent
+          resolve(e.data.data)
+        } else if (e?.data?.type === 'closeDialog') {
+          resolve(false)
+        }
+      }
+      window.addEventListener('message', window.et.handleDialogEvent)
+      window.postMessage({
+        type: 'openDialog',
+        data: opts
+      }, '*')
+    })
   },
   ipcOnEvent: (event, cb) => {
 

@@ -7,6 +7,7 @@ import {
   isMac,
   isWin,
   packInfo,
+  home,
   extIconPath
 } from '../common/runtime-constants.js'
 import fsFunctions from '../common/fs-functions.js'
@@ -26,6 +27,7 @@ export function index (req, res) {
     isMac,
     isWin,
     packInfo,
+    home,
     version: packInfo.version,
     siteName: packInfo.name,
     fsFunctions,
