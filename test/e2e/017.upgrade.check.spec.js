@@ -1,19 +1,17 @@
-const { _electron: electron } = require('playwright')
-const {
-  test: it
-} = require('@playwright/test')
+import { chromium } from 'playwright'
+import { test as it } from '@playwright/test'
+import delay from './common/wait.js'
+import log from './common/log.js'
+import extendClient from './common/client-extend.js'
+
 const { describe } = it
 it.setTimeout(100000)
-const delay = require('./common/wait')
-const log = require('./common/log')
-const appOptions = require('./common/app-options')
-const extendClient = require('./common/client-extend')
 
 describe('Upgrade check', function () {
   it('Upgrade check should work', async function () {
-    const electronApp = await electron.launch(appOptions)
-    const client = await electronApp.firstWindow()
-    extendClient(client, electronApp)
+    const app = await chromium.launch()
+    const client = await app.newPage()
+    extendClient(client)
     await delay(4500)
 
     log('button:about')
@@ -25,6 +23,6 @@ describe('Upgrade check', function () {
     await client.click('.about-wrap .ant-btn-primary')
     await delay(9000)
     await client.hasElem('.upgrade-panel')
-    await electronApp.close().catch(console.log)
+    await app.close().catch(console.log)
   })
 })

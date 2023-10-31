@@ -111,7 +111,7 @@ npm run lint
 npm run fix
 ```
 
-## Build
+## Build && run in production
 
 ```sh
 npm run build
@@ -124,7 +124,13 @@ npm run prod
 
 ## Test
 
-todo
+```bash
+npx playwright install --with-deps chromium
+# or with a proxy if needed
+HTTPS_PROXY=http://127.0.0.1:1087 npx playwright install --with-deps chromium
+# then edit .env, edit TEST_HOST TEST_USER TEST_PASS
+npm run test
+```
 
 ## License
 

@@ -21,8 +21,11 @@ export default Store => {
       })
       return true
     } else {
+      console.log('getConstants err')
+      store.authChecked = true
       Object.assign(store, {
         authChecked: true,
+        logined: false,
         fetchingUser: false
       })
       return false

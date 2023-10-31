@@ -1,31 +1,26 @@
-const { _electron: electron } = require('playwright')
-const {
-  test: it
-} = require('@playwright/test')
-const { describe } = it
-it.setTimeout(100000)
-const os = require('os')
-const delay = require('./common/wait')
-const basicTermTest = require('./common/basic-terminal-test')
+import { chromium } from 'playwright'
+import os from 'os'
+import { test as it } from '@playwright/test'
+import delay from './common/wait.js'
+import basicTermTest from './common/basic-terminal-test.js'
+import extendClient from './common/client-extend.js'
+
 const platform = os.platform()
 const isWin = platform.startsWith('win')
-const appOptions = require('./common/app-options')
-const extendClient = require('./common/client-extend')
-// if (!process.env.LOCAL_TEST && isOs('darwin')) {
-//   return
-// }
+const { describe } = it
+it.setTimeout(100000)
 
 describe('terminal', function () {
   it('should open window and local terminal ls/dir command works', async function () {
-    const electronApp = await electron.launch(appOptions)
-    const client = await electronApp.firstWindow()
-    extendClient(client, electronApp)
+    const app = await chromium.launch()
+    const client = await app.newPage()
+    extendClient(client)
     const cmd = isWin
       ? 'dir'
       : 'ls'
     await delay(13500)
 
     await basicTermTest(client, cmd)
-    await electronApp.close().catch(console.log)
+    await app.close().catch(console.log)
   })
 })

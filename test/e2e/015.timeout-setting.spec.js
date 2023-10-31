@@ -3,28 +3,26 @@
  * need TEST_HOST TEST_PASS TEST_USER env set
  */
 
-const { _electron: electron } = require('playwright')
-const {
-  test: it
-} = require('@playwright/test')
-const { describe } = it
-it.setTimeout(100000)
-const { expect } = require('chai')
-const delay = require('./common/wait')
-const log = require('./common/log')
-const {
+import { chromium } from 'playwright'
+import { test as it } from '@playwright/test'
+import { expect } from 'chai'
+import delay from './common/wait.js'
+import log from './common/log.js'
+import {
   TEST_HOST,
   TEST_PASS,
   TEST_USER
-} = require('./common/env')
-const appOptions = require('./common/app-options')
-const extendClient = require('./common/client-extend')
+} from './common/env.js'
+import extendClient from './common/client-extend.js'
+
+const { describe } = it
+it.setTimeout(100000)
 
 describe('timeout setting', function () {
   it('timeout setting works', async function () {
-    const electronApp = await electron.launch(appOptions)
-    const client = await electronApp.firstWindow()
-    extendClient(client, electronApp)
+    const app = await chromium.launch()
+    const client = await app.newPage()
+    extendClient(client)
     await delay(4000)
 
     log('set timeout to 100')
@@ -74,6 +72,6 @@ describe('timeout setting', function () {
     await delay(150)
     expect(timeout1).equal(50000)
     await delay(400)
-    await electronApp.close().catch(console.log)
+    await app.close().catch(console.log)
   })
 })

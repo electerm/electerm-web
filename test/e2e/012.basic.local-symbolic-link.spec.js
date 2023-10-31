@@ -1,19 +1,17 @@
-const { _electron: electron } = require('playwright')
-const {
-  test: it
-} = require('@playwright/test')
+import { chromium } from 'playwright'
+import { test as it } from '@playwright/test'
+import delay from './common/wait.js'
+import { expect } from 'chai'
+import extendClient from './common/client-extend.js'
+
 const { describe } = it
 it.setTimeout(100000)
-const delay = require('./common/wait')
-const { expect } = require('chai')
-const appOptions = require('./common/app-options')
-const extendClient = require('./common/client-extend')
 
 describe('symbolic links support', function () {
   it('symbolic links support works', async function () {
-    const electronApp = await electron.launch(appOptions)
-    const client = await electronApp.firstWindow()
-    extendClient(client, electronApp)
+    const app = await chromium.launch()
+    const client = await app.newPage()
+    extendClient(client)
     await delay(4500)
     const tmp = 'tmp-' + (+new Date())
     const cmd = `cd ~ && mkdir ${tmp} && cd ${tmp} && touch x.js && mkdir xx && ln -s x.js xk && ln -s xx xxk`
@@ -34,6 +32,6 @@ describe('symbolic links support', function () {
     const cmd1 = `cd ~ && rm -rf ${tmp}`
     await client.keyboard.type(cmd1)
     await client.keyboard.press('Enter')
-    await electronApp.close().catch(console.log)
+    await app.close().catch(console.log)
   })
 })

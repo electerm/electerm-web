@@ -2,13 +2,14 @@
  * file/folder select dialog component
  */
 
-import React from 'react'
+import { Component } from '../../electerm-react/components/common/react-subx'
 import {
   Modal,
   Spin,
   notification,
   Pagination,
-  Button
+  Button,
+  ConfigProvider
 } from 'antd'
 import FileItem from './file-item'
 import AddressBar from '../../electerm-react/components/sftp/address-bar'
@@ -22,11 +23,10 @@ import './file-select-dialog.styl'
 const { prefix } = window
 const s = prefix('sfp')
 
-export default class FileSelectDialog extends React.Component {
+export default class FileSelectDialog extends Component {
   constructor (props) {
     super(props)
     const p = window.localStorage.getItem(this.lsKey) || window.et.home
-    console.log('p', p)
     this.state = {
       opts: null,
       loading: false,
@@ -324,12 +324,14 @@ export default class FileSelectDialog extends React.Component {
       onCancel: this.handleClose
     }
     return (
-      <Modal {...props}>
-        <Spin spinning={loading}>
-          {this.renderHeader()}
-          {this.renderList()}
-        </Spin>
-      </Modal>
+      <ConfigProvider theme={this.props.store.uiThemeConfig}>
+        <Modal {...props}>
+          <Spin spinning={loading}>
+            {this.renderHeader()}
+            {this.renderList()}
+          </Spin>
+        </Modal>
+      </ConfigProvider>
     )
   }
 

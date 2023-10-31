@@ -1,28 +1,28 @@
-const { _electron: electron } = require('playwright')
-const {
-  test: it,
+import { chromium } from 'playwright'
+import {
+  test as it,
   expect
-} = require('@playwright/test')
+} from '@playwright/test'
+
+import delay from './common/wait.js'
+import log from './common/log.js'
+import prefixer from './common/lang.js'
+import extendClient from './common/client-extend.js'
+
 const { describe } = it
 it.setTimeout(100000)
 
-const delay = require('./common/wait')
-const log = require('./common/log')
-const appOptions = require('./common/app-options')
-const prefixer = require('./common/lang')
-const extendClient = require('./common/client-extend')
-
 describe('init setting buttons', function () {
   it('all buttons open proper setting tab', async function () {
-    const electronApp = await electron.launch(appOptions)
-    // const app = await electronApp.evaluate(async ({ app }) => {
+    const app = await chromium.launch()
+    // const app = await app.evaluate(async ({ app }) => {
     //   // This runs in the main Electron process, parameter here is always
     //   // the result of the require('electron') in the main app script.
     //   return app
     // })
     // console.log(app)
-    const client = await electronApp.firstWindow()
-    extendClient(client, electronApp)
+    const client = await app.newPage()
+    extendClient(client, app)
     const prefix = await prefixer()
     const e = prefix('common')
     // await client.waitUntilWindowLoaded()
@@ -74,6 +74,6 @@ describe('init setting buttons', function () {
     const text5 = await client.getText(sel)
     expect(text5).toEqual(e('bookmarks'))
 
-    await electronApp.close().catch(console.log)
+    await app.close().catch(console.log)
   })
 })

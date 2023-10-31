@@ -2,23 +2,20 @@
  * basic ssh test
  * need TEST_HOST TEST_PASS TEST_USER env set
  */
+import { test as it } from '@playwright/test'
+import { chromium } from 'playwright'
+import { expect } from 'chai'
+import delay from './common/wait.js'
+import extendClient from './common/client-extend.js'
 
-const { _electron: electron } = require('playwright')
-const {
-  test: it
-} = require('@playwright/test')
 const { describe } = it
 it.setTimeout(100000)
-const { expect } = require('chai')
-const delay = require('./common/wait')
-const appOptions = require('./common/app-options')
-const extendClient = require('./common/client-extend')
 
 describe('terminal split', function () {
   it('split button works', async function () {
-    const electronApp = await electron.launch(appOptions)
-    const client = await electronApp.firstWindow()
-    extendClient(client, electronApp)
+    const app = await chromium.launch()
+    const client = await app.newPage()
+    extendClient(client)
     await delay(8500)
     await client.click('.session-current .term-controls .icon-split')
     await delay(2200)
@@ -35,6 +32,6 @@ describe('terminal split', function () {
     terms = await client.elements('.session-current .term-wrap')
     terms = await terms.count()
     expect(terms).equal(2)
-    await electronApp.close().catch(console.log)
+    await app.close().catch(console.log)
   })
 })

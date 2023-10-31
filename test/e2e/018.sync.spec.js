@@ -1,16 +1,14 @@
-const { _electron: electron } = require('playwright')
-require('dotenv').config()
-const {
-  test: it
-} = require('@playwright/test')
-const { describe } = it
-it.setTimeout(100000)
-const delay = require('./common/wait')
-const log = require('./common/log')
-const { expect } = require('chai')
-const appOptions = require('./common/app-options')
-const prefixer = require('./common/lang')
-const extendClient = require('./common/client-extend')
+import { chromium } from 'playwright'
+import { config } from 'dotenv'
+import { test as it } from '@playwright/test'
+import delay from './common/wait.js'
+import log from './common/log.js'
+import { expect } from 'chai'
+import prefixer from './common/lang.js'
+import extendClient from './common/client-extend.js'
+
+config()
+
 const {
   GIST_ID,
   GIST_TOKEN,
@@ -21,12 +19,15 @@ const {
   CUSTOM_SYNC_SECRET
 } = process.env
 
+const { describe } = it
+it.setTimeout(100000)
+
 describe('data sync', function () {
   it('all buttons open proper terminal themes tab', async function () {
-    const electronApp = await electron.launch(appOptions)
-    const client = await electronApp.firstWindow()
-    extendClient(client, electronApp)
-    const prefix = await prefixer(electron)
+    const app = await chromium.launch()
+    const client = await app.newPage()
+    extendClient(client)
+    const prefix = await prefixer()
     const e = prefix('common')
 
     await delay(3500)
