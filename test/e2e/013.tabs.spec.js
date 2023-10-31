@@ -1,20 +1,18 @@
-const { _electron: electron } = require('playwright')
-const {
-  test: it
-} = require('@playwright/test')
+import { chromium } from 'playwright'
+import { test as it } from '@playwright/test'
+import delay from './common/wait.js'
+import { expect } from 'chai'
+import extendClient from './common/client-extend.js'
+import log from './common/log.js'
+
 const { describe } = it
 it.setTimeout(100000)
-const delay = require('./common/wait')
-const { expect } = require('chai')
-const appOptions = require('./common/app-options')
-const extendClient = require('./common/client-extend')
-const log = require('./common/log')
 
 describe('tabs', function () {
   it('double click to duplicate tab button works', async function () {
-    const electronApp = await electron.launch(appOptions)
-    const client = await electronApp.firstWindow()
-    extendClient(client, electronApp)
+    const app = await chromium.launch()
+    const client = await app.newPage()
+    extendClient(client)
     await delay(4500)
     const tabsLenBefore = await client.countElem('.tabs .tab')
     const wrapsBefore = await client.countElem('.sessions > div')
@@ -31,6 +29,6 @@ describe('tabs', function () {
     await delay(1500)
     const tabs1 = await client.countElem('.tabs .tab')
     expect(tabs1).equal(tabsLenBefore + 2)
-    await electronApp.close().catch(console.log)
+    await app.close().catch(console.log)
   })
 })

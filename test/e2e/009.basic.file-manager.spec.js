@@ -1,21 +1,19 @@
-const { _electron: electron } = require('playwright')
-const {
-  test: it
-} = require('@playwright/test')
+import { chromium } from 'playwright'
+import { test as it } from '@playwright/test'
+import log from './common/log.js'
+import { expect } from 'chai'
+import delay from './common/wait.js'
+import nanoid from './common/uid.js'
+import extendClient from './common/client-extend.js'
+
 const { describe } = it
 it.setTimeout(100000)
-const log = require('./common/log')
-const { expect } = require('chai')
-const delay = require('./common/wait')
-const nanoid = require('./common/uid')
-const appOptions = require('./common/app-options')
-const extendClient = require('./common/client-extend')
 
 describe('local file manager', function () {
   it('should open window and basic sftp works', async function () {
-    const electronApp = await electron.launch(appOptions)
-    const client = await electronApp.firstWindow()
-    extendClient(client, electronApp)
+    const app = await chromium.launch()
+    const client = await app.newPage()
+    extendClient(client)
     await delay(3500)
 
     // click sftp tab
@@ -99,6 +97,6 @@ describe('local file manager', function () {
     let localFileList2 = await client.elements('.session-current .file-list.local .sftp-item')
     localFileList2 = await localFileList2.count()
     expect(localFileList2).equal(localFileListBefore)
-    await electronApp.close().catch(console.log)
+    await app.close().catch(console.log)
   })
 })

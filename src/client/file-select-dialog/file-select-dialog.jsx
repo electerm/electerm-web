@@ -27,7 +27,6 @@ export default class FileSelectDialog extends Component {
   constructor (props) {
     super(props)
     const p = window.localStorage.getItem(this.lsKey) || window.et.home
-    console.log('p', p)
     this.state = {
       opts: null,
       loading: false,

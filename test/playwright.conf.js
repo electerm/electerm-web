@@ -1,7 +1,9 @@
 import { env } from './e2e/common/env.js'
 import { defineConfig } from '@playwright/test'
 
-const url = `http://${env.HOST}:${env.PORT}`
+const host = env.HOST || '127.0.0.1'
+const port = env.PORT || 5577
+const url = `http://${host}:${port}`
 
 export default defineConfig({
   // Fail the build on CI if you accidentally left test.only in the source code.

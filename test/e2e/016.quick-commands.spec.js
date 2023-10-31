@@ -3,23 +3,21 @@
  * need TEST_HOST TEST_PASS TEST_USER env set
  */
 
-const { _electron: electron } = require('playwright')
-const {
-  test: it
-} = require('@playwright/test')
+import { chromium } from 'playwright'
+import { test as it } from '@playwright/test'
+import { expect } from 'chai'
+import delay from './common/wait.js'
+import log from './common/log.js'
+import extendClient from './common/client-extend.js'
+
 const { describe } = it
 it.setTimeout(100000)
-const { expect } = require('chai')
-const delay = require('./common/wait')
-const log = require('./common/log')
-const appOptions = require('./common/app-options')
-const extendClient = require('./common/client-extend')
 
 describe('quick commands', function () {
   it('quick commands form', async function () {
-    const electronApp = await electron.launch(appOptions)
-    const client = await electronApp.firstWindow()
-    extendClient(client, electronApp)
+    const app = await chromium.launch()
+    const client = await app.newPage()
+    extendClient(client)
     log('open setting')
     await delay(2000)
     await client.click('.btns .anticon-setting')
@@ -63,6 +61,6 @@ describe('quick commands', function () {
       return window.store.currentQuickCommands.length
     })
     expect(c2).equal(c1 + 1)
-    await electronApp.close().catch(console.log)
+    await app.close().catch(console.log)
   })
 })

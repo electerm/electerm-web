@@ -14,7 +14,7 @@ export default class Logout extends Component {
     return (
       <div className='control-icon-wrap logout-icon'>
         <LogoutOutlined
-          className='pointer font20 control-icon iblock'
+          className='pointer font16 control-icon iblock'
           onClick={this.handleLogout}
         />
       </div>
