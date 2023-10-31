@@ -1,4 +1,4 @@
-import { env } from './env.js'
+import { env } from './e2e/common/env.js'
 import { defineConfig } from '@playwright/test'
 
 const url = `http://${env.HOST}:${env.PORT}`

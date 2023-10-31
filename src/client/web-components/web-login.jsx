@@ -10,6 +10,7 @@ import {
   Loading3QuartersOutlined
 } from '@ant-design/icons'
 import Main from '../../electerm-react/components/main/main.jsx'
+// import Logout from './logout.jsx'
 
 const { prefix } = window
 const f = prefix('form')
@@ -98,17 +99,21 @@ export default class Login extends Component {
   }
 
   render () {
+    const store = this.props
     const {
-      authChecked
-    } = this.props.store
+      authChecked,
+      logined
+    } = store
     if (!authChecked) {
+      console.log('!authChecked)')
       return this.renderUnchecked()
-    } else if (!this.props.store.logined) {
+    } else if (!logined) {
+      console.log('!logined)')
       return this.renderLogin()
     }
     return (
       <Main
-        store={this.props.store}
+        store={store}
       />
     )
   }
