@@ -20,6 +20,9 @@ export function httpRoutes (app) {
     app.use(express.static(
       resolve(cwd, 'node_modules')
     ))
+    app.use(express.static(
+      resolve(cwd, 'src/client/statics')
+    ))
   } else {
     app.use(express.static(
       resolve(cwd, 'dist/assets')

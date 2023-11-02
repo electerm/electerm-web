@@ -12,13 +12,13 @@ import {
 import express from 'express'
 import { createServer as createViteServer } from 'vite'
 import conf from './conf.js'
-import { loadDevStylus } from './style.js'
 import os from 'os'
 import copy from 'json-deep-copy'
 import proxy from 'express-http-proxy'
 import fsFunctions from '../../src/app/common/fs-functions.js'
 import { createToken } from '../../src/app/lib/jwt.js'
 import { logDir } from '../../src/app/server/session-log.js'
+import { loadDevStylus } from '../../src/app/lib/style.js'
 
 const devPort = env.DEV_PORT || 5570
 const devHost = env.DEV_HOST || '127.0.0.1'

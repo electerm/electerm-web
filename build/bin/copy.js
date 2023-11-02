@@ -4,6 +4,10 @@ import { cwd } from './build-common.js'
 
 const { cp } = pkg
 
+const f1 = resolve(
+  cwd,
+  'src/client/statics/*'
+)
 const from0 = resolve(
   cwd,
   'node_modules/vscode-icons/icons'
@@ -15,6 +19,10 @@ const from1 = resolve(
 const from3 = resolve(
   cwd,
   'build/iTerm2-Color-Schemes/electerm/*'
+)
+const t1 = resolve(
+  cwd,
+  'dist/assets/'
 )
 const to1 = resolve(
   cwd,
@@ -29,6 +37,10 @@ const to4 = resolve(
   'dist/assets/iTerm2-Color-Schemes/'
 )
 const arr = [
+  {
+    from: f1,
+    to: t1
+  },
   {
     from: from1,
     to: to1

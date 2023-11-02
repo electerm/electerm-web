@@ -11,6 +11,9 @@ export default class Logout extends Component {
   }
 
   render () {
+    if (window.et.tokenElecterm) {
+      return null
+    }
     return (
       <div className='control-icon-wrap logout-icon'>
         <LogoutOutlined
