@@ -24,14 +24,16 @@ jobs:
     # before_install:
     - run: npm i
     - run: npx playwright install chromium
+    - run: npm i -g pm2
     # script:
     - run: npm run build
     - run: cp .sample.env .env
-
+    - run: npm run test3
+    - run: echo "npm run prod" > run.sh && pm2 start run.sh
     - name: test
       uses: GabrielBB/xvfb-action@v1
       with:
-        run: npm run prod & npm run test2 && npm run test3
+        run: npm run test2
       env:
         NODE_TEST: 1
         TEST_HOST: ${{ secrets.TEST_HOST }}
