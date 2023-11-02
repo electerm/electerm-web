@@ -47,19 +47,18 @@ Open-sourced terminal/ssh/telnet/serialport/sftp client(linux, mac, win).
 
 todo
 
-## Install
+## Prerequisites
 
-todo
+- Nodejs 18+/npm, recommend use [nvm](https://github.com/nvm-sh/nvm) to install nodejs/npm
+- python/make tools
 
 ## Upgrade
 
 todo
 
-[Discussion board](https://github.com/electerm/electerm-web/discussions)
-
 ## Support
 
-Would love to hear from you, please tell me what you think, [submit an issue](https://github.com/electerm/electerm-web/issues), [Start a new discussion](https://github.com/electerm/electerm-web/discussions/new), [create/fix language files](https://github.com/electerm/electerm-locales) or create pull requests, all welcome.
+Would love to hear from you, please tell me what you think, [submit an issue](https://github.com/electerm/electerm-web/issues/new/choose), [Start a new discussion](https://github.com/electerm/electerm-web/discussions/new), [create/fix language files](https://github.com/electerm/electerm-locales) or create pull requests, all welcome.
 
 ## Sponsor this project
 
