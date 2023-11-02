@@ -31,7 +31,7 @@ jobs:
     - name: test
       uses: GabrielBB/xvfb-action@v1
       with:
-        run: npm run test1
+        run: npm run prod & npm run test1
       env:
         NODE_TEST: 1
         TEST_HOST: ${{ secrets.TEST_HOST }}
