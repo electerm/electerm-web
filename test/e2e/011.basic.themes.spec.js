@@ -1,19 +1,21 @@
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import delay from './common/wait.js'
 import { test as it } from '@playwright/test'
 import log from './common/log.js'
 import { expect } from 'chai'
 import prefixer from './common/lang.js'
-import extendClient from './common/client-extend.js'
 
 const { describe } = it
 it.setTimeout(100000)
 
 describe('terminal themes', function () {
   it('all buttons open proper terminal themes tab', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     const prefix = await prefixer()
     const e = prefix('common')
     const t = prefix('terminalThemes')
@@ -50,6 +52,8 @@ describe('terminal themes', function () {
     })
     await delay(1000)
     expect(themeNow).equal(themePrev + 1)
+    console.log()
+
     expect(themeIterm > 10).equal(true)
 
     log('tab it')
@@ -57,6 +61,6 @@ describe('terminal themes', function () {
     await delay(100)
     const text4 = await client.getText(sel)
     expect(text4).equal(e('setting'))
-    await app.close().catch(console.log)
+    await close(context, app)
   })
 })

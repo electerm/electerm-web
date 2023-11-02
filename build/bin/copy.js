@@ -14,7 +14,7 @@ const from1 = resolve(
 )
 const from3 = resolve(
   cwd,
-  '../iTerm2-Color-Schemes/electerm/*'
+  'build/iTerm2-Color-Schemes/electerm/*'
 )
 const to1 = resolve(
   cwd,

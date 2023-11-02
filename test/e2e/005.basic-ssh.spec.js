@@ -8,10 +8,12 @@ import {
   TEST_PASS,
   TEST_USER
 } from './common/env.js'
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import { expect } from 'chai'
 import delay from './common/wait.js'
-import extendClient from './common/client-extend.js'
 import basicTermTest from './common/basic-terminal-test.js'
 
 const { describe } = it
@@ -19,9 +21,9 @@ it.setTimeout(100000)
 
 describe('ssh', function () {
   it('should open window and basic ssh ls command works', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     await delay(4500)
     const cmd = 'ls'
     await delay(4500)
@@ -38,5 +40,6 @@ describe('ssh', function () {
     await delay(4010)
     await basicTermTest(client, cmd)
     await app.close().catch(console.log)
+    await close(context, app)
   })
 })

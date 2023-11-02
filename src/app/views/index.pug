@@ -38,6 +38,9 @@ html
         img.iblock.logo-filter(src='images/electerm.png', alt='', height=80)
     script.
       window.et = !{JSON.stringify(_global)}
+    - if (tokenElecterm)
+      script.
+        window.localStorage.setItem('tokenElecterm', window.et.tokenElecterm)
     - var url = '/src/client/entry-web/basic.js'
     - if (isDev)
       //- script(src='/external/react.development.js?' + version)

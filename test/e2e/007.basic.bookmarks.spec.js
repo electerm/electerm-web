@@ -1,4 +1,7 @@
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import { test as it } from '@playwright/test'
 import delay from './common/wait.js'
 import log from './common/log.js'
@@ -9,16 +12,15 @@ import {
   TEST_USER
 } from './common/env.js'
 import prefixer from './common/lang.js'
-import extendClient from './common/client-extend.js'
 
 const { describe } = it
 it.setTimeout(100000)
 
 describe('bookmarks', function () {
   it('all buttons open proper bookmark tab', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     const prefix = await prefixer()
     const e = prefix('common')
     await delay(5500)
@@ -74,5 +76,6 @@ describe('bookmarks', function () {
     // const text4 = await client.getText(sel)
     // expect(text4).equal(e('setting'))
     // await app.close().catch(console.log)
+    await close(context, app)
   })
 })

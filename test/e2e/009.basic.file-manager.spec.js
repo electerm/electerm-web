@@ -1,19 +1,21 @@
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import { test as it } from '@playwright/test'
 import log from './common/log.js'
 import { expect } from 'chai'
 import delay from './common/wait.js'
 import nanoid from './common/uid.js'
-import extendClient from './common/client-extend.js'
 
 const { describe } = it
 it.setTimeout(100000)
 
 describe('local file manager', function () {
   it('should open window and basic sftp works', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     await delay(3500)
 
     // click sftp tab
@@ -97,6 +99,6 @@ describe('local file manager', function () {
     let localFileList2 = await client.elements('.session-current .file-list.local .sftp-item')
     localFileList2 = await localFileList2.count()
     expect(localFileList2).equal(localFileListBefore)
-    await app.close().catch(console.log)
+    await close(context, app)
   })
 })

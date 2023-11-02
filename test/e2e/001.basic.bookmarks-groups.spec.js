@@ -1,20 +1,21 @@
 import { test as it } from '@playwright/test'
-import { chromium } from 'playwright'
 import delay from './common/wait.js'
 import log from './common/log.js'
 import { expect } from 'chai'
 import prefixer from './common/lang.js'
-import extendClient from './common/client-extend.js'
+import {
+  close,
+  init
+} from './common/common.js'
 
 const { describe } = it
 it.setTimeout(100000)
 
 describe('bookmark groups', function () {
   it('all buttons open proper bookmark tab', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
-    await client.goto('/')
+    const {
+      client, context, app
+    } = await init()
     const prefix = await prefixer()
     const e = prefix('common')
     await delay(3500)
@@ -49,6 +50,6 @@ describe('bookmark groups', function () {
         window.store.bookmarkGroups.filter(d => d !== 'u567')
       )
     })
-    await app.close().catch(console.log)
+    await close(context, app)
   })
 })

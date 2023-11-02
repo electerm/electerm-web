@@ -3,7 +3,10 @@
  * need TEST_HOST TEST_PASS TEST_USER env set
  */
 
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import { test as it } from '@playwright/test'
 import { expect } from 'chai'
 import delay from './common/wait.js'
@@ -13,16 +16,15 @@ import {
   TEST_PASS,
   TEST_USER
 } from './common/env.js'
-import extendClient from './common/client-extend.js'
 
 const { describe } = it
 it.setTimeout(100000)
 
 describe('timeout setting', function () {
   it('timeout setting works', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     await delay(4000)
 
     log('set timeout to 100')
@@ -72,6 +74,6 @@ describe('timeout setting', function () {
     await delay(150)
     expect(timeout1).equal(50000)
     await delay(400)
-    await app.close().catch(console.log)
+    await close(context, app)
   })
 })

@@ -3,23 +3,24 @@
  * need TEST_HOST TEST_PASS TEST_USER env set
  */
 
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import {
   test as it
 } from '@playwright/test'
 import { expect } from 'chai'
 import delay from './common/wait.js'
 
-import extendClient from './common/client-extend.js'
-
 const { describe } = it
 it.setTimeout(100000)
 
 describe('ssh', function () {
   it('should open window and basic ssh ls command works', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     await delay(4500)
     await delay(4500)
     await client.rightClick('.tabs .tab', 10, 10)
@@ -29,5 +30,6 @@ describe('ssh', function () {
       return window.store.tabs.length
     })
     expect(tabsCount).equal(2)
+    await close(context, app)
   })
 })

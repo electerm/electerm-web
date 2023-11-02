@@ -33,7 +33,13 @@ export async function init () {
   const config = await getConfig(true)
   return {
     config,
-    langs: Object.keys(langMap),
+    isPortable: true,
+    langs: Object.keys(langMap).map(id => {
+      return {
+        id,
+        ...langMap[id]
+      }
+    }),
     langMap
   }
 }

@@ -1,17 +1,19 @@
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import { test as it } from '@playwright/test'
 import delay from './common/wait.js'
 import { expect } from 'chai'
-import extendClient from './common/client-extend.js'
 
 const { describe } = it
 it.setTimeout(100000)
 
 describe('symbolic links support', function () {
   it('symbolic links support works', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     await delay(4500)
     const tmp = 'tmp-' + (+new Date())
     const cmd = `cd ~ && mkdir ${tmp} && cd ${tmp} && touch x.js && mkdir xx && ln -s x.js xk && ln -s xx xxk`
@@ -32,6 +34,6 @@ describe('symbolic links support', function () {
     const cmd1 = `cd ~ && rm -rf ${tmp}`
     await client.keyboard.type(cmd1)
     await client.keyboard.press('Enter')
-    await app.close().catch(console.log)
+    await close(context, app)
   })
 })

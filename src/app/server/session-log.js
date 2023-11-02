@@ -2,12 +2,23 @@
  * log ssh output to file
  */
 
-import { resolve } from 'path'
-import { createWriteStream } from 'fs'
+import { resolve, dirname } from 'path'
+import { createWriteStream, existsSync, mkdirSync } from 'fs'
 import { cwd } from '../common/runtime-constants.js'
 
+function mkdirP (resolvedPath) {
+  if (!existsSync(resolvedPath)) {
+    mkdirP(dirname(resolvedPath))
+    mkdirSync(resolvedPath)
+  }
+}
+
 const { SESSION_LOG_PATH } = process.env
-const logDir = SESSION_LOG_PATH || resolve(cwd, 'electerm_session_logs')
+export const logDir = SESSION_LOG_PATH || resolve(cwd, 'electerm_session_logs')
+
+if (!existsSync(logDir)) {
+  mkdirP(logDir)
+}
 
 export class SessionLog {
   constructor (options) {

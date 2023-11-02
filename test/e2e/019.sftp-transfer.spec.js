@@ -3,7 +3,10 @@
  * need TEST_HOST TEST_PASS TEST_USER env set
  */
 
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import { expect } from 'chai'
 import { test as it } from '@playwright/test'
 import delay from './common/wait.js'
@@ -14,16 +17,15 @@ import {
 } from './common/env.js'
 import log from './common/log.js'
 import { nanoid } from 'nanoid'
-import extendClient from './common/client-extend.js'
 
 const { describe } = it
 it.setTimeout(100000)
 
 describe('sftp file transfer', function () {
   it('should open window and basic sftp works', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     await delay(3500)
     await client.click('.btns .anticon-plus-circle')
     await delay(500)
@@ -195,6 +197,6 @@ describe('sftp file transfer', function () {
     let remoteFileList2 = await client.elements('.session-current .file-list.remote .sftp-item')
     remoteFileList2 = await remoteFileList2.count()
     expect(remoteFileList2).equal(remoteFileListBefore)
-    await app.close().catch(console.log)
+    await close(context, app)
   })
 })

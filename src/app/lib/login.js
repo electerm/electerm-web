@@ -2,11 +2,10 @@
  * simple login with password only
  */
 
-import jwt from 'jsonwebtoken'
+import { createToken } from './jwt.js'
 
 const {
-  SERVER_PASS,
-  SERVER_USER
+  SERVER_PASS
 } = process.env
 
 export function login (req, res) {
@@ -14,8 +13,6 @@ export function login (req, res) {
   if (password !== SERVER_PASS) {
     return res.status(401).send('pass not right')
   }
-  const token = jwt.sign({
-    id: SERVER_USER
-  }, process.env.SERVER_SECRET, { expiresIn: '120y' })
+  const token = createToken()
   res.send(token)
 }

@@ -3,21 +3,23 @@
  * need TEST_HOST TEST_PASS TEST_USER env set
  */
 
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import { test as it } from '@playwright/test'
 import { expect } from 'chai'
 import delay from './common/wait.js'
 import log from './common/log.js'
-import extendClient from './common/client-extend.js'
 
 const { describe } = it
 it.setTimeout(100000)
 
 describe('quick commands', function () {
   it('quick commands form', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     log('open setting')
     await delay(2000)
     await client.click('.btns .anticon-setting')
@@ -61,6 +63,6 @@ describe('quick commands', function () {
       return window.store.currentQuickCommands.length
     })
     expect(c2).equal(c1 + 1)
-    await app.close().catch(console.log)
+    await close(context, app)
   })
 })

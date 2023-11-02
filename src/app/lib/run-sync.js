@@ -1,7 +1,6 @@
 /**
  * serial port lib
  */
-import open from 'open'
 import log from '../common/log.js'
 import { toCss } from '../lib/style.js'
 import { listItermThemes } from '../lib/iterm-theme.js'
@@ -15,13 +14,12 @@ import { checkDbUpgrade, doUpgrade } from '../upgrade/index.js'
 import { watchFile, unwatchFile } from './watch-file.js'
 import lookup from './lookup.js'
 import { init } from './init.js'
+import { showItemInFolder } from './show-item-in-folder.js'
 
 const globs = {
   encryptAsync,
   decryptAsync,
-  showItemInFolder: (pth) => {
-    return open(pth)
-  },
+  showItemInFolder,
   dbAction,
   lookup,
   watchFile,
