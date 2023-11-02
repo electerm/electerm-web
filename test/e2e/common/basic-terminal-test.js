@@ -1,7 +1,7 @@
 import delay from './wait.js'
 import { expect } from 'chai'
 
-module.exports = async (client, cmd) => {
+export default async (client, cmd) => {
   async function focus () {
     client.click('.session-current .xterm .xterm-cursor-layer')
   }

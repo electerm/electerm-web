@@ -1,4 +1,7 @@
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import {
   test as it,
   expect
@@ -7,22 +10,15 @@ import {
 import delay from './common/wait.js'
 import log from './common/log.js'
 import prefixer from './common/lang.js'
-import extendClient from './common/client-extend.js'
 
 const { describe } = it
 it.setTimeout(100000)
 
 describe('init setting buttons', function () {
   it('all buttons open proper setting tab', async function () {
-    const app = await chromium.launch()
-    // const app = await app.evaluate(async ({ app }) => {
-    //   // This runs in the main Electron process, parameter here is always
-    //   // the result of the require('electron') in the main app script.
-    //   return app
-    // })
-    // console.log(app)
-    const client = await app.newPage()
-    extendClient(client, app)
+    const {
+      client, context, app
+    } = await init()
     const prefix = await prefixer()
     const e = prefix('common')
     // await client.waitUntilWindowLoaded()
@@ -73,7 +69,6 @@ describe('init setting buttons', function () {
     await delay(600)
     const text5 = await client.getText(sel)
     expect(text5).toEqual(e('bookmarks'))
-
-    await app.close().catch(console.log)
+    await close(context, app)
   })
 })

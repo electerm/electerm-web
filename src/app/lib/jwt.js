@@ -17,6 +17,17 @@ export const errHandler = function (err, req, res, next) {
   }
 }
 
+export function createToken (
+  user = process.env.SERVER_USER,
+  pass = process.env.SERVER_SECRET,
+  expire = process.env.TOKEN_EXPIRED_TIME || '120y'
+) {
+  const x = jwtb.sign({
+    id: user
+  }, pass, { expiresIn: expire })
+  return x
+}
+
 export function verify (token) {
   return jwtb.verify(token, process.env.SERVER_SECRET)
 }

@@ -6,6 +6,9 @@ const port = env.PORT || 5577
 const url = `http://${host}:${port}`
 
 export default defineConfig({
+  use: {
+    baseURL: url
+  },
   // Fail the build on CI if you accidentally left test.only in the source code.
   forbidOnly: !!process.env.CI,
 
@@ -13,13 +16,5 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
 
   // Opt out of parallel tests on CI.
-  workers: 1,
-
-  // // Reporter to use
-  // reporter: 'html',
-
-  use: {
-    // Base URL to use in actions like `await page.goto('/')`.
-    baseURL: url
-  }
+  workers: 1
 })

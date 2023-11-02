@@ -1,11 +1,13 @@
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import { config } from 'dotenv'
 import { test as it } from '@playwright/test'
 import delay from './common/wait.js'
 import log from './common/log.js'
 import { expect } from 'chai'
 import prefixer from './common/lang.js'
-import extendClient from './common/client-extend.js'
 
 config()
 
@@ -24,9 +26,9 @@ it.setTimeout(100000)
 
 describe('data sync', function () {
   it('all buttons open proper terminal themes tab', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     const prefix = await prefixer()
     const e = prefix('common')
 
@@ -96,5 +98,6 @@ describe('data sync', function () {
       return window.store.getBookmarks()
     })
     expect(bks3.length > 3).equal(true)
+    await close(context, app)
   })
 })

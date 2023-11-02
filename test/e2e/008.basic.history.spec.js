@@ -1,19 +1,21 @@
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import { test as it } from '@playwright/test'
 import delay from './common/wait.js'
 import log from './common/log.js'
 import { expect } from 'chai'
 import prefixer from './common/lang.js'
-import extendClient from './common/client-extend.js'
 
 const { describe } = it
 it.setTimeout(100000)
 
 describe('history', function () {
   it('all buttons open proper history tab', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     const prefix = await prefixer()
     const e = prefix('common')
     await delay(4500)
@@ -43,6 +45,6 @@ describe('history', function () {
     await client.click('.setting-wrap .item-list-unit')
     const list1 = await client.getAttribute('.setting-wrap .item-list-unit:nth-child(1)', 'class')
     expect(list1.includes('active'))
-    await app.close().catch(console.log)
+    await close(context, app)
   })
 })

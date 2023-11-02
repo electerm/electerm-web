@@ -18,7 +18,7 @@ export async function createApp () {
   app.use(express.json())
 
   app.use(morgan(
-    'combined'
+    ':method :url :status :res[content-length] - :response-time ms'
   ))
   app.set('view engine', 'pug')
   app.set(

@@ -20,7 +20,7 @@ export default {
     'diffie-hellman-group1-sha1'
   ],
   cipher: [
-    // 'chacha20-poly1305@openssh.com',
+    'chacha20-poly1305@openssh.com',
     'aes128-ctr',
     'aes192-ctr',
     'aes256-ctr',
@@ -34,12 +34,12 @@ export default {
     'aes128-ctr',
     'aes192-ctr',
     'aes256-ctr',
-    'blowfish-cbc',
-    '3des-cbc',
-    'arcfour256',
-    'arcfour128',
+    // 'blowfish-cbc',
+    '3des-cbc'
+    // 'arcfour256',
+    // 'arcfour128',
     // 'cast128-cbc',
-    'arcfour'
+    // 'arcfour'
   ],
   serverHostKey: [
     'ssh-ed25519',

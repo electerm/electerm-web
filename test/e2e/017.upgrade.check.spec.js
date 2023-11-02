@@ -1,17 +1,19 @@
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import { test as it } from '@playwright/test'
 import delay from './common/wait.js'
 import log from './common/log.js'
-import extendClient from './common/client-extend.js'
 
 const { describe } = it
 it.setTimeout(100000)
 
 describe('Upgrade check', function () {
   it('Upgrade check should work', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     await delay(4500)
 
     log('button:about')
@@ -23,6 +25,6 @@ describe('Upgrade check', function () {
     await client.click('.about-wrap .ant-btn-primary')
     await delay(9000)
     await client.hasElem('.upgrade-panel')
-    await app.close().catch(console.log)
+    await close(context, app)
   })
 })

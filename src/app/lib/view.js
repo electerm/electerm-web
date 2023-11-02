@@ -13,6 +13,8 @@ import {
 import fsFunctions from '../common/fs-functions.js'
 import { loadDevStylus } from './style.js'
 import copy from 'json-deep-copy'
+import { createToken } from './jwt.js'
+import { logDir } from '../server/session-log.js'
 
 const stylus = loadDevStylus()
 
@@ -33,7 +35,14 @@ export function index (req, res) {
     fsFunctions,
     isWebApp: true,
     extIconPath,
+    sessionLogPath: logDir,
     server: process.env.SERVER || buildServer()
+  }
+  const {
+    ENABLE_AUTH
+  } = process.env
+  if (!ENABLE_AUTH) {
+    data.tokenElecterm = createToken()
   }
   data._global = copy(data)
   res.render('index', data)

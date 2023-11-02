@@ -1,8 +1,10 @@
-import { chromium } from 'playwright'
+import {
+  close,
+  init
+} from './common/common.js'
 import { test as it } from '@playwright/test'
 import delay from './common/wait.js'
 import { expect } from 'chai'
-import extendClient from './common/client-extend.js'
 import log from './common/log.js'
 
 const { describe } = it
@@ -10,9 +12,9 @@ it.setTimeout(100000)
 
 describe('tabs', function () {
   it('double click to duplicate tab button works', async function () {
-    const app = await chromium.launch()
-    const client = await app.newPage()
-    extendClient(client)
+    const {
+      client, context, app
+    } = await init()
     await delay(4500)
     const tabsLenBefore = await client.countElem('.tabs .tab')
     const wrapsBefore = await client.countElem('.sessions > div')
@@ -29,6 +31,6 @@ describe('tabs', function () {
     await delay(1500)
     const tabs1 = await client.countElem('.tabs .tab')
     expect(tabs1).equal(tabsLenBefore + 2)
-    await app.close().catch(console.log)
+    await close(context, app)
   })
 })
