@@ -6,13 +6,13 @@
 
 # electerm-web [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Open%20sourced%20terminal%2Fssh%2Fsftp%20client(linux%2C%20mac%2C%20win)&url=https%3A%2F%2Fgithub.com%2Felecterm%2Felecterm-web&hashtags=electerm,ssh,terminal,sftp)
 
-This is web app version of electerm app, running in browser, almost has the same features as the desktop version.
+This is web app version of [electerm app](https://github.com/electerm/electerm), running in browser, almost has the same features as the desktop version.
 
-!!Currently it is in development phase, not suitable for production use.
+**!!Currently it is in development phase, not suitable for production use.**
 
 [![GitHub version](https://img.shields.io/github/release/electerm/electerm/all.svg)](https://github.com/electerm/electerm/releases)
-[![Build Status](https://github.com/electerm/electerm/actions/workflows/mac-test-1.yml/badge.svg)](https://github.com/electerm/electerm/actions)
-[![license](https://img.shields.io/github/license/electerm/electerm.svg)](https://github.com/electerm/electerm/blob/master/LICENSE)
+[![Build Status](https://github.com/electerm/electerm-dev/actions/workflows/mac-test-1.yml/badge.svg)](https://github.com/electerm/electerm-dev/actions)
+[![license](https://img.shields.io/github/license/electerm/electerm.svg)](https://github.com/electerm/electerm-dev/blob/master/LICENSE)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 [![Get it from the Snap Store](https://img.shields.io/badge/Snap-Store-green)](https://snapcraft.io/electerm)
 [![Get it from the Microsoft Store](https://img.shields.io/badge/Microsoft-Store-blue)](https://www.microsoft.com/store/apps/9NCN7272GTFF)
@@ -42,7 +42,6 @@ Open-sourced terminal/ssh/telnet/serialport/sftp client(linux, mac, win).
 - UI/terminal theme
 - Sync bookmarks/themes/quick commands to github/gitee secret gist
 - Quick input to one or all terminals.
-- --Command line usage: check [wiki](https://github.com/electerm/electerm/wiki/Command-line-usage)--
 
 ## Download
 
@@ -128,7 +127,7 @@ npm run prod
 npx playwright install --with-deps chromium
 # or with a proxy if needed
 HTTPS_PROXY=http://127.0.0.1:1087 npx playwright install --with-deps chromium
-# then edit .env, edit TEST_HOST TEST_USER TEST_PASS
+# then edit .env, edit test related env
 npm run test
 ```
 
