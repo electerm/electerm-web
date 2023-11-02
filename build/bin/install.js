@@ -20,5 +20,6 @@ if (isWin) {
 } else {
   exec(run)
 }
+rm('-rf', 'src/electerm-react')
 cp('-r', 'node_modules/@electerm/electerm-react/client', 'src/electerm-react')
 echo('done install required modules')
