@@ -68,12 +68,29 @@ wechat donate
 
 [![wechat donate](https://electerm.html5beta.com/electerm-wechat-donate.png)](https://github.com/electerm)
 
-
 ## Prerequisites
 
 - git
 - Nodejs 18+/npm, recommend use [nvm](https://github.com/nvm-sh/nvm) to install nodejs/npm for Linux and MacOS
 - python/make tools, for Linux: `sudo apt install -y make python build-essential`, for MacOS: install Xcode, for Windows, install vs studio or `npm install --global --production windows-build-tools`
+
+## One line script to deploy
+
+for Linux or Mac
+
+```sh
+curl -o- https://electerm.html5beta.com/scripts/one-line-web.sh | bash
+# or
+wget -qO- https://electerm.html5beta.com/scripts/one-line-web.sh | bash
+```
+
+for Windows
+
+```powershell
+Invoke-WebRequest -Uri "https://electerm.html5beta.com/scripts/one-line-web.bat" -OutFile "one-line-web.bat"
+cmd.exe /c ".\one-line-web.bat"
+
+```
 
 ## Dev
 
