@@ -11,7 +11,6 @@ This is web app version of [electerm app](https://github.com/electerm/electerm),
 **!!Currently it is in development phase, not suitable for production use.**
 
 [![GitHub version](https://img.shields.io/github/release/electerm/electerm/all.svg)](https://github.com/electerm/electerm/releases)
-[![Build Status](https://github.com/electerm/electerm-dev/actions/workflows/mac-test-1.yml/badge.svg)](https://github.com/electerm/electerm-dev/actions)
 [![license](https://img.shields.io/github/license/electerm/electerm.svg)](https://github.com/electerm/electerm-dev/blob/master/LICENSE)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 [![Get it from the Snap Store](https://img.shields.io/badge/Snap-Store-green)](https://snapcraft.io/electerm)
@@ -47,11 +46,6 @@ Open-sourced terminal/ssh/telnet/serialport/sftp client(linux, mac, win).
 
 todo
 
-## Prerequisites
-
-- Nodejs 18+/npm, recommend use [nvm](https://github.com/nvm-sh/nvm) to install nodejs/npm
-- python/make tools
-
 ## Upgrade
 
 todo
@@ -73,6 +67,13 @@ open collective
 wechat donate
 
 [![wechat donate](https://electerm.html5beta.com/electerm-wechat-donate.png)](https://github.com/electerm)
+
+
+## Prerequisites
+
+- git
+- Nodejs 18+/npm, recommend use [nvm](https://github.com/nvm-sh/nvm) to install nodejs/npm for Linux and MacOS
+- python/make tools, for Linux: `sudo apt install -y make python build-essential`, for MacOS: install Xcode, for Windows, install vs studio or `npm install --global --production windows-build-tools`
 
 ## Dev
 
@@ -116,6 +117,8 @@ npm run build
 
 # run production server
 npm run prod
+
+# or ./build/bin/run-prod.sh
 
 #then visit http://127.0.0.1:5577 with browser
 ```
