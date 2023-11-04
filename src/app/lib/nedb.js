@@ -7,7 +7,7 @@ import { resolve } from 'path'
 import Datastore from '@yetzt/nedb'
 
 const reso = (name) => {
-  const nedbPath = process.env.DB_PATH || resolve(cwd, 'database/nedb-database')
+  const nedbPath = process.env.DB_PATH || resolve(cwd, 'data/nedb-database')
   return resolve(nedbPath, 'users', defaultUserName, `electerm.${name}.nedb`)
 }
 

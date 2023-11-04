@@ -13,8 +13,9 @@ function mkdirP (resolvedPath) {
   }
 }
 
-const { SESSION_LOG_PATH } = process.env
-export const logDir = SESSION_LOG_PATH || resolve(cwd, 'electerm_session_logs')
+const { DB_PATH } = process.env
+const dataPath = DB_PATH || resolve(cwd, 'data')
+export const logDir = resolve(dataPath, 'electerm_session_logs')
 
 if (!existsSync(logDir)) {
   mkdirP(logDir)
