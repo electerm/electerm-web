@@ -115,3 +115,4 @@ dist
 /electerm_session_logs
 /src/electerm-react
 /test-results
+/data
