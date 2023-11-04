@@ -74,7 +74,7 @@ wechat donate
 - Nodejs 18+/npm, recommend use [nvm](https://github.com/nvm-sh/nvm) to install nodejs/npm for Linux and MacOS
 - python/make tools, for Linux: `sudo apt install -y make python build-essential`, for MacOS: install Xcode, for Windows, install vs studio or `npm install --global --production windows-build-tools`
 
-## One line script to deploy
+## One line script to deploy from source code
 
 for Linux or Mac
 
