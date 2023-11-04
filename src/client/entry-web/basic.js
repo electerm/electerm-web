@@ -6,12 +6,11 @@ import '../web-components/web-api.js'
 import '../web-components/web-pre.js'
 import { get as _get } from 'lodash-es'
 
-const { isDev } = window.et
-const { version } = window.et
+const { isDev, version, cdn } = window.et
 
 async function loadWorker () {
   return new Promise((resolve) => {
-    const url = !isDev ? `js/worker-${version}.js` : '/js/worker.js'
+    const url = !isDev ? cdn + `/js/worker-${version}.js` : cdn + '/js/worker.js'
     window.worker = new window.Worker(url)
     function onInit (e) {
       if (!e || !e.data) {
@@ -35,7 +34,7 @@ async function load () {
   }
   function loadScript () {
     const rcs = document.createElement('script')
-    const url = !isDev ? `js/electerm-${version}.js` : '/js/electerm.js'
+    const url = !isDev ? cdn + `/js/electerm-${version}.js` : cdn + '/js/electerm.js'
     rcs.src = url
     rcs.type = 'module'
     document.body.appendChild(rcs)

@@ -23,6 +23,7 @@ function buildServer () {
 }
 
 export function index (req, res) {
+  const server = process.env.SERVER || buildServer()
   const data = {
     stylus,
     isDev,
@@ -35,8 +36,9 @@ export function index (req, res) {
     fsFunctions,
     isWebApp: true,
     extIconPath,
+    cdn: process.env.CDN || server,
     sessionLogPath: logDir,
-    server: process.env.SERVER || buildServer()
+    server
   }
   const {
     ENABLE_AUTH

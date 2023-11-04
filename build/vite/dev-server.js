@@ -36,6 +36,7 @@ const base = {
   packInfo: pack,
   home: os.homedir(),
   server: h,
+  cdn: h,
   stylus: loadDevStylus(),
   sessionLogPath: logDir,
   tokenElecterm: process.env.ENABLE_AUTH ? '' : createToken()

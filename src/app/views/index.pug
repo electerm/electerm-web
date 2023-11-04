@@ -26,8 +26,8 @@ html
         background: transparent 50% 50% no-repeat url("./images/electerm-watermark.png");
       }
     - if (!isDev)
-      link(rel='stylesheet', href='css/' + version + '-basic.css')
-      link(rel='stylesheet', href='css/' + version + '-index.css')
+      link(rel='stylesheet', href=cdn + '/css/' + version + '-basic.css')
+      link(rel='stylesheet', href=cdn + '/css/' + version + '-index.css')
       style(id='theme-css').
   body
     - if (isDev)
@@ -56,6 +56,6 @@ html
     - else
       //- script(src='/external/react.production.min.js?' + version)
       //- script(src='/external/react-dom.production.min.js?' + version)
-      - var url = src='/js/basic-' + version + '.js'
+      - var url = src=cdn + '/js/basic-' + version + '.js'
       script(src=url, type='module')
 
