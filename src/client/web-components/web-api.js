@@ -31,7 +31,14 @@ window.api = {
 
   },
   runGlobalAsync: async (func, ...args) => {
-    if (func === 'setTitle') {
+    if (func === 'initCommandLine') {
+      try {
+        const { init } = window.et.query
+        return init ? JSON.parse(window.et.query.init) : null
+      } catch (err) {
+        console.log('initCommandLine error:', err)
+      }
+    } else if (func === 'setTitle') {
       document.title = args[0]
       return
     } else if (func === 'openNewInstance') {

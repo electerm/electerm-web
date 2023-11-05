@@ -38,6 +38,7 @@ export function index (req, res) {
     extIconPath,
     cdn: process.env.CDN || server,
     sessionLogPath: logDir,
+    query: req.query,
     server
   }
   const {
