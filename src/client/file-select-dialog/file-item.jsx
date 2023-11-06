@@ -1,4 +1,4 @@
-import FileIcon from '../../electerm-react/components/sftp/file-icon'
+import FileIcon from '../electerm-react/components/sftp/file-icon'
 import classNames from 'classnames'
 export default function FileItem (props) {
   const {

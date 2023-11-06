@@ -2,7 +2,7 @@
  * file/folder select dialog component
  */
 
-import { Component } from '../../electerm-react/components/common/react-subx'
+import { Component } from '../electerm-react/components/common/react-subx'
 import {
   Modal,
   Spin,
@@ -12,11 +12,11 @@ import {
   ConfigProvider
 } from 'antd'
 import FileItem from './file-item'
-import AddressBar from '../../electerm-react/components/sftp/address-bar'
-import isValidPath from '../../electerm-react/common/is-valid-path'
+import AddressBar from '../electerm-react/components/sftp/address-bar'
+import isValidPath from '../electerm-react/common/is-valid-path'
 import {
   typeMap
-} from '../../electerm-react/common/constants'
+} from '../electerm-react/common/constants'
 import { resolve } from '../web-components/path'
 import './file-select-dialog.styl'
 

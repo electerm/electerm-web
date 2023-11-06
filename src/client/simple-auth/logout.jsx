@@ -1,7 +1,7 @@
 import {
   LogoutOutlined
 } from '@ant-design/icons'
-import { Component } from '../../electerm-react/components/common/react-subx'
+import { Component } from '../electerm-react/components/common/react-subx'
 import './logout.styl'
 
 export default class Logout extends Component {

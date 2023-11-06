@@ -1,8 +1,8 @@
-import ErrorBoundary from '../../electerm-react/components/main/error-wrapper'
-import Login from './web-login'
+import ErrorBoundary from '../electerm-react/components/main/error-wrapper'
+import Login from '../simple-auth/web-login'
 import store from './web-store'
 import FileSelectDialog from '../file-select-dialog/file-select-dialog'
-import Logout from './logout.jsx'
+import Logout from '../simple-auth/logout'
 export default function MainEntry () {
   return (
     <ErrorBoundary>
