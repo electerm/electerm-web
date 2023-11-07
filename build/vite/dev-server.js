@@ -43,10 +43,14 @@ const base = {
 }
 
 function handleIndex (req, res) {
+  const data = {
+    ...base,
+    query: req.query
+  }
   const view = 'index'
   res.render(view, {
-    ...base,
-    _global: copy(base)
+    ...data,
+    _global: copy(data)
   })
 }
 
