@@ -13,6 +13,7 @@ export async function saveUserConfig (userConfig) {
   delete userConfig.terminalTypes
   delete userConfig.tokenElecterm
   delete userConfig.port
+  delete userConfig.server
   delete userConfig.wsPort
   delete userConfig.wsHost
   delete userConfig.useSystemTitleBar
