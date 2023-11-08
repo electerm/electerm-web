@@ -25,7 +25,7 @@ export const iconPath = resolve(
 )
 export const extIconPath = isDev
   ? '/node_modules/vscode-icons/icons/'
-  : '/icons'
+  : '/icons/'
 export const defaultUserName = 'default_user'
 export const minWindowWidth = 590
 export const minWindowHeight = 400
