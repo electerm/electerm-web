@@ -8,8 +8,6 @@
 
 This is web app version of [electerm app](https://github.com/electerm/electerm), running in browser, almost has the same features as the desktop version.
 
-**!!Currently it is in development phase, not suitable for production use.**
-
 [![GitHub version](https://img.shields.io/github/release/electerm/electerm/all.svg)](https://github.com/electerm/electerm/releases)
 [![license](https://img.shields.io/github/license/electerm/electerm.svg)](https://github.com/electerm/electerm-dev/blob/master/LICENSE)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
@@ -95,6 +93,10 @@ Invoke-WebRequest -Uri "https://electerm.html5beta.com/scripts/one-line-web.bat"
 cmd.exe /c ".\one-line-web.bat"
 
 ```
+
+## Deploy from docker image
+
+Check [electerm-web-docker](https://github.com/electerm/electerm-web-docker)
 
 ## Dev
 
