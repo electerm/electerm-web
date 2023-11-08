@@ -24,6 +24,7 @@ function buildServer () {
 
 export function index (req, res) {
   const server = process.env.SERVER || buildServer()
+  const cdn = process.env.CDN || server
   const data = {
     stylus,
     isDev,
@@ -35,8 +36,8 @@ export function index (req, res) {
     siteName: packInfo.name,
     fsFunctions,
     isWebApp: true,
-    extIconPath,
-    cdn: process.env.CDN || server,
+    extIconPath: cdn + extIconPath,
+    cdn,
     sessionLogPath: logDir,
     query: req.query,
     server
