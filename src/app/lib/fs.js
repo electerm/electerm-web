@@ -1,14 +1,17 @@
-import { spawn } from 'child_process'
+import { spawn, exec } from 'child_process'
 import fs, { promises as fss } from 'fs'
 import log from '../common/log.js'
 import tar from 'tar'
 import { isWin, isMac, tempDir } from '../common/runtime-constants.js'
 import uid from '../common/uid.js'
 import path from 'path'
+import { promisify } from 'util'
 import { Bash } from 'node-bash'
-import { PowerShell } from 'node-powershell'
 
 const ROOT_PATH = '/'
+const execAsync = promisify(
+  exec
+)
 
 // Encoding function
 function encodeUint8Array (uint8Arr) {
@@ -43,13 +46,7 @@ const run = (cmd) => {
  * @param {string} cmd
  */
 const runWinCmd = (cmd) => {
-  const ps = new PowerShell({
-    executableOptions: {
-      '-ExecutionPolicy': 'Bypass',
-      '-NoProfile': true
-    }
-  })
-  return ps.invokeCommand(cmd)
+  return execAsync(`powershell.exe -Command "${cmd}"`)
 }
 
 /**
@@ -58,7 +55,7 @@ const runWinCmd = (cmd) => {
  */
 const rmrf = (localFolderPath) => {
   const cmd = isWin
-    ? `Remove-Item "${localFolderPath}" -Force -Recurse -ErrorAction SilentlyContinue`
+    ? `Remove-Item '${localFolderPath}' -Force -Recurse -ErrorAction SilentlyContinue`
     : `rm -rf "${localFolderPath}"`
   return isWin ? runWinCmd(cmd) : run(cmd)
 }
@@ -69,8 +66,8 @@ const rmrf = (localFolderPath) => {
  */
 const mv = (from, to) => {
   const cmd = isWin
-    ? `Move-Item "${from}" "${to}"`
-    : `mv "${from}" "${to}"`
+    ? `Move-Item '${(from)}' '${to}'`
+    : `mv '${from}' '${to}'`
   return isWin ? runWinCmd(cmd) : run(cmd)
 }
 
@@ -80,7 +77,7 @@ const mv = (from, to) => {
  */
 const cp = (from, to) => {
   const cmd = isWin
-    ? `Copy-Item "${from}" -Destination "${to}" -Recurse`
+    ? `Copy-Item '${from}' -Destination '${to}' -Recurse`
     : `cp -r "${from}" "${to}"`
   return isWin ? runWinCmd(cmd) : run(cmd)
 }
@@ -100,7 +97,7 @@ const touch = (localFilePath) => {
 const openFile = (localFilePath) => {
   let cmd
   if (isWin) {
-    cmd = `Invoke-Item "${localFilePath}"`
+    cmd = `Invoke-Item '${localFilePath}'`
     return runWinCmd(cmd)
   }
   cmd = (isMac
