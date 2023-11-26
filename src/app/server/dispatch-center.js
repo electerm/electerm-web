@@ -21,7 +21,8 @@ import {
   createTerm,
   testTerm,
   resize,
-  runCmd
+  runCmd,
+  toggleTerminalLog
 } from './terminal-api.js'
 
 global.upgradeInsts = {}
@@ -174,6 +175,8 @@ export function initWs (app) {
         testTerm(ws, msg)
       } else if (action === 'resize-terminal') {
         resize(ws, msg)
+      } else if (action === 'toggle-terminal-log') {
+        toggleTerminalLog(ws, msg)
       } else if (action === 'run-cmd') {
         runCmd(ws, msg)
       } if (action === 'runSync') {

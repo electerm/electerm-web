@@ -31,6 +31,18 @@ export function resize (ws, msg) {
   })
 }
 
+export function toggleTerminalLog (ws, msg) {
+  const { id, pid, sessionId } = msg
+  const term = terminals(pid, sessionId)
+  if (term) {
+    term.toggleTerminalLog()
+  }
+  ws.s({
+    id,
+    data: 'ok'
+  })
+}
+
 export function createTerm (ws, msg) {
   const { id, body } = msg
   terminal(body, ws)
