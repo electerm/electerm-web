@@ -22,7 +22,8 @@ import {
   testTerm,
   resize,
   runCmd,
-  toggleTerminalLog
+  toggleTerminalLog,
+  toggleTerminalLogTimestamp
 } from './terminal-api.js'
 
 global.upgradeInsts = {}
@@ -177,6 +178,8 @@ export function initWs (app) {
         resize(ws, msg)
       } else if (action === 'toggle-terminal-log') {
         toggleTerminalLog(ws, msg)
+      } else if (action === 'toggle-terminal-log-timestamp') {
+        toggleTerminalLogTimestamp(ws, msg)
       } else if (action === 'run-cmd') {
         runCmd(ws, msg)
       } if (action === 'runSync') {

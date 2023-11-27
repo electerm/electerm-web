@@ -43,6 +43,18 @@ export function toggleTerminalLog (ws, msg) {
   })
 }
 
+export function toggleTerminalLogTimestamp (ws, msg) {
+  const { id, pid, sessionId } = msg
+  const term = terminals(pid, sessionId)
+  if (term) {
+    term.toggleTerminalLogTimestamp()
+  }
+  ws.s({
+    id,
+    data: 'ok'
+  })
+}
+
 export function createTerm (ws, msg) {
   const { id, body } = msg
   terminal(body, ws)

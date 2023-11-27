@@ -40,7 +40,10 @@ export function wsRoutes (app) {
     term.on('data', function (data) {
       try {
         if (term.sessionLogger) {
-          term.sessionLogger.write(`[${new Date()}] ${strip(data.toString())}`)
+          const dt = term.initOptions.addTimeStampToTermLog
+            ? `[${new Date()}] `
+            : ''
+          term.sessionLogger.write(`${dt}${strip(data.toString())}`)
         }
         ws.send(Buffer.from(data))
       } catch (ex) {
