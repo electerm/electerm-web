@@ -22,6 +22,8 @@ import deepCopy from 'json-deep-copy'
 import { TerminalBase } from './session-base.js'
 import { commonExtends } from './session-common.js'
 
+const failMsg = 'All configured authentication methods failed'
+
 class TerminalSshBase extends TerminalBase {
   getLocalEnv () {
     return {
@@ -209,7 +211,7 @@ class TerminalSshBase extends TerminalBase {
           !this.jumpSshKeys &&
           !this.hoppingOptions.password &&
           !this.hoppingOptions.privateKey &&
-          err.message.includes('All configured authentication methods failed')
+          err.message.includes(failMsg)
         ) {
           const options = {
             name: `password for ${this.hoppingOptions.username}@${this.initHoppingOptions.host}`,
@@ -614,11 +616,16 @@ class TerminalSshBase extends TerminalBase {
             return this.nextTry(err)
           })
       } else if (
+        this.sshKeys &&
+        err.message.includes(failMsg)
+      ) {
+        return this.nextTry(err)
+      } else if (
         !this.connectOptions.password &&
-        err.message.includes('All configured authentication methods failed')
+        err.message.includes(failMsg)
       ) {
         const options = {
-          name: `password for ${this.connectOptions.username}@${this.connectOptions.host}`,
+          name: `password for ${this.initOptions.username}@${this.initOptions.host}`,
           instructions: [''],
           prompts: [{
             echo: false,
