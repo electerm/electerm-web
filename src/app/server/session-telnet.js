@@ -2,25 +2,11 @@
  * terminal/sftp/serial class
  */
 import _ from 'lodash'
-import uid from '../common/uid.js'
 import log from '../common/log.js'
-import { createLogFileName } from '../common/create-session-log-file-path.js'
-import { SessionLog } from './session-log.js'
 import { Telnet } from './telnet.js'
+import { TerminalBase } from './session-base.js'
 
-class TerminalTelnet {
-  constructor (initOptions, ws, isTest) {
-    this.pid = initOptions.uid || uid()
-    this.initOptions = initOptions
-    if (initOptions.saveTerminalLogToFile) {
-      this.sessionLogger = new SessionLog({
-        fileName: createLogFileName(initOptions.logName)
-      })
-    }
-    this.ws = ws
-    this.isTest = isTest
-  }
-
+class TerminalTelnet extends TerminalBase {
   async init () {
     const connection = new Telnet()
 
@@ -79,8 +65,8 @@ class TerminalTelnet {
   write (data) {
     try {
       this.port.write(data)
-      if (this.sshLogger) {
-        this.sshLogger.write(data)
+      if (this.sessionLogger) {
+        this.sessionLogger.write(data)
       }
     } catch (e) {
       log.error(e)
@@ -89,8 +75,8 @@ class TerminalTelnet {
 
   kill () {
     this.channel && this.channel.end()
-    if (this.sshLogger) {
-      this.sshLogger.destroy()
+    if (this.sessionLogger) {
+      this.sessionLogger.destroy()
     }
     const inst = global.sessions[
       this.initOptions.sessionId

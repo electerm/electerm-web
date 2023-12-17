@@ -1,4 +1,4 @@
-import strip from '@electerm/strip-ansi'
+import strip from 'strip-ansi'
 import log from '../common/log.js'
 import expressWs from 'express-ws'
 import { verifyWs, initWs } from '../server/dispatch-center.js'
@@ -40,10 +40,14 @@ export function wsRoutes (app) {
     term.on('data', function (data) {
       try {
         if (term.sessionLogger) {
-          term.sessionLogger.write(strip(data.toString()))
+          const dt = term.initOptions.addTimeStampToTermLog
+            ? `[${new Date()}] `
+            : ''
+          term.sessionLogger.write(`${dt}${strip(data.toString())}`)
         }
         ws.send(Buffer.from(data))
       } catch (ex) {
+        console.log('kkk', ex)
       // The WebSocket is not open, ignore
       }
     })

@@ -56,7 +56,8 @@ export default (initOptions) => {
         protocol,
         hostname,
         port: proxyPort,
-        path: proxyHost,
+        host: proxyHost,
+        path: `${host}:${port}`,
         method: 'CONNECT',
         timeout: readyTimeout
       }

@@ -24,6 +24,21 @@ export class TerminalBase {
     }
   }
 
+  toggleTerminalLogTimestamp () {
+    this.initOptions.addTimeStampToTermLog = !this.initOptions.addTimeStampToTermLog
+  }
+
+  toggleTerminalLog () {
+    if (this.sessionLogger) {
+      this.sessionLogger.destroy()
+      delete this.sessionLogger
+    } else {
+      this.sessionLogger = new SessionLog({
+        fileName: createLogFileName(this.initOptions.logName)
+      })
+    }
+  }
+
   onEndConn () {
     const inst = global.sessions[
       this.initOptions.sessionId

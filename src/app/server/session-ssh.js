@@ -22,6 +22,8 @@ import deepCopy from 'json-deep-copy'
 import { TerminalBase } from './session-base.js'
 import { commonExtends } from './session-common.js'
 
+const failMsg = 'All configured authentication methods failed'
+
 class TerminalSshBase extends TerminalBase {
   getLocalEnv () {
     return {
@@ -130,9 +132,14 @@ class TerminalSshBase extends TerminalBase {
 
   async getPrivateKeysInJumpServer (conn) {
     const r = await this.runCmd('ls ~/.ssh', conn)
-    return r.split('\n')
-      .filter(d => d.endsWith('.pub'))
-      .map(d => `~/.ssh/${d}`.replace('.pub', ''))
+      .catch(err => {
+        log.error(err)
+      })
+    return r
+      ? r.split('\n')
+        .filter(d => d.endsWith('.pub'))
+        .map(d => `~/.ssh/${d}`.replace('.pub', ''))
+      : []
   }
 
   catPrivateKeyInJumpServer (conn, filePath) {
@@ -204,7 +211,7 @@ class TerminalSshBase extends TerminalBase {
           !this.jumpSshKeys &&
           !this.hoppingOptions.password &&
           !this.hoppingOptions.privateKey &&
-          err.message.includes('All configured authentication methods failed')
+          err.message.includes(failMsg)
         ) {
           const options = {
             name: `password for ${this.hoppingOptions.username}@${this.initHoppingOptions.host}`,
@@ -380,6 +387,18 @@ class TerminalSshBase extends TerminalBase {
     })
   }
 
+  getSSHKeys () {
+    try {
+      return require('fs')
+        .readdirSync(sshKeysPath)
+        .filter(file => file.endsWith('.pub'))
+        .map(file => pathResolve(sshKeysPath, file.replace('.pub', '')))
+    } catch (e) {
+      log.error(e)
+      return []
+    }
+  }
+
   getPrivateKey (connectOptions) {
     if (this.sshKeys) {
       if (this.sshKeys.length > 0) {
@@ -393,16 +412,13 @@ class TerminalSshBase extends TerminalBase {
       }
       return
     }
-    const list = fs
-      .readdirSync(sshKeysPath)
-      .filter(file => file.endsWith('.pub'))
-      .map(file => pathResolve(sshKeysPath, file.replace('.pub', '')))
+    const list = this.getSSHKeys()
     if (list.length) {
       const p = list.shift()
       this.privateKeyPath = p
       connectOptions.privateKey = fs.readFileSync(p, 'utf8')
+      this.sshKeys = list
     }
-    this.sshKeys = list
   }
 
   doSshConnect = (
@@ -600,11 +616,16 @@ class TerminalSshBase extends TerminalBase {
             return this.nextTry(err)
           })
       } else if (
+        this.sshKeys &&
+        err.message.includes(failMsg)
+      ) {
+        return this.nextTry(err)
+      } else if (
         !this.connectOptions.password &&
-        err.message.includes('All configured authentication methods failed')
+        err.message.includes(failMsg)
       ) {
         const options = {
-          name: `password for ${this.connectOptions.username}@${this.connectOptions.host}`,
+          name: `password for ${this.initOptions.username}@${this.initOptions.host}`,
           instructions: [''],
           prompts: [{
             echo: false,
@@ -666,8 +687,8 @@ class TerminalSshBase extends TerminalBase {
   write (data) {
     try {
       this.channel.write(data)
-      if (this.sshLogger) {
-        this.sshLogger.write(data)
+      if (this.sessionLogger) {
+        this.sessionLogger.write(data)
       }
     } catch (e) {
       log.error(e)
@@ -675,8 +696,8 @@ class TerminalSshBase extends TerminalBase {
   }
 
   kill () {
-    if (this.sshLogger) {
-      this.sshLogger.destroy()
+    if (this.sessionLogger) {
+      this.sessionLogger.destroy()
     }
     this.channel && this.channel.end()
     delete this.channel
