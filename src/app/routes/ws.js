@@ -1,6 +1,9 @@
 import strip from 'strip-ansi'
 import log from '../common/log.js'
 import expressWs from 'express-ws'
+import {
+  isWin
+} from '../common/runtime-constants.js'
 import { verifyWs, initWs } from '../server/dispatch-center.js'
 import {
   terminals
@@ -61,7 +64,9 @@ export function wsRoutes (app) {
     }
 
     term.on('close', onClose)
-
+    if (term.isLocal && isWin) {
+      term.on('exit', onClose)
+    }
     ws.on('message', function (msg) {
       try {
         term.write(msg)

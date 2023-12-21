@@ -23,6 +23,7 @@ class TerminalLocal extends TerminalBase {
       termType,
       term
     } = this.initOptions
+    this.isLocal = true
     const { platform } = process
     const exec = platform.startsWith('win')
       ? pathResolve(
