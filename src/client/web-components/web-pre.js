@@ -1,4 +1,5 @@
 import * as path from './path.js'
+import { message } from 'antd'
 
 const {
   ipcOnEvent,
@@ -48,24 +49,33 @@ window.pre = {
   ],
   osInfo: () => { return window.pre.osInfoData },
   extIconPath: window.et.extIconPath,
-  readClipboard: () => {
-    return window.et.clipboard || ''
-  },
+  // readClipboard: () => {
+  //   return window.et.clipboard || ''
+  // },
 
   writeClipboard: str => {
     window.et.clipboard = str
+    if (!navigator.clipboard) {
+      message.error('Clipboard API not available')
+      return
+    }
+    try {
+      return navigator.clipboard.writeText(str)
+    } catch (err) {
+      message.error('Failed to copy text: ' + err)
+    }
   },
-  // readClipboard: function readClipboard () {
-  //   if (!navigator.clipboard) {
-  //     message.error('Clipboard API not available')
-  //     return ''
-  //   }
-  //   try {
-  //     return navigator.clipboard.readText()
-  //   } catch (err) {
-  //     message.error('Failed to read clipboard: ' + err.message)
-  //   }
-  // },
+  readClipboardSync: function readClipboard () {
+    if (!navigator.clipboard) {
+      message.error('Clipboard API not available')
+      return ''
+    }
+    try {
+      return navigator.clipboard.readText()
+    } catch (err) {
+      message.error('Failed to read clipboard: ' + err.message)
+    }
+  },
 
   // writeClipboard: function writeClipboard (str) {
   //   if (!navigator.clipboard) {
