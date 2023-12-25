@@ -38,5 +38,6 @@ export default {
   confirmBeforeExit: false,
   initDefaultTabOnStart: true,
   screenReaderMode: false,
-  autoRefreshWhenSwitchToSftp: false
+  autoRefreshWhenSwitchToSftp: false,
+  keepaliveInterval: 0
 }

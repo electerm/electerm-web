@@ -31,7 +31,7 @@ export const minWindowWidth = 590
 export const minWindowHeight = 400
 export const defaultLang = 'en_us'
 export const tempDir = os.tmpdir()
-export const homeOrtmp = os.homedir() || os.tmpdir()
+export const homeOrTmp = os.homedir() || os.tmpdir()
 export const packInfo = getJson(
   resolve(cwd, 'package.json')
 )
