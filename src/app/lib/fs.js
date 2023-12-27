@@ -117,18 +117,11 @@ const zipFolder = (localFolerPath) => {
     const p = path.resolve(tempDir, `electerm-temp-${n}.tar.gz`)
     const cwd = path.dirname(localFolerPath)
     const file = path.basename(localFolerPath)
-    try {
-      tar.c({
-        gzip: true,
-        file: p,
-        cwd
-      }, [file], () => {
-        resolve(p)
-      })
-    } catch (e) {
-      log.error(e)
-      reject(e)
-    }
+    return tar.c({
+      gzip: true,
+      file: p,
+      cwd
+    }, [file])
   })
 }
 
