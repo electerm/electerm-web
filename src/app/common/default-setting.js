@@ -39,5 +39,6 @@ export default {
   initDefaultTabOnStart: true,
   screenReaderMode: false,
   autoRefreshWhenSwitchToSftp: false,
-  keepaliveInterval: 0
+  keepaliveInterval: 0,
+  backspaceMode: '^?'
 }
