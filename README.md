@@ -109,7 +109,6 @@ Check [electerm-web-docker](https://github.com/electerm/electerm-web-docker)
 git clone git@github.com:electerm/electerm-web.git
 cd electerm-web
 cp .sample.env .env
-# edit SERVER_SECRET in .env
 # edit DB_PATH to set db path, default path ./database
 # to use same data as desktop electerm
 # for Mac OS DB_PATH="/Users/<your-user-name>/Library/Application Support/electerm"
@@ -144,6 +143,23 @@ npm run prod
 # or ./build/bin/run-prod.sh
 
 #then visit http://127.0.0.1:5577 with browser
+```
+
+## Run in server
+
+```sh
+# Edit .env, set
+ENABLE_AUTH=1
+SERVER_SECRET=some-server-secret
+SERVER_PASS=some-login-pass-word
+SERVER_PASS=some-pass-word
+SERVER=http://xxx.com
+CDN=http://xxx.com
+
+# run prod app
+./run-electerm-web.sh
+
+# Check examples/nginx-ssl.conf for domain binding nginx conf example
 ```
 
 ## Test
