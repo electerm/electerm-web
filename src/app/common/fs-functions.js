@@ -29,5 +29,6 @@ export default [
   'statCustom',
   'openCustom',
   'closeCustom',
-  'writeCustom'
+  'writeCustom',
+  'getFolderSize'
 ]

@@ -7,6 +7,7 @@ import uid from '../common/uid.js'
 import path from 'path'
 import { promisify } from 'util'
 import { Bash } from 'node-bash'
+import { getSizeCount, getSizeCountWin } from '../common/count-folder-data.js'
 
 const ROOT_PATH = '/'
 const execAsync = promisify(
@@ -47,6 +48,20 @@ const run = (cmd) => {
  */
 const runWinCmd = (cmd) => {
   return execAsync(`powershell.exe -Command "${cmd}"`)
+}
+
+function getFolderSizeWin (folderPath) {
+  return runWinCmd(
+    `Get-ChildItem -Path "${folderPath}" -Recurse | Where-Object { ! $_.PSIsContainer } | Measure-Object -Property Length -Sum`
+  ).then(res => getSizeCountWin(res.stdout))
+}
+
+function getFolderSize (folderPath) {
+  if (isWin) {
+    return getFolderSizeWin(folderPath)
+  }
+  return run(`du -sh "${folderPath}" && find "${folderPath}" -type f | wc -l`)
+    .then(getSizeCount)
 }
 
 /**
@@ -250,6 +265,7 @@ export const fsExport = Object.assign(
   fss,
   {
     run,
+    getFolderSize,
     runWinCmd,
     rmrf,
     touch,

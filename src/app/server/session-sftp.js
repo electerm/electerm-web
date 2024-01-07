@@ -7,6 +7,7 @@ import {
 } from './sftp-file.js'
 import { commonExtends } from './session-common.js'
 import { TerminalBase } from './session-base.js'
+import { getSizeCount } from '../common/count-folder-data.js'
 
 class SftpBase extends TerminalBase {
   connect (initOptions) {
@@ -109,6 +110,31 @@ class SftpBase extends TerminalBase {
         else resolve()
       })
     })
+  }
+
+  runExec (cmd) {
+    return new Promise((resolve, reject) => {
+      const { client } = this
+      client.exec(cmd, this.getExecOpts(), (err, stream) => {
+        if (err) {
+          reject(err)
+        } else {
+          let out = Buffer.from('')
+          stream.on('end', (data) => {
+            resolve(out.toString())
+          }).on('data', (data) => {
+            out = Buffer.concat([out, data])
+          }).stderr.on('data', (data) => {
+            reject(data.toString())
+          })
+        }
+      })
+    })
+  }
+
+  getFolderSize (folderPath) {
+    return this.runExec(`du -sh "${folderPath}" && find "${folderPath}" -type f | wc -l`)
+      .then(getSizeCount)
   }
 
   /**
