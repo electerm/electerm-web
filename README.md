@@ -159,7 +159,7 @@ CDN=http://xxx.com
 # run prod app
 ./run-electerm-web.sh
 
-# Check examples/nginx-ssl.conf for domain binding nginx conf example
+# Check examples/nginx.conf examples/nginx-ssl.conf  for domain binding nginx conf example
 ```
 
 ## Test
