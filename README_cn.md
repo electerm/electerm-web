@@ -4,6 +4,8 @@
     </a>
 </h1>
 
+[English](README_cn.md)
+
 # electerm-web [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Open%20sourced%20terminal%2Fssh%2Fsftp%20client(linux%2C%20mac%2C%20win)&url=https%3A%2F%2Fgithub.com%2Felecterm%2Felecterm-web&hashtags=electerm,ssh,terminal,sftp)
 
 这是Electerm应用的Web版本，可以在浏览器中运行，几乎拥有与桌面版本相同的功能。
