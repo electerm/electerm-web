@@ -4,6 +4,8 @@
     </a>
 </h1>
 
+[中文](README_cn.md)
+
 # electerm-web [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Open%20sourced%20terminal%2Fssh%2Fsftp%20client(linux%2C%20mac%2C%20win)&url=https%3A%2F%2Fgithub.com%2Felecterm%2Felecterm-web&hashtags=electerm,ssh,terminal,sftp)
 
 This is web app version of [electerm app](https://github.com/electerm/electerm), running in browser, almost has the same features as the desktop version.
@@ -149,12 +151,11 @@ npm run prod
 
 ```sh
 # Edit .env, set
-ENABLE_AUTH=1
+ENABLE_AUTH=1 # if not enabled, everyone can use it without login
 SERVER_SECRET=some-server-secret
 SERVER_PASS=some-login-pass-word
-SERVER_PASS=some-pass-word
-SERVER=http://xxx.com
-CDN=http://xxx.com
+SERVER=http://xxx.com # if you want to bind domain
+CDN=http://xxx.com # if you want to use cdn serve static files
 
 # run prod app
 ./run-electerm-web.sh
