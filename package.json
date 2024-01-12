@@ -1,6 +1,6 @@
 {
   "name": "electerm-web",
-  "version": "2.37.121",
+  "version": "2.37.126",
   "description": "Running electerm in as web app",
   "main": "src/app/app.js",
   "type": "module",
@@ -47,7 +47,7 @@
   "preferGlobal": true,
   "devDependencies": {
     "@ant-design/icons": "5.2.5",
-    "@electerm/electerm-react": "^1.37.121",
+    "@electerm/electerm-react": "^1.37.126",
     "@electerm/electerm-resource": "1.3.7",
     "@electerm/strip-ansi": "^1.0.0",
     "@playwright/test": "1.39.0",
