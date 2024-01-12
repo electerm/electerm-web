@@ -26,6 +26,8 @@ export async function getDb () {
   let Db = null
   if (conf.Db) {
     Db = conf.Db
+  } else if (process.env.SQL_DB_URL) {
+    Db = await import('./sql-db.js').then(d => d.SqlDb)
   } else {
     Db = await import('./nedb.js').then(d => d.Db)
   }
@@ -49,6 +51,10 @@ export async function getDb () {
 }
 
 export async function dbAction (...args) {
+  console.log('...args',...args)
   const func = await getDb()
-  return func(...args)
+  const arr = await func(...args)
+
+  console.log('result',JSON.stringify(arr))
+  return arr
 }
