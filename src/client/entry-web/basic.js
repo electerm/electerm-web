@@ -2,6 +2,7 @@
  * init app data then write main script to html body
  */
 import '../electerm-react/css/basic.styl'
+import '../electerm-react/css/mobile.styl'
 import '../web-components/web-api.js'
 import '../web-components/web-pre.js'
 import { get as _get } from 'lodash-es'
