@@ -42,6 +42,7 @@ Open-sourced terminal/ssh/telnet/serialport/sftp client(linux, mac, win).
 - Sync bookmarks/themes/quick commands to github/gitee secret gist
 - Quick input to one or all terminals.
 - Init from url query string [wiki](https://github.com/electerm/electerm-web/wiki/Init-from-url-query-string)
+- Support mobile device(responsive design)
 
 ## Download
 

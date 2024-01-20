@@ -42,6 +42,7 @@
 - 将书签/主题/快速命令同步到 github/gitee 的 secret gist
 - 支持快速输入到任意或所有终端
 - 可从 URL 查询字符串进行初始化 [wiki](https://github.com/electerm/electerm-web/wiki/Init-from-url-query-string)
+- 支持移动设备(响应式设计)
 
 ## 下载
 
