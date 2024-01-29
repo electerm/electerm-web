@@ -55,11 +55,16 @@ export default defineConfig({
           dayjs: ['dayjs'],
           antd1: [
             '@ant-design/colors',
+            '@ant-design/cssinjs',
             '@ant-design/react-slick',
+            '@ctrl/tinycolor',
+            'classnames',
             '@rc-component/color-picker',
             '@rc-component/mutate-observer',
             '@rc-component/tour',
             '@rc-component/trigger',
+            'copy-to-clipboard',
+            'qrcode.react',
             'rc-cascader',
             'rc-checkbox',
             'rc-collapse',
@@ -118,18 +123,6 @@ export default defineConfig({
           'zmodem.js': ['zmodem.js'],
           'vscode-icons-js': ['vscode-icons-js'],
           'react-utils': ['react', 'react-colorful', 'react-delta', 'memoize-one', 'prop-types']
-        },
-        inlineDynamicImports: false,
-        format: 'esm',
-        entryFileNames: `js/[name]-${version}.js`,
-        chunkFileNames: `chunk/[name]-${version}-[hash].js`,
-        assetFileNames: chunkInfo => {
-          const { name } = chunkInfo
-          return name.endsWith('.css')
-            ? `css/${version}-${name}`
-            : `images/${name}`
-        },
-        dir: resolve(cwd, 'dist/assets')
       }
     }
   },
