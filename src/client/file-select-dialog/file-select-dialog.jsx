@@ -234,9 +234,11 @@ export default class FileSelectDialog extends Component {
 
   renderFooter () {
     const {
-      properties,
-      fileSelected
+      properties
     } = this.state.opts
+    const {
+      fileSelected
+    } = this.state
     const disabled = properties.includes('openFile') && !fileSelected
     return (
       <div className='fix'>
