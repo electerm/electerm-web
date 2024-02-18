@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 // import htmlPurge from 'vite-plugin-purgecss'
-import { cwd } from './common.js'
+import { cwd, version } from './common.js'
 import { resolve } from 'path'
 import def from './def.js'
 import commonjs from 'vite-plugin-commonjs'
@@ -49,6 +49,16 @@ export default defineConfig({
       //   'react-dom'
       // ],
       output: {
+        inlineDynamicImports: false,
+        format: 'esm',
+        entryFileNames: `js/[name]-${version}.js`,
+        chunkFileNames: `chunk/[name]-${version}-[hash].js`,
+        assetFileNames: chunkInfo => {
+          const { name } = chunkInfo
+          return name.endsWith('.css')
+            ? `css/${version}-${name}`
+            : `images/${name}`
+        },
         manualChunks: {
           react: ['react-dom'],
           'lodash-es': ['lodash-es'],
