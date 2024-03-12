@@ -40,5 +40,13 @@ export default {
   screenReaderMode: false,
   autoRefreshWhenSwitchToSftp: false,
   keepaliveInterval: 0,
-  backspaceMode: '^?'
+  backspaceMode: '^?',
+  terminalInfos: [
+    'uptime',
+    'cpu',
+    'mem',
+    'activities',
+    'network',
+    'disks'
+  ]
 }

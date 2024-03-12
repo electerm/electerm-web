@@ -16,5 +16,5 @@ export const watchFile = (path) => {
 
 export const unwatchFile = (path) => {
   global.watchFilePath = ''
-  fs.watchFile(path, onWatch)
+  fs.unwatchFile(path, onWatch)
 }
