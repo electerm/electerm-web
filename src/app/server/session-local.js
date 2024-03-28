@@ -4,9 +4,9 @@
 import pty from 'node-pty'
 import { resolve as pathResolve } from 'path'
 import log from '../common/log.js'
-import {
-  isWin
-} from '../common/runtime-constants.js'
+// import {
+//   isWin
+// } from '../common/runtime-constants.js'
 import { TerminalBase } from './session-base.js'
 
 class TerminalLocal extends TerminalBase {
@@ -79,9 +79,7 @@ class TerminalLocal extends TerminalBase {
     if (this.sessionLogger) {
       this.sessionLogger.destroy()
     }
-    if (!isWin) {
-      this.term && this.term.kill()
-    }
+    this.term && this.term.kill()
     this.onEndConn()
   }
 }
