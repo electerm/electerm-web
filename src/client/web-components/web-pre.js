@@ -49,9 +49,9 @@ window.pre = {
   ],
   osInfo: () => { return window.pre.osInfoData },
   extIconPath: window.et.extIconPath,
-  // readClipboard: () => {
-  //   return window.et.clipboard || ''
-  // },
+  readClipboard: () => {
+    return window.et.clipboard || ''
+  },
 
   writeClipboard: str => {
     window.et.clipboard = str
