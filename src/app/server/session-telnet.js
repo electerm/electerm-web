@@ -81,6 +81,9 @@ class TerminalTelnet extends TerminalBase {
     const inst = global.sessions[
       this.initOptions.sessionId
     ]
+    if (this.ws) {
+      delete this.ws
+    }
     if (!inst) {
       return
     }

@@ -1,6 +1,6 @@
 {
   "name": "electerm-web",
-  "version": "2.38.70",
+  "version": "2.38.80",
   "description": "Running electerm in as web app",
   "main": "src/app/app.js",
   "type": "module",
