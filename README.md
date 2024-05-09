@@ -25,7 +25,7 @@ Open-sourced terminal/ssh/telnet/serialport/sftp client(linux, mac, win).
 
 ## Features
 
-- Works as a terminal/file manager or ssh/telnet/serialport/sftp client
+- Works as a terminal/file manager or ssh/telnet/serialport/RDP/sftp client
 - Global hotkey to toggle window visibility (similar to guake, default is `ctrl + 2`)
 - Multi platform(linux, mac, win)
 - 🇺🇸 🇨🇳 🇧🇷 🇷🇺 🇪🇸 🇫🇷 🇹🇷 🇭🇰 🇯🇵 🇸🇦 🇩🇪 🇰🇷 Multi-language support([electerm-locales](https://github.com/electerm/electerm-locales), contributions/fixes welcome)
