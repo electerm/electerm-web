@@ -34,6 +34,7 @@ const globs = {
   initCommandLine: () => Promise.resolve(0),
   loadFontList,
   saveUserConfig,
+  registerDeepLink: () => Promise.resolve(1),
   setWindowSize: () => Promise.resolve(1),
   getScreenSize: () => Promise.resolve({ width: 1920, height: 1080 })
 }

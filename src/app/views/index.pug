@@ -44,6 +44,7 @@ html
       script.
         window.localStorage.setItem('tokenElecterm', window.et.tokenElecterm)
     - var url = '/src/client/entry-web/basic.js'
+    - var url1 = '/src/client/entry-web/rle.js'
     - if (isDev)
       //- script(src='/external/react.development.js?' + version)
       //- script(src='/external/react-dom.development.js?' + version)
@@ -54,10 +55,13 @@ html
         window.$RefreshSig$ = () => (type) => type
         window.__vite_plugin_react_preamble_installed__ = true
       script(src='/@vite/client', type='module')
+      script(src=url1, type='module')
       script(src=url, type='module')
     - else
       //- script(src='/external/react.production.min.js?' + version)
       //- script(src='/external/react-dom.production.min.js?' + version)
       - var url = src=cdn + '/js/basic-' + version + '.js'
+      - var url2 = src=cdn + '/js/rle-' + version + '.js'
+      script(src=url2, type='module')
       script(src=url, type='module')
 

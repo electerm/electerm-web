@@ -41,6 +41,7 @@ export default {
   autoRefreshWhenSwitchToSftp: false,
   keepaliveInterval: 0,
   backspaceMode: '^?',
+  showHiddenFilesOnSftpStart: true,
   terminalInfos: [
     'uptime',
     'cpu',

@@ -18,10 +18,17 @@ import {
   testConnectionSerial
 } from './session-serial.js'
 
+import {
+  terminalRdp,
+  testConnectionRdp
+} from './session-rdp.js'
+
 export const terminal = async function (initOptions, ws) {
   const type = initOptions.termType || initOptions.type
   if (type === 'telnet') {
     return terminalTelnet(initOptions, ws)
+  } else if (type === 'rdp') {
+    return terminalRdp(initOptions, ws)
   } else if (type === 'serial') {
     return terminalSerial(initOptions, ws)
   } else if (type === 'local') {
@@ -39,6 +46,8 @@ export const testConnection = (initOptions) => {
   const type = initOptions.termType || initOptions.type
   if (type === 'telnet') {
     return testConnectionTelnet(initOptions)
+  } else if (type === 'rdp') {
+    return testConnectionRdp(initOptions)
   } else if (type === 'local') {
     return testConnectionLocal(initOptions)
   } else if (type === 'serial') {

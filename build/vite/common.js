@@ -25,5 +25,9 @@ export const staticPaths = [
   {
     dir: resolve(cwd, 'node_modules/@electerm/electerm-resource/res/imgs'),
     path: '/images'
+  },
+  {
+    dir: resolve(cwd, 'src/client/statics'),
+    path: '/'
   }
 ]

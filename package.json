@@ -1,6 +1,6 @@
 {
   "name": "electerm-web",
-  "version": "2.38.80",
+  "version": "2.39.2",
   "description": "Running electerm in as web app",
   "main": "src/app/app.js",
   "type": "module",
@@ -47,7 +47,7 @@
   "preferGlobal": true,
   "devDependencies": {
     "@ant-design/icons": "5.2.6",
-    "@electerm/electerm-react": "^1.38.70",
+    "@electerm/electerm-react": "^1.39.2",
     "@electerm/electerm-resource": "1.3.7",
     "@electerm/strip-ansi": "^1.0.0",
     "@playwright/test": "1.39.0",
@@ -92,7 +92,7 @@
     "zmodem-ts": "^1.0.2"
   },
   "dependencies": {
-    "@electerm/electerm-locales": "1.2.10",
+    "@electerm/electerm-locales": "1.2.14",
     "@electerm/electerm-themes": "^1.0.1",
     "@yetzt/nedb": "1.8.0",
     "axios": "0.26.0",
@@ -100,6 +100,7 @@
     "diffie-hellman": "^5.0.3",
     "dotenv": "16.3.1",
     "electerm-sync": "1.1.0",
+    "electron-app-universal-protocol-client": "^1.3.0",
     "electron-log": "^4.4.8",
     "eventemitter3": "5.0.1",
     "express": "4.18.2",
@@ -117,7 +118,8 @@
     "morgan": "^1.10.0",
     "nanoid": "3.1.31",
     "node-bash": "5.0.1",
-    "node-pty": "^1.1.0-beta2",
+    "node-pty": "^1.1.0-beta14",
+    "node-rdpjs-2": "^0.3.5",
     "os-locale-s": "1.0.8",
     "pug": "3.0.2",
     "serialport": "10.4.0",
@@ -145,7 +147,8 @@
       "self"
     ],
     "ignore": [
-      "/public/"
+      "/public/",
+      "src/client/entry-web/rle.js"
     ],
     "sourceType": "module"
   }
