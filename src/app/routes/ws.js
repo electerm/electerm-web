@@ -63,7 +63,7 @@ export function wsRoutes (app) {
       ws.close && ws.close()
     }
 
-    term.on('close', onClose)
+    // term.on('close', onClose)
     if (term.isLocal && isWin) {
       term.on('exit', onClose)
     }

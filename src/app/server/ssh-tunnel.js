@@ -1,5 +1,6 @@
 import log from '../common/log.js'
 import { connect, createServer } from 'net'
+import socks from 'socksv5'
 
 export function forwardRemoteToLocal ({
   conn,
@@ -52,5 +53,36 @@ export function forwardLocalToRemote ({
   })
   conn.on('close', () => {
     localServer && localServer.close()
+  })
+}
+
+export function dynamicForward ({
+  conn,
+  sshTunnelLocalPort,
+  sshTunnelLocalHost = '127.0.0.1'
+}) {
+  return new Promise((resolve, reject) => {
+    socks.createServer((info, accept, deny) => {
+      conn.forwardOut(
+        info.srcAddr,
+        info.srcPort,
+        info.dstAddr,
+        info.dstPort,
+        (err, stream) => {
+          if (err) {
+            deny()
+            return reject(err)
+          }
+          const clientSocket = accept(true)
+          if (clientSocket) {
+            stream.pipe(clientSocket).pipe(stream).on('close', () => {
+              conn.end()
+            })
+          }
+        })
+    }).listen(sshTunnelLocalPort, sshTunnelLocalHost, () => {
+      log.log(`SOCKS server listening on ${sshTunnelLocalHost}:${sshTunnelLocalPort}`)
+      resolve(1)
+    }).useAuth(socks.auth.None())
   })
 }

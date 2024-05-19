@@ -341,8 +341,7 @@ class TerminalSshBase extends TerminalBase {
       if (
         sshTunnel &&
         sshTunnel.sshTunnel &&
-        sshTunnel.sshTunnelLocalPort &&
-        sshTunnel.sshTunnelRemotePort
+        sshTunnel.sshTunnelLocalPort
       ) {
         sshTunnelFuncs[sshTunnel.sshTunnel]({
           ...sshTunnel,
