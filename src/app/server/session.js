@@ -23,12 +23,19 @@ import {
   testConnectionRdp
 } from './session-rdp.js'
 
+import {
+  terminalVnc,
+  testConnectionVnc
+} from './session-vnc.js'
+
 export const terminal = async function (initOptions, ws) {
   const type = initOptions.termType || initOptions.type
   if (type === 'telnet') {
     return terminalTelnet(initOptions, ws)
   } else if (type === 'rdp') {
     return terminalRdp(initOptions, ws)
+  } else if (type === 'vnc') {
+    return terminalVnc(initOptions, ws)
   } else if (type === 'serial') {
     return terminalSerial(initOptions, ws)
   } else if (type === 'local') {
@@ -48,6 +55,8 @@ export const testConnection = (initOptions) => {
     return testConnectionTelnet(initOptions)
   } else if (type === 'rdp') {
     return testConnectionRdp(initOptions)
+  } else if (type === 'vnc') {
+    return testConnectionVnc(initOptions)
   } else if (type === 'local') {
     return testConnectionLocal(initOptions)
   } else if (type === 'serial') {

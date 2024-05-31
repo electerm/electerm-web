@@ -15,7 +15,8 @@ const tables = [
   'data',
   'quickCommands',
   'log',
-  'dbUpgradeLog'
+  'dbUpgradeLog',
+  'profiles'
 ]
 
 export async function getDb () {

@@ -10,9 +10,9 @@ import {
 } from '../common/runtime-constants.js'
 import { resolve as pathResolve } from 'path'
 import net from 'net'
-import fs from 'fs'
 import { exec } from 'child_process'
 import log from '../common/log.js'
+import fs from 'fs'
 import alg from './ssh2-alg.js'
 import {
   session
@@ -337,18 +337,39 @@ class TerminalSshBase extends TerminalBase {
       }
     }
     const { sshTunnels = [] } = initOptions
+    const sshTunnelResults = []
     for (const sshTunnel of sshTunnels) {
       if (
         sshTunnel &&
         sshTunnel.sshTunnel &&
         sshTunnel.sshTunnelLocalPort
       ) {
-        sshTunnelFuncs[sshTunnel.sshTunnel]({
+        const result = await sshTunnelFuncs[sshTunnel.sshTunnel]({
           ...sshTunnel,
           conn: this.conn
         })
+          .then(r => {
+            return {
+              sshTunnel
+            }
+          })
+          .catch(err => {
+            log.error('error when do sshTunnel', err)
+            return {
+              error: err.message,
+              sshTunnel
+            }
+          })
+        sshTunnelResults.push(result)
       }
     }
+    this.ws.s({
+      update: {
+        sshTunnelResults
+      },
+      action: 'ssh-tunnel-result',
+      tabId: this.initOptions.srcTabId
+    })
     return new Promise((resolve, reject) => {
       this.conn.shell(
         shellWindow,
@@ -390,7 +411,7 @@ class TerminalSshBase extends TerminalBase {
 
   getSSHKeys () {
     try {
-      return require('fs')
+      return fs
         .readdirSync(sshKeysPath)
         .filter(file => file.endsWith('.pub'))
         .map(file => pathResolve(sshKeysPath, file.replace('.pub', '')))
@@ -563,6 +584,29 @@ class TerminalSshBase extends TerminalBase {
     return shellOpts
   }
 
+  getUserName (connectOptions) {
+    const options = {
+      name: 'username',
+      instructions: [''],
+      prompts: [{
+        echo: false,
+        prompt: ''
+      }]
+    }
+    return this.onKeyboardEvent(options)
+      .then(data => {
+        const username = data ? data[0] : ''
+        if (username) {
+          this.connectOptions.username = data[0]
+        }
+        return this.sshConnect()
+      })
+      .catch(e => {
+        log.error('errored get username for', e)
+        return this.nextTry(e)
+      })
+  }
+
   async sshConnect () {
     const { initOptions } = this
     this.conn = new Client()
@@ -570,6 +614,9 @@ class TerminalSshBase extends TerminalBase {
     const {
       connectOptions
     } = this
+    if (!connectOptions.username) {
+      return this.getUserName(connectOptions)
+    }
     if (
       this.sshKeys ||
       (!connectOptions.privateKey && !connectOptions.password)
@@ -622,7 +669,6 @@ class TerminalSshBase extends TerminalBase {
       ) {
         return this.nextTry(err)
       } else if (
-        !this.connectOptions.password &&
         err.message.includes(failMsg)
       ) {
         const options = {
@@ -688,9 +734,7 @@ class TerminalSshBase extends TerminalBase {
   write (data) {
     try {
       this.channel.write(data)
-      if (this.sessionLogger) {
-        this.sessionLogger.write(data)
-      }
+      // this.writeLog(data)
     } catch (e) {
       log.error(e)
     }
