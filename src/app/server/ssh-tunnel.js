@@ -74,7 +74,7 @@ export function dynamicForward ({
   sshTunnelLocalHost = '127.0.0.1'
 }) {
   return new Promise((resolve, reject) => {
-    socks.createServer((info, accept, deny) => {
+    const dproxyServer = socks.createServer((info, accept, deny) => {
       conn.forwardOut(
         info.srcAddr,
         info.srcPort,
@@ -87,14 +87,17 @@ export function dynamicForward ({
           }
           const clientSocket = accept(true)
           if (clientSocket) {
-            stream.pipe(clientSocket).pipe(stream).on('close', () => {
-              conn.end()
-            })
+            stream.pipe(clientSocket).pipe(stream)
           }
         })
-    }).listen(sshTunnelLocalPort, sshTunnelLocalHost, () => {
+    })
+    dproxyServer.listen(sshTunnelLocalPort, sshTunnelLocalHost, () => {
       log.log(`SOCKS server listening on ${sshTunnelLocalHost}:${sshTunnelLocalPort}`)
       resolve(1)
     }).useAuth(socks.auth.None())
+    // close socks proxy when ssh connection is closed.
+    conn.on('close', () => {
+      dproxyServer && dproxyServer.close()
+    })
   })
 }
