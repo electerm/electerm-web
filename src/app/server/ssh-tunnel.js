@@ -95,6 +95,10 @@ export function dynamicForward ({
       log.log(`SOCKS server listening on ${sshTunnelLocalHost}:${sshTunnelLocalPort}`)
       resolve(1)
     }).useAuth(socks.auth.None())
+    dproxyServer.on('error', (err) => {
+      log.error('Error listening for local connections:', err)
+      reject(err)
+    })
     // close socks proxy when ssh connection is closed.
     conn.on('close', () => {
       dproxyServer && dproxyServer.close()

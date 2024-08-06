@@ -11,8 +11,7 @@ import {
 } from '@ant-design/icons'
 import Main from '../electerm-react/components/main/main.jsx'
 
-const { prefix } = window
-const f = prefix('form')
+const f = window.translate
 
 export default class Login extends Component {
   state = {

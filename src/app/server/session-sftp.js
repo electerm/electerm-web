@@ -66,25 +66,23 @@ class SftpBase extends TerminalBase {
    * @return {Promise}
    */
   rmdir (remotePath) {
-    if (this.enableSsh) {
-      return new Promise((resolve, reject) => {
-        const { client } = this
-        const cmd = `rm -rf "${remotePath}"`
-        client.exec(cmd, this.getExecOpts(), err => {
-          if (err) reject(err)
-          else resolve(1)
-        })
-      })
-    } else {
-      return this.removeDirectoryRecursively(remotePath)
-    }
+    return this.removeDirectoryRecursively(remotePath)
+    // if (this.enableSsh) {
+    //   return new Promise((resolve, reject) => {
+    //     const { client } = this
+    //     const cmd = `rm -rf "${remotePath}"`
+    //     client.exec(cmd, this.getExecOpts(), err => {
+    //       if (err) reject(err)
+    //       else resolve(1)
+    //     })
+    //   })
+    // } else {
+    //   return this.removeDirectoryRecursively(remotePath)
+    // }
   }
 
   async removeDirectoryRecursively (remotePath) {
-    const {
-      sftp
-    } = this
-    const contents = await sftp.list(remotePath)
+    const contents = await this.list(remotePath)
     for (const item of contents) {
       const itemPath = `${remotePath}/${item.name}`
       if (item.type === 'd') {
@@ -107,16 +105,6 @@ class SftpBase extends TerminalBase {
    * @return {Promise}
    */
   touch (remotePath) {
-    if (this.enableSsh) {
-      return new Promise((resolve, reject) => {
-        const { client } = this
-        const cmd = `touch "${remotePath}"`
-        client.exec(cmd, this.getExecOpts(), err => {
-          if (err) reject(err)
-          else resolve(1)
-        })
-      })
-    }
     return this.touchFile(remotePath)
   }
 

@@ -20,8 +20,7 @@ import {
 import { resolve } from '../web-components/path'
 import './file-select-dialog.styl'
 
-const { prefix } = window
-const s = prefix('sfp')
+const s = window.translate
 
 export default class FileSelectDialog extends Component {
   constructor (props) {
