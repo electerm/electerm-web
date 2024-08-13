@@ -5,6 +5,8 @@
 import rp from 'axios'
 import { createProxyAgent } from '../lib/proxy-agent.js'
 
+rp.defaults.proxy = false
+
 function fetch (options) {
   return rp(options)
     .then((res) => {
@@ -22,6 +24,8 @@ export default async function wsFetchHandler (ws, msg) {
   const agent = createProxyAgent(proxy)
   if (agent) {
     options.httpsAgent = agent
+  } else {
+    options.proxy = false
   }
   const res = await fetch(options)
   if (res.error) {

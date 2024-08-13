@@ -39,18 +39,25 @@ class GitHub extends GitHubOri {
 const dist = {
   gitee: Gitee,
   github: GitHub,
-  custom: customSync
+  custom: customSync,
+  cloud: customSync
 }
 
 async function doSync (type, func, args, token, proxy) {
+  const argsArr = [...args]
   const inst = new dist[type](token)
+  if (type === 'cloud') {
+    argsArr[0] = ''
+  }
   const agent = createProxyAgent(proxy)
   const conf = agent
     ? {
         httpsAgent: agent
       }
-    : {}
-  return inst[func](...args, conf)
+    : {
+        proxy: false
+      }
+  return inst[func](...argsArr, conf)
     .then(r => r.data)
     .catch(e => {
       log.error('sync error')
