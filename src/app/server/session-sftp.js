@@ -54,7 +54,26 @@ class SftpBase extends TerminalBase {
    * @return {Promise}
    */
   getHomeDir () {
-    return this.runCmd('eval echo "~$different_user"')
+    // return this.runCmd('eval echo "~$different_user"')
+    // ext_home_dir
+    return this.getSftpHomeDir()
+      .catch(err => {
+        console.error('get home dir error', err)
+        return this.realpath('')
+      })
+  }
+
+  getSftpHomeDir () {
+    // return this.runCmd('eval echo "~$different_user"')
+    // ext_home_dir
+    return new Promise((resolve, reject) => {
+      this.sftp.ext_home_dir('', (err, path) => {
+        if (err) {
+          return reject(err)
+        }
+        resolve(path)
+      })
+    })
   }
 
   /**
@@ -66,19 +85,23 @@ class SftpBase extends TerminalBase {
    * @return {Promise}
    */
   rmdir (remotePath) {
-    return this.removeDirectoryRecursively(remotePath)
-    // if (this.enableSsh) {
-    //   return new Promise((resolve, reject) => {
-    //     const { client } = this
-    //     const cmd = `rm -rf "${remotePath}"`
-    //     client.exec(cmd, this.getExecOpts(), err => {
-    //       if (err) reject(err)
-    //       else resolve(1)
-    //     })
-    //   })
-    // } else {
-    //   return this.removeDirectoryRecursively(remotePath)
-    // }
+    return this.rmrf(remotePath)
+      .then(r => r)
+      .catch(err => {
+        console.error('rm -rf dir error', err)
+        return this.removeDirectoryRecursively(remotePath)
+      })
+  }
+
+  rmrf (remotePath) {
+    return new Promise((resolve, reject) => {
+      const { client } = this
+      const cmd = `rm -rf "${remotePath}"`
+      client.exec(cmd, this.getExecOpts(), err => {
+        if (err) reject(err)
+        else resolve(1)
+      })
+    })
   }
 
   async removeDirectoryRecursively (remotePath) {
