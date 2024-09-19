@@ -3,7 +3,7 @@
  */
 import _ from 'lodash'
 import log from '../common/log.js'
-import rdp from 'node-rdpjs-2'
+import rdp from '@electerm/rdpjs'
 import { TerminalBase } from './session-base.js'
 import { isDev } from '../common/runtime-constants.js'
 

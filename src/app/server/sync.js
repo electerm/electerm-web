@@ -46,7 +46,7 @@ const dist = {
 async function doSync (type, func, args, token, proxy) {
   const argsArr = [...args]
   const inst = new dist[type](token)
-  if (type === 'cloud') {
+  if (type === 'cloud' && func === 'getOne') {
     argsArr[0] = ''
   }
   const agent = createProxyAgent(proxy)
