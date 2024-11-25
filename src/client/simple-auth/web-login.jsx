@@ -1,4 +1,5 @@
-import { Component } from '../electerm-react/components/common/react-subx'
+import { auto } from 'manate/react'
+import { useState, useEffect, useRef } from 'react'
 import LogoElem from '../electerm-react/components/common/logo-elem.jsx'
 import {
   Input,
@@ -13,102 +14,91 @@ import Main from '../electerm-react/components/main/main.jsx'
 
 const f = window.translate
 
-export default class Login extends Component {
-  state = {
-    pass: ''
+export default auto(function Login ({ store }) {
+  const [pass, setPass] = useState('')
+  const submitting = useRef(false)
+
+  useEffect(() => {
+    store.getConstants()
+  }, [])
+
+  const handlePassChange = e => {
+    setPass(e.target.value)
   }
 
-  componentDidMount () {
-    this.props.store.getConstants()
-  }
-
-  handlePassChange = e => {
-    this.setState({
-      pass: e.target.value
-    })
-  }
-
-  handleSubmit = () => {
-    const {
-      pass
-    } = this.state
+  const handleSubmit = async () => {
     if (!pass) {
       return message.warning('password required')
-    } else if (
-      this.submitting
-    ) {
+    } else if (submitting.current) {
       return
     }
-    this.props.store.login(
-      this.state.pass
-    )
+    submitting.current = true
+    await store.login(pass)
+    submitting.current = false
   }
 
-  renderUnchecked () {
+  const renderUnchecked = () => {
     return (
-      <div className='pd3 aligncenter'>
+
+      <div>
         <LogoElem />
         <div className='pd3 aligncenter'>
-          <Loading3QuartersOutlined
-            spin
-          />
+          <Loading3QuartersOutlined spin />
         </div>
+
       </div>
     )
   }
 
-  renderAfter = () => {
+  const renderAfter = () => {
     return (
       <ArrowRightOutlined
         className='mg1x pointer'
-        onClick={this.handleSubmit}
+        onClick={handleSubmit}
       />
     )
   }
 
-  renderLogin () {
+  const renderLogin = () => {
     const {
       logining,
       fetchingUser
-    } = this.props.store
-    const {
-      pass
-    } = this.state
+    } = store
+
     return (
-      <div className='pd3 aligncenter'>
+
+      <div>
         <LogoElem />
         <div className='pd3 aligncenter'>
           <Input.Password
             value={pass}
             readOnly={logining || fetchingUser}
-            onChange={this.handlePassChange}
+            onChange={handlePassChange}
             placeholder={f('password')}
-            addonAfter={this.renderAfter()}
-            onPressEnter={this.handleSubmit}
+            addonAfter={renderAfter()}
+            onPressEnter={handleSubmit}
           />
         </div>
-        <div className='aligncenter'>
+
+        <div>
           <Spin
             spinning={logining || fetchingUser}
           />
         </div>
+
       </div>
     )
   }
 
-  render () {
-    const {
-      authChecked
-    } = this.props.store
-    if (!authChecked) {
-      return this.renderUnchecked()
-    } else if (!this.props.store.logined) {
-      return this.renderLogin()
-    }
-    return (
-      <Main
-        store={this.props.store}
-      />
-    )
+  if (!store.authChecked) {
+    return renderUnchecked()
+  } else if (!store.logined) {
+    return renderLogin()
   }
-}
+
+  return (
+    <Main
+      store={store}
+    />
+  )
+})

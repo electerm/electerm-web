@@ -2,7 +2,7 @@
  * file/folder select dialog component
  */
 
-import { Component } from '../electerm-react/components/common/react-subx'
+import { Component } from 'react'
 import {
   Modal,
   Spin,
@@ -325,7 +325,7 @@ export default class FileSelectDialog extends Component {
       onCancel: this.handleClose
     }
     return (
-      <ConfigProvider theme={this.props.store.uiThemeConfig}>
+      <ConfigProvider theme={window.store.uiThemeConfig}>
         <Modal {...props}>
           <Spin spinning={loading}>
             {this.renderHeader()}
