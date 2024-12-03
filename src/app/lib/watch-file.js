@@ -1,20 +1,21 @@
 import fs from 'fs'
+import globalState from './global-state.js'
 
 function onWatch (curr, prev) {
   try {
-    const text = fs.readFileSync(global.watchFilePath).toString()
-    global.win.webContents.send('file-change', text)
+    const text = fs.readFileSync(globalState.get('watchFilePath')).toString()
+    globalState.get('win').webContents.send('file-change', text)
   } catch (e) {
     console.log('send file change fail', e)
   }
 }
 
 export const watchFile = (path) => {
-  global.watchFilePath = path
+  globalState.set('watchFilePath', path)
   fs.watchFile(path, onWatch)
 }
 
 export const unwatchFile = (path) => {
-  global.watchFilePath = ''
+  globalState.set('watchFilePath', '')
   fs.unwatchFile(path, onWatch)
 }

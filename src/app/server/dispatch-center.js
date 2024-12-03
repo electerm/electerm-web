@@ -26,11 +26,6 @@ import {
   toggleTerminalLogTimestamp
 } from './terminal-api.js'
 
-global.upgradeInsts = {}
-
-// for remote sessions
-global.sessions = {}
-
 const {
   SERVER_USER
 } = process.env

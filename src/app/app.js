@@ -5,8 +5,6 @@
 import log from './common/log.js'
 import { createApp } from './server/server.js'
 
-global.et = {}
-
 process.on('uncaughtException', (err) => {
   log.error('uncaughtException', err)
 })

@@ -1,7 +1,7 @@
 import { spawn, exec } from 'child_process'
 import fs, { promises as fss } from 'fs'
 import log from '../common/log.js'
-import tar from 'tar'
+import * as tar from 'tar'
 import { isWin, isMac, tempDir } from '../common/runtime-constants.js'
 import uid from '../common/uid.js'
 import path from 'path'

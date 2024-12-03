@@ -5,6 +5,7 @@ import _ from 'lodash'
 import log from '../common/log.js'
 import { Telnet } from './telnet.js'
 import { TerminalBase } from './session-base.js'
+import globalState from './global-state.js'
 
 class TerminalTelnet extends TerminalBase {
   async init () {
@@ -44,13 +45,13 @@ class TerminalTelnet extends TerminalBase {
       this.kill()
       return true
     }
-    global.sessions[this.initOptions.sessionId] = {
+    globalState.setSession(this.initOptions.sessionId, {
       id: this.initOptions.sessionId,
       sftps: {},
       terminals: {
         [this.pid]: this
       }
-    }
+    })
   }
 
   resize (cols, rows) {
@@ -78,9 +79,7 @@ class TerminalTelnet extends TerminalBase {
     if (this.sessionLogger) {
       this.sessionLogger.destroy()
     }
-    const inst = global.sessions[
-      this.initOptions.sessionId
-    ]
+    const inst = globalState.getSession(this.initOptions.sessionId)
     if (this.ws) {
       delete this.ws
     }
@@ -91,9 +90,7 @@ class TerminalTelnet extends TerminalBase {
     if (
       _.isEmpty(inst.terminals)
     ) {
-      delete global.sessions[
-        this.initOptions.sessionId
-      ]
+      globalState.removeSession(this.initOptions.sessionId)
     }
   }
 }

@@ -3,7 +3,7 @@
  * collect all stylus files in src/client and merge into one str
  */
 
-import glob from 'glob'
+import { globSync } from 'glob'
 import stylus from 'stylus'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
@@ -16,7 +16,7 @@ import {
 const { version } = packInfo
 
 function findFiles (pattern) {
-  return glob.sync(pattern)
+  return globSync(pattern)
 }
 
 function removeUnused (str) {

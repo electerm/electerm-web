@@ -75,7 +75,6 @@ export default defineConfig({
             '@rc-component/tour',
             '@rc-component/trigger',
             'copy-to-clipboard',
-            'qrcode.react',
             'rc-cascader',
             'rc-checkbox',
             'rc-collapse',
@@ -114,34 +113,29 @@ export default defineConfig({
           antd: ['antd'],
           'ant-icons': ['@ant-design/icons'],
           xterm: [
-            'xterm'
+            '@xterm/xterm'
           ],
           'xterm-addon1': [
-            'xterm-addon-attach',
-            'xterm-addon-canvas',
-            'xterm-addon-fit',
-            'xterm-addon-ligatures'
+            '@xterm/addon-attach',
+            '@xterm/addon-canvas',
+            '@xterm/addon-fit',
+            '@xterm/addon-ligatures'
           ],
           'xterm-addon2': [
-            'xterm-addon-search',
-            'xterm-addon-unicode11',
-            'xterm-addon-web-links',
-            'xterm-addon-webgl'
+            '@xterm/addon-search',
+            '@xterm/addon-unicode11',
+            '@xterm/addon-web-links',
+            '@xterm/addon-webgl'
           ],
           'electerm-themes': ['@electerm/electerm-themes'],
           trzsz: ['trzsz'],
           manate: ['manate'],
           'zmodem-ts': ['zmodem-ts'],
           'vscode-icons-js': ['vscode-icons-js'],
-          'react-utils': ['react', 'react-colorful', 'react-delta', 'memoize-one', 'prop-types'],
+          'react-utils': ['react', 'react-colorful', 'react-delta-hooks', 'memoize-one'],
           novnc: ['@novnc/novnc']
         }
       }
-    }
-  },
-  resolve: {
-    alias: {
-      events: 'eventemitter3'
     }
   }
 })

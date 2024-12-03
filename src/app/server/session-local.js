@@ -4,9 +4,7 @@
 import pty from 'node-pty'
 import { resolve as pathResolve } from 'path'
 import log from '../common/log.js'
-// import {
-//   isWin
-// } from '../common/runtime-constants.js'
+import globalState from './global-state.js'
 import { TerminalBase } from './session-base.js'
 
 class TerminalLocal extends TerminalBase {
@@ -46,13 +44,13 @@ class TerminalLocal extends TerminalBase {
     })
     this.term.termType = termType
     const { sessionId } = this.initOptions
-    global.sessions[sessionId] = {
+    globalState.setSession(sessionId, {
       id: sessionId,
       sftps: {},
       terminals: {
         [this.pid]: this
       }
-    }
+    })
     return Promise.resolve(this)
   }
 

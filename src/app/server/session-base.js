@@ -5,6 +5,7 @@ import uid from '../common/uid.js'
 import { createLogFileName } from '../common/create-session-log-file-path.js'
 import { SessionLog } from './session-log.js'
 import _ from 'lodash'
+import globalState from './global-state.js'
 
 export class TerminalBase {
   constructor (initOptions, ws, isTest) {
@@ -40,9 +41,7 @@ export class TerminalBase {
   }
 
   onEndConn () {
-    const inst = global.sessions[
-      this.initOptions.sessionId
-    ]
+    const inst = globalState.getSession(this.initOptions.sessionId)
     if (!inst) {
       return
     }
@@ -59,9 +58,7 @@ export class TerminalBase {
       _.isEmpty(inst.terminals)
     ) {
       this.endConns && this.endConns()
-      delete global.sessions[
-        this.initOptions.sessionId
-      ]
+      globalState.removeSession(this.initOptions.sessionId)
     }
   }
 }

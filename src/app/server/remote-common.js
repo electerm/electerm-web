@@ -4,9 +4,10 @@
  */
 
 // const _ = require('loadsh')
+import globalState from './global-state.js'
 
 export function session (sessionId) {
-  return global.sessions[sessionId]
+  return globalState.getSession(sessionId)
 }
 
 export function sftp (id, sessionId, inst) {

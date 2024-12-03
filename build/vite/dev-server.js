@@ -74,8 +74,7 @@ async function createServer () {
   const vite = await createViteServer({
     ...conf,
     server: {
-      port: 3041,
-      middlewareMode: true
+      port: 3041
     },
     appType: 'custom'
   })
