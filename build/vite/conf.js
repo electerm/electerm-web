@@ -9,7 +9,7 @@ import commonjs from 'vite-plugin-commonjs'
 
 function buildInput () {
   return {
-    electerm: resolve(cwd, 'src/client/entry-web/index.jsx'),
+    electerm: resolve(cwd, 'src/client/entry-web/electerm.jsx'),
     basic: resolve(cwd, 'src/client/entry-web/basic.js'),
     worker: resolve(cwd, 'src/client/entry-web/worker.js'),
     rle: resolve(cwd, 'src/client/entry-web/rle.js')
