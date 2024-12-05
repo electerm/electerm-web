@@ -65,7 +65,7 @@ window.api = {
   runSync: (func, ...args) => {
     if (func === 'isMaximized') {
       return false
-    } else if (func === 'isSencondInstance') {
+    } else if (func === 'isSecondInstance') {
       return false
     } else if (func === 'windowMove') {
       return false
