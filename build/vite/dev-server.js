@@ -38,6 +38,7 @@ const base = {
   server: h,
   cdn: h,
   stylus: loadDevStylus(),
+  isWebApp: true,
   sessionLogPath: logDir,
   tokenElecterm: process.env.ENABLE_AUTH ? '' : createToken()
 }
