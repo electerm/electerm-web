@@ -10,6 +10,8 @@
 
 这是Electerm应用的Web版本，可以在浏览器中运行，几乎拥有与桌面版本相同的功能。
 
+Powered by [manate](https://github.com/tylerlong/manate)
+
 [![GitHub version](https://img.shields.io/github/release/electerm/electerm/all.svg)](https://github.com/electerm/electerm/releases)
 [![license](https://img.shields.io/github/license/electerm/electerm.svg)](https://github.com/electerm/electerm-dev/blob/master/LICENSE)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
