@@ -1,7 +1,7 @@
 /**
  * terminal/sftp/serial class
  */
-import { Client } from 'ssh2'
+import { Client } from '@electerm/ssh2'
 import proxySock from './socks.js'
 import _ from 'lodash'
 import uid from '../common/uid.js'

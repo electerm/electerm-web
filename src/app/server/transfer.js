@@ -6,14 +6,6 @@ import fs from 'fs'
 import _ from 'lodash'
 import log from '../common/log.js'
 
-function tryCreateBuffer (size) {
-  try {
-    return Buffer.allocUnsafe(size)
-  } catch (ex) {
-    return ex
-  }
-}
-
 export class Transfer {
   constructor ({
     remotePath,
@@ -35,227 +27,225 @@ export class Transfer {
     this.srcPath = isd ? remotePath : localPath
     this.dstPath = !isd ? remotePath : localPath
     this.pausing = false
-
+    this.hadError = false
+    this.isUpload = isd
+    this.options = options
+    this.concurrency = options.concurrency || 64
+    this.chunkSize = options.chunkSize || 32768
+    this.mode = options.mode
     this.onData = _.throttle((count) => {
       ws.s({
         id: 'transfer:data:' + id,
         data: count
       })
     }, 3000)
+    this.timers = {}
 
     this.ws = ws
     this.fastXfer(options, type)
   }
 
+  tryCreateBuffer = (size) => {
+    try {
+      return Buffer.allocUnsafe(size)
+    } catch (ex) {
+      return ex
+    }
+  }
+
   // from https://github.com/mscdex/ssh2-streams/blob/master/lib/sftp.js
-  fastXfer = (opts, type) => {
-    let {
-      concurrency = 64,
-      chunkSize = 32768,
-      mode
-    } = opts
-    const onstep = this.onData
+  fastXfer = () => {
+    const { src, srcPath } = this
+    src.open(srcPath, 'r', this.onSrcOpen)
+  }
+
+  onSrcOpen = (err, sourceHandle) => {
+    if (err) {
+      return this.onError(err)
+    }
+    if (this.onDestroy) {
+      return
+    }
+    const { src } = this
+    const th = this
+
+    th.srcHandle = sourceHandle
+
+    src.fstat(th.srcHandle, this.tryStat)
+  }
+
+  tryStat = (err, attrs) => {
     const { src, dst, srcPath, dstPath } = this
-    let fileSize
-    const isUpload = type === 'upload'
-    const cb = this.onError
+    const th = this
+    if (err) {
+      if (src !== fs) {
+        // Try stat() for sftp servers that may not support fstat() for
+        // whatever reason
+        src.stat(srcPath, (err_, attrs_) => {
+          if (err_) {
+            return th.onError(err_)
+          }
+          this.tryStat(null, attrs_)
+        })
+        return
+      }
+      return th.onError(err)
+    }
+    this.fsize = attrs.size
+    dst.open(dstPath, 'w', this.onDstOpen)
+  }
+
+  onDstOpen = (err, destHandle) => {
+    if (err) {
+      return this.onError(err)
+    }
+
+    if (this.onDestroy) {
+      return
+    }
+
+    let {
+      concurrency,
+      chunkSize,
+      mode
+    } = this
+    const onstep = this.onData
+    const { src, dst, dstPath } = this
     const th = this
 
     // internal state variables
-    let fsize
     let pdst = 0
     let total = 0
-    let hadError = false
-    let readbuf
     let bufsize = chunkSize * concurrency
 
-    function onerror (err) {
-      if (hadError) {
+    const { fsize } = this
+
+    th.dstHandle = destHandle
+
+    if (fsize <= 0) {
+      return th.onError()
+    }
+
+    // Use less memory where possible
+    while (bufsize > fsize) {
+      if (concurrency === 1) {
+        bufsize = fsize
+        break
+      }
+      bufsize -= chunkSize
+      --concurrency
+    }
+
+    const readbuf = th.tryCreateBuffer(bufsize)
+    if (readbuf instanceof Error) {
+      return th.onError(readbuf)
+    }
+
+    if (mode !== undefined) {
+      dst.fchmod(th.dstHandle, mode, function tryAgain (err) {
+        if (err) {
+          // Try chmod() for sftp servers that may not support fchmod() for
+          // whatever reason
+          dst.chmod(dstPath, mode, function (err_) {
+            tryAgain()
+          })
+          return
+        }
+        startReads()
+      })
+    } else {
+      startReads()
+    }
+
+    function onread (err, nb, data, dstpos, datapos, origChunkLen) {
+      if (err) {
+        return th.onError(err)
+      }
+
+      if (th.onDestroy) {
         return
       }
-      hadError = true
 
-      let left = 0
-      let cbfinal
+      datapos = datapos || 0
 
-      if (th.srcHandle || th.dstHandle) {
-        cbfinal = function () {
-          if (--left === 0) {
-            cb(err)
-          }
+      dst.write(th.dstHandle, readbuf, datapos, nb, dstpos, writeCb)
+
+      function writeCb (err) {
+        if (err) {
+          return th.onError(err)
         }
-        if (th.srcHandle && (isUpload || src.writable)) {
-          ++left
+
+        total += nb
+        onstep && onstep(total, nb, fsize)
+
+        if (nb < origChunkLen) {
+          return singleRead(datapos, dstpos + nb, origChunkLen - nb)
         }
-        if (th.dstHandle && (!isUpload || dst.writable)) {
-          ++left
+
+        if (total === fsize) {
+          dst.close(th.dstHandle, (err) => {
+            th.dstHandle = undefined
+            if (err) {
+              return th.onError(err)
+            }
+            src.close(th.srcHandle, (err) => {
+              th.srcHandle = undefined
+              if (err) {
+                return th.onError(err)
+              }
+              th.onError()
+            })
+          })
+          return
         }
-        if (th.srcHandle && (isUpload || src.writable)) {
-          src.close(th.srcHandle, cbfinal)
+
+        if (pdst >= fsize) {
+          return
         }
-        if (th.dstHandle && (!isUpload || dst.writable)) {
-          dst.close(th.dstHandle, cbfinal)
-        }
-      } else {
-        cb(err)
+
+        const chunk = (pdst + chunkSize > fsize ? fsize - pdst : chunkSize)
+        singleRead(datapos, pdst, chunk)
+        pdst += chunk
       }
     }
 
-    src.open(srcPath, 'r', (err, sourceHandle) => {
-      if (err) {
-        return onerror(err)
+    function makeCb (psrc, pdst, chunk) {
+      return function (err, nb, data) {
+        onread(err, nb, data, pdst, psrc, chunk)
       }
+    }
 
-      th.srcHandle = sourceHandle
-
-      if (fileSize === undefined) {
-        src.fstat(th.srcHandle, tryStat)
-      } else {
-        tryStat(null, { size: fileSize })
+    function singleRead (psrc, pdst, chunk) {
+      if (th.onDestroy) {
+        return
       }
-
-      function tryStat (err, attrs) {
-        if (err) {
-          if (src !== fs) {
-            // Try stat() for sftp servers that may not support fstat() for
-            // whatever reason
-            src.stat(srcPath, (err_, attrs_) => {
-              if (err_) {
-                return onerror(err)
-              }
-              tryStat(null, attrs_)
-            })
-            return
-          }
-          return onerror(err)
-        }
-        fsize = attrs.size
-        dst.open(dstPath, 'w', (err, destHandle) => {
-          if (err) {
-            return onerror(err)
-          }
-
-          th.dstHandle = destHandle
-
-          if (fsize <= 0) {
-            return onerror()
-          }
-
-          // Use less memory where possible
-          while (bufsize > fsize) {
-            if (concurrency === 1) {
-              bufsize = fsize
-              break
-            }
-            bufsize -= chunkSize
-            --concurrency
-          }
-
-          readbuf = tryCreateBuffer(bufsize)
-          if (readbuf instanceof Error) {
-            return onerror(readbuf)
-          }
-
-          if (mode !== undefined) {
-            dst.fchmod(th.dstHandle, mode, function tryAgain (err) {
-              if (err) {
-                // Try chmod() for sftp servers that may not support fchmod() for
-                // whatever reason
-                dst.chmod(dstPath, mode, function (err_) {
-                  tryAgain()
-                })
-                return
-              }
-              startReads()
-            })
-          } else {
-            startReads()
-          }
-
-          function onread (err, nb, data, dstpos, datapos, origChunkLen) {
-            if (err) {
-              return onerror(err)
-            }
-
-            datapos = datapos || 0
-
-            dst.write(th.dstHandle, readbuf, datapos, nb, dstpos, writeCb)
-
-            function writeCb (err) {
-              if (err) {
-                return onerror(err)
-              }
-
-              total += nb
-              onstep && onstep(total, nb, fsize)
-
-              if (nb < origChunkLen) {
-                return singleRead(datapos, dstpos + nb, origChunkLen - nb)
-              }
-
-              if (total === fsize) {
-                dst.close(th.dstHandle, (err) => {
-                  th.dstHandle = undefined
-                  if (err) {
-                    return onerror(err)
-                  }
-                  src.close(th.srcHandle, (err) => {
-                    th.srcHandle = undefined
-                    if (err) {
-                      return onerror(err)
-                    }
-                    cb()
-                  })
-                })
-                return
-              }
-
-              if (pdst >= fsize) {
-                return
-              }
-
-              const chunk = (pdst + chunkSize > fsize ? fsize - pdst : chunkSize)
-              singleRead(datapos, pdst, chunk)
-              pdst += chunk
-            }
-          }
-
-          function makeCb (psrc, pdst, chunk) {
-            return function (err, nb, data) {
-              onread(err, nb, data, pdst, psrc, chunk)
-            }
-          }
-
-          function singleRead (psrc, pdst, chunk) {
-            if (th.pausing) {
-              return setTimeout(
-                () => singleRead(psrc, pdst, chunk), 2
-              )
-            }
-            src.read(
-              th.srcHandle,
-              readbuf,
-              psrc,
-              chunk,
-              pdst,
-              makeCb(psrc, pdst, chunk)
-            )
-          }
-
-          function startReads () {
-            let reads = 0
-            let psrc = 0
-            while (pdst < fsize && reads < concurrency) {
-              const chunk = (pdst + chunkSize > fsize ? fsize - pdst : chunkSize)
-              singleRead(psrc, pdst, chunk)
-              psrc += chunk
-              pdst += chunk
-              ++reads
-            }
-          }
-        })
+      if (th.pausing) {
+        th.timers[psrc + ':' + pdst] = setTimeout(() => {
+          singleRead(psrc, pdst, chunk)
+        }, 2)
+        return
       }
-    })
+      src.read(
+        th.srcHandle,
+        readbuf,
+        psrc,
+        chunk,
+        pdst,
+        makeCb(psrc, pdst, chunk)
+      )
+    }
+
+    function startReads () {
+      let reads = 0
+      let psrc = 0
+      while (pdst < fsize && reads < concurrency) {
+        const chunk = (pdst + chunkSize > fsize ? fsize - pdst : chunkSize)
+        singleRead(psrc, pdst, chunk)
+        psrc += chunk
+        pdst += chunk
+        ++reads
+      }
+    }
   }
 
   onEnd = (id = this.id, ws = this.ws) => {
@@ -270,7 +260,7 @@ export class Transfer {
       return this.onEnd()
     }
     ws && ws.s({
-      wid: 'transfer:err:' + id,
+      id: 'transfer:err:' + id,
       error: {
         message: err.message,
         stack: err.stack
@@ -286,14 +276,33 @@ export class Transfer {
     this.pausing = false
   }
 
-  destroy = () => {
+  kill = () => {
     if (this.src && this.srcHandle) {
       this.src.close(this.srcHandle, log.error)
     }
     if (this.dst && this.dstHandle) {
       this.dst.close(this.dstHandle, log.error)
     }
-    this.ws.close()
+    this.src = null
+    this.dst = null
+    this.srcHandle = null
+    this.dstHandle = null
+  }
+
+  destroy = () => {
+    this.onDestroy = true
+    setTimeout(this.kill, 200)
+    if (this.ws) {
+      this.ws.close()
+      this.ws = null
+    }
+    if (this.timers) {
+      Object.keys(this.timers).forEach(k => {
+        clearTimeout(this.timers[k])
+        this.timers[k] = null
+      })
+      this.timers = null
+    }
   }
 
   // end
