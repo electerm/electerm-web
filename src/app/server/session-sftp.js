@@ -91,14 +91,7 @@ class SftpBase extends TerminalBase {
   }
 
   rmrf (remotePath) {
-    return new Promise((resolve, reject) => {
-      const { client } = this
-      const cmd = `rm -rf "${remotePath}"`
-      client.exec(cmd, this.getExecOpts(), err => {
-        if (err) reject(err)
-        else resolve(1)
-      })
-    })
+    return this.runExec(`rm -rf "${remotePath}"`)
   }
 
   async removeDirectoryRecursively (remotePath) {
@@ -166,7 +159,7 @@ class SftpBase extends TerminalBase {
   cp (from, to) {
     return new Promise((resolve, reject) => {
       if (!this.enableSsh) {
-        return reject(new Error('do not support copy operation in sftp mode'))
+        return reject(new Error('do not support copy operation in sftp only mode'))
       }
       const { client } = this
       const cmd = `cp -r "${from}" "${to}"`
