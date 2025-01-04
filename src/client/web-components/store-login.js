@@ -5,7 +5,7 @@ export default Store => {
   Store.prototype.getConstants = async function () {
     const { store } = window
     store.fetchingUser = true
-    const res = await Fetch.get('/api/get-constants', null, {
+    const res = await Fetch.get(window.et.server + '/api/get-constants', null, {
       handleErr: console.log
     })
     if (res) {
@@ -34,7 +34,7 @@ export default Store => {
   Store.prototype.login = async function (password) {
     const { store } = window
     store.logining = true
-    const res = await Fetch.post('/api/login', {
+    const res = await Fetch.post(window.et.server + '/api/login', {
       password
     })
     if (res) {

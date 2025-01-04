@@ -9,7 +9,7 @@ import {
   terminals
 } from '../server/remote-common.js'
 
-export function wsRoutes (app) {
+export function wsRoutes (app, router) {
   expressWs(app, undefined, {
     wsOptions: {
       perMessageDeflate: {
@@ -33,7 +33,7 @@ export function wsRoutes (app) {
       }
     }
   })
-  app.ws('/terminals/:pid', function (ws, req) {
+  router.ws('/terminals/:pid', function (ws, req) {
     const { sessionId } = req.query
     verifyWs(req)
     const term = terminals(req.params.pid, sessionId)
@@ -79,7 +79,7 @@ export function wsRoutes (app) {
 
     ws.on('close', onClose)
   })
-  app.ws('/rdp/:pid', function (ws, req) {
+  router.ws('/rdp/:pid', function (ws, req) {
     const { sessionId, width, height } = req.query
     verifyWs(req)
     const term = terminals(req.params.pid, sessionId)
@@ -89,7 +89,7 @@ export function wsRoutes (app) {
     log.debug('ws: connected to rdp session ->', pid)
     ws.on('error', log.error)
   })
-  app.ws('/vnc/:pid', function (ws, req) {
+  router.ws('/vnc/:pid', function (ws, req) {
     const { sessionId, ...rest } = req.query
     verifyWs(req)
     const term = terminals(req.params.pid, sessionId)
@@ -99,5 +99,5 @@ export function wsRoutes (app) {
     log.debug('ws: connected to vnc session ->', pid)
     ws.on('error', log.error)
   })
-  initWs(app)
+  initWs(router)
 }

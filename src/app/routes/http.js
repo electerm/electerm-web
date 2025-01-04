@@ -12,19 +12,19 @@ import {
   errHandler
 } from '../lib/jwt.js'
 
-export function httpRoutes (app) {
-  app.get('/', index)
-  app.post('/api/login', login)
-  app.get('/api/get-constants', jwtAuth, errHandler, getConstants)
+export function httpRoutes (router) {
+  router.get('/', index)
+  router.post('/api/login', login)
+  router.get('/api/get-constants', jwtAuth, errHandler, getConstants)
   if (isDev) {
-    app.use(express.static(
+    router.use(express.static(
       resolve(cwd, 'node_modules')
     ))
-    app.use(express.static(
+    router.use(express.static(
       resolve(cwd, 'src/client/statics')
     ))
   } else {
-    app.use(express.static(
+    router.use(express.static(
       resolve(cwd, 'dist/assets')
     ))
   }

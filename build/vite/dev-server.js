@@ -22,6 +22,8 @@ import { loadDevStylus } from '../../src/app/lib/style.js'
 
 const devPort = env.DEV_PORT || 5570
 const devHost = env.DEV_HOST || '127.0.0.1'
+const urlPath = env.URL_PATH || '/'
+const tail = urlPath.endsWith('/') ? '' : urlPath
 const port = env.PORT || 5577
 const host = env.HOST || '127.0.0.1'
 const h = `http://${devHost}:${devPort}`
@@ -35,8 +37,8 @@ const base = {
   fsFunctions,
   packInfo: pack,
   home: os.homedir(),
-  server: h,
-  cdn: h,
+  server: h + tail,
+  cdn: h + tail,
   stylus: loadDevStylus(),
   isWebApp: true,
   sessionLogPath: logDir,
@@ -99,25 +101,25 @@ async function createServer () {
   // Use vite's connect instance as middleware. If you use your own
   // express router (express.Router()), you should use router.use
   app.use(vite.middlewares)
-  app.get(['/', '/index.html'], handleIndex)
-  app.get('/:dir/:name.:ext', redirect)
+  app.get([urlPath], handleIndex)
+  app.get(tail + '/:dir/:name.:ext', redirect)
   app.listen(devPort, devHost, () => {
     console.log('cwd:', cwd)
     console.log(`server started at ${h}`)
   })
   app.use(
-    '/api/login',
+    tail + '/api/login',
     proxy(tar, {
       proxyReqPathResolver: function (req) {
-        return '/api/login'
+        return tail + '/api/login'
       }
     })
   )
   app.use(
-    '/api/get-constants',
+    tail + '/api/get-constants',
     proxy(tar, {
       proxyReqPathResolver: function (req) {
-        return '/api/get-constants'
+        return tail + '/api/get-constants'
       }
     })
   )

@@ -16,6 +16,8 @@ export async function getConfig () {
   delete userConfig.host
   delete userConfig.terminalTypes
   delete userConfig.tokenElecterm
+  delete userConfig.server
+  delete userConfig.urlPath
   const config = {
     ...defaultSetting,
     ...userConfig,
@@ -24,6 +26,7 @@ export async function getConfig () {
     wsHost: isDev ? process.env.DEV_HOST : process.env.HOST,
     wsPort: isDev ? process.env.DEV_PORT : process.env.PORT,
     server: process.env.SERVER,
+    urlPath: process.env.URL_PATH || '',
     useSystemTitleBar: true
   }
   return config

@@ -31,9 +31,10 @@ export async function createApp () {
     )
   )
   app.set('x-powered-by', false)
-
-  httpRoutes(app)
-  wsRoutes(app)
-  await applyExtensions(app)
+  const router = express.Router()
+  httpRoutes(router)
+  wsRoutes(app, router)
+  await applyExtensions(router)
+  app.use(process.env.URL_PATH || '/', router)
   return app
 }

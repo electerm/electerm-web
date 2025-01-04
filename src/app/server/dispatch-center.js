@@ -65,9 +65,9 @@ export function verifyWs (req) {
   }
 }
 
-export function initWs (app) {
+export function initWs (router) {
   // sftp function
-  app.ws('/sftp/:id', (ws, req) => {
+  router.ws('/sftp/:id', (ws, req) => {
     verifyWs(req)
     wsDec(ws)
     const { id } = req.params
@@ -118,7 +118,7 @@ export function initWs (app) {
   })
 
   // transfer function
-  app.ws('/transfer/:id', (ws, req) => {
+  router.ws('/transfer/:id', (ws, req) => {
     verifyWs(req)
     wsDec(ws)
     const { id } = req.params
@@ -153,7 +153,7 @@ export function initWs (app) {
   // upgrade todo
 
   // common functions
-  app.ws('/common/s', (ws, req) => {
+  router.ws('/common/s', (ws, req) => {
     verifyWs(req)
     wsDec(ws)
     ws.on('message', async (message) => {
