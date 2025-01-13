@@ -15,8 +15,11 @@ import { watchFile, unwatchFile } from './watch-file.js'
 import lookup from './lookup.js'
 import { init } from './init.js'
 import { showItemInFolder } from './show-item-in-folder.js'
+import { AIchat } from './ai.js'
+import globalState from './global-state.js'
 
 const globs = {
+  AIchat,
   encryptAsync,
   decryptAsync,
   showItemInFolder,
@@ -32,6 +35,9 @@ const globs = {
   toCss,
   init,
   initCommandLine: () => Promise.resolve(0),
+  getInitTime: () => {
+    return globalState.get('initTime')
+  },
   loadFontList,
   saveUserConfig,
   registerDeepLink: () => Promise.resolve(1),

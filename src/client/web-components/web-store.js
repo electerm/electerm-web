@@ -4,7 +4,7 @@
 
 import { manage } from 'manate'
 import initState from '../electerm-react/store/init-state'
-import { StateStore } from '../electerm-react/store/index.js'
+import { StateStore } from '../electerm-react/store/store'
 import loginExtend from './store-login'
 
 class Store extends StateStore {

@@ -71,6 +71,13 @@ window.api = {
       return false
     } else if (func === 'getLoadTime' || func === 'setLoadTime') {
       return 0
+    } else if (func === 'getInitTime') {
+      if (window.et.initTime !== undefined) {
+        return window.et.initTime
+      } else {
+        window.et.initTime = Date.now()
+        return window.et.initTime
+      }
     }
     return window.wsFetch({
       action: 'runSync',

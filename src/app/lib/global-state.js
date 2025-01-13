@@ -16,7 +16,7 @@ class GlobalState {
       app: null,
       rawArgs: null,
       loadTime: null,
-      initTime: null,
+      initTime: Date.now(),
       watchFilePath: '',
       oldRectangle: null,
       serverPort: null,
