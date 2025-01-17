@@ -1,13 +1,19 @@
 /**
  * AI integration with DeepSeek API
  */
-import OpenAI from 'openai'
+import axios from 'axios'
 import log from '../common/log.js'
 import defaultSettings from '../common/config-default.js'
 
 // Initialize OpenAI with DeepSeek configuration
-const initAIClient = async (config) => {
-  return new OpenAI(config)
+const createAIClient = (baseURL, apiKey) => {
+  return axios.create({
+    baseURL,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`
+    }
+  })
 }
 
 export const AIchat = async (
@@ -18,11 +24,9 @@ export const AIchat = async (
   apiKey
 ) => {
   try {
-    const client = await initAIClient({
-      baseURL,
-      apiKey
-    })
-    const completion = await client.chat.completions.create({
+    const client = createAIClient(baseURL, apiKey)
+    const response = await client.post('/chat/completions', {
+      model,
       messages: [
         {
           role: 'system',
@@ -32,12 +36,11 @@ export const AIchat = async (
           role: 'user',
           content: prompt
         }
-      ],
-      model
+      ]
     })
 
     return {
-      response: completion.choices[0].message.content
+      response: response.data.choices[0].message.content
     }
   } catch (e) {
     log.error('AI chat error')

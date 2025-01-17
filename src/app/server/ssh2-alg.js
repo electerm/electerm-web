@@ -49,8 +49,8 @@ export default {
     // 'arcfour'
   ],
   serverHostKey: [
-    'ssh-ed25519',
     'ssh-rsa',
+    'ssh-ed25519',
     'rsa-sha2-512',
     'rsa-sha2-256',
     'ecdsa-sha2-nistp256',
