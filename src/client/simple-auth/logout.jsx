@@ -15,7 +15,7 @@ export default auto(function Logout (props) {
   }
 
   return (
-    <div>
+    <div className='logout-icon'>
       <LogoutOutlined
         className='pointer font16 control-icon iblock'
         onClick={handleLogout}
