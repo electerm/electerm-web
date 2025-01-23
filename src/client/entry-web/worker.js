@@ -13,8 +13,9 @@ function createWs (
 ) {
   // init gloabl ws
   const { host, port, tokenElecterm, server = '' } = config
-  const s = server
-    ? server.replace(/https?:\/\//, '')
+  const ss = self.currentUrl || server
+  const s = ss
+    ? ss.replace(/https?:\/\//, '').replace(/\/$/, '')
     : `${host}:${port}`
   const pre = server.startsWith('https') ? 'wss' : 'ws'
   const wsUrl = `${pre}://${s}/${type}/${id}?sessionId=${sessionId}&sftpId=${sftpId}&token=${tokenElecterm}`
@@ -67,8 +68,13 @@ async function onMsg (e) {
     args,
     action,
     type,
-    persist
+    persist,
+    url
   } = e.data
+  if (action === 'init-url') {
+    self.currentUrl = url
+    return false
+  }
   if (action === 'create') {
     const inst = self.insts[id]
     if (inst instanceof WebSocket) {

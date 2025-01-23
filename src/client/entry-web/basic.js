@@ -50,6 +50,12 @@ async function load () {
     return window.capitalizeFirstLetter(str)
   }
   await loadWorker()
+  if (!window.et.isDev) {
+    window.worker.postMessage({
+      action: 'init-url',
+      url: window.location.href
+    })
+  }
   loadScript()
   document.body.removeChild(document.getElementById('content-loading'))
 }

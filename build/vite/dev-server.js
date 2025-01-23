@@ -75,7 +75,13 @@ async function createServer () {
   const vite = await createViteServer({
     ...conf,
     server: {
-      port: 3041
+      port: 3041,
+      hmr: {
+        // Configure HMR connection
+        host: '0.0.0.0',
+        port: 4655,
+        protocol: 'ws'
+      }
     },
     appType: 'custom'
   })

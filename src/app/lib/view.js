@@ -23,7 +23,8 @@ function buildServer () {
 }
 
 export function index (req, res) {
-  const server = process.env.SERVER || buildServer()
+  const server = process.env.SERVER || (isDev ? buildServer() : '')
+  console.log('server:', server)
   const cdn = process.env.CDN || server
   const data = {
     stylus,
