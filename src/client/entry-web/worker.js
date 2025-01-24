@@ -17,7 +17,7 @@ function createWs (
   const s = ss
     ? ss.replace(/https?:\/\//, '').replace(/\/$/, '')
     : `${host}:${port}`
-  const pre = server.startsWith('https') ? 'wss' : 'ws'
+  const pre = ss.startsWith('https') ? 'wss' : 'ws'
   const wsUrl = `${pre}://${s}/${type}/${id}?sessionId=${sessionId}&sftpId=${sftpId}&token=${tokenElecterm}`
   const ws = new WebSocket(wsUrl)
   ws.s = msg => {
