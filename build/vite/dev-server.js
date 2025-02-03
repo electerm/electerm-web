@@ -109,7 +109,7 @@ async function createServer () {
   app.get('/:dir/:name.:ext', redirect)
   app.listen(devPort, devHost, () => {
     console.log('cwd:', cwd)
-    console.log(`server started at ${h}`)
+    console.log(`server started at ${h || `http://${devHost}:${devPort}`}`)
   })
   app.use(
     '/api/login',
