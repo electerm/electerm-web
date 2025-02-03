@@ -45,6 +45,7 @@ Powered by [manate](https://github.com/tylerlong/manate)
 - 支持快速输入到任意或所有终端
 - 可从 URL 查询字符串进行初始化 [wiki](https://github.com/electerm/electerm-web/wiki/Init-from-url-query-string)
 - 支持移动设备(响应式设计)
+- AI助手集成（支持[DeepSeek](https://www.deepseek.com)、OpenAI等AI API），协助命令建议、脚本编写、以及解释所选终端内容
 
 ## 下载
 

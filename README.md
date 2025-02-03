@@ -45,6 +45,7 @@ Open-sourced terminal/ssh/telnet/serialport/sftp client(linux, mac, win).
 - Quick input to one or all terminals.
 - Init from url query string [wiki](https://github.com/electerm/electerm-web/wiki/Init-from-url-query-string)
 - Support mobile device(responsive design)
+- AI assistant integration (supporting [DeepSeek](https://www.deepseek.com), OpenAI, and other AI APIs) to help with command suggestions, script writing, and explaining selected terminal content
 
 ## Download
 
