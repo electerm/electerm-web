@@ -83,7 +83,7 @@ async function createServer () {
     appType: 'custom'
   })
   app.use(
-    logger(':method :url :status :res[content-length] - :response-time ms')
+    logger('dev')
   )
   app.use(express.json())
   app.use(express.urlencoded({
