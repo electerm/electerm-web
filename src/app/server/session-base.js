@@ -14,6 +14,7 @@ export class TerminalBase {
     this.initOptions = initOptions
     if (initOptions.saveTerminalLogToFile) {
       this.sessionLogger = new SessionLog({
+        logDir: initOptions.sessionLogPath,
         fileName: createLogFileName(initOptions.logName)
       })
     }
@@ -35,6 +36,7 @@ export class TerminalBase {
       delete this.sessionLogger
     } else {
       this.sessionLogger = new SessionLog({
+        logDir: this.initOptions.sessionLogPath,
         fileName: createLogFileName(this.initOptions.logName)
       })
     }

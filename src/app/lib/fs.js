@@ -1,4 +1,4 @@
-import { spawn, exec } from 'child_process'
+import { exec } from 'child_process'
 import fs, { promises as fss } from 'fs'
 import log from '../common/log.js'
 import * as tar from 'tar'
