@@ -19,8 +19,6 @@ export default [
   'readFileAsBase64',
   'writeFile',
   'openFile',
-  'zipFolder',
-  'unzipFile',
   'readCustom',
   'exists',
   'readdir',

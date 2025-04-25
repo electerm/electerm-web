@@ -1,10 +1,7 @@
 import { exec } from 'child_process'
 import fs, { promises as fss } from 'fs'
 import log from '../common/log.js'
-import * as tar from 'tar'
-import { isWin, isMac, tempDir } from '../common/runtime-constants.js'
-import uid from '../common/uid.js'
-import path from 'path'
+import { isWin, isMac } from '../common/runtime-constants.js'
 import { promisify } from 'util'
 import { Bash } from 'node-bash'
 import { getSizeCount, getSizeCountWin } from '../common/count-folder-data.js'
@@ -122,45 +119,6 @@ const openFile = (localFilePath) => {
   return run(cmd)
 }
 
-/**
- * zip file
- * @param {string} localFolerPath absolute path of a folder
- */
-const zipFolder = (localFolerPath) => {
-  return new Promise((resolve, reject) => {
-    const n = uid()
-    const p = path.resolve(tempDir, `electerm-temp-${n}.tar.gz`)
-    const cwd = path.dirname(localFolerPath)
-    const file = path.basename(localFolerPath)
-    return tar.c({
-      gzip: true,
-      file: p,
-      cwd
-    }, [file])
-  })
-}
-
-/**
- * unzip file
- * @param {string} localFilePath absolute path of a zip file
- * @param {string} targetFolderPath absolute path of unzip target folder
- */
-const unzipFile = (localFilePath, targetFolderPath) => {
-  return new Promise((resolve, reject) => {
-    try {
-      tar.x({
-        file: localFilePath,
-        C: targetFolderPath
-      }, () => {
-        resolve(1)
-      })
-    } catch (e) {
-      log.error(e)
-      reject(e)
-    }
-  })
-}
-
 async function listWindowsRootPath () {
   return new Promise((resolve, reject) => {
     const { exec } = require('child_process')
@@ -270,8 +228,6 @@ export const fsExport = Object.assign(
     cp,
     mv,
     openFile,
-    zipFolder,
-    unzipFile,
     readCustom,
     statCustom,
     openCustom,
