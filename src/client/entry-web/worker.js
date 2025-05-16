@@ -7,7 +7,6 @@ self.insts = {}
 function createWs (
   type,
   id,
-  sessionId = '',
   sftpId = '',
   config
 ) {
@@ -18,7 +17,7 @@ function createWs (
     ? ss.replace(/https?:\/\//, '').replace(/\/$/, '')
     : `${host}:${port}`
   const pre = ss.startsWith('https') ? 'wss' : 'ws'
-  const wsUrl = `${pre}://${s}/${type}/${id}?sessionId=${sessionId}&sftpId=${sftpId}&token=${tokenElecterm}`
+  const wsUrl = `${pre}://${s}/${type}/${id}?sftpId=${sftpId}&token=${tokenElecterm}`
   const ws = new WebSocket(wsUrl)
   ws.s = msg => {
     ws.send(JSON.stringify(msg))

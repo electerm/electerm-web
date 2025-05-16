@@ -4,7 +4,6 @@
 import uid from '../common/uid.js'
 import { createLogFileName } from '../common/create-session-log-file-path.js'
 import { SessionLog } from './session-log.js'
-import _ from 'lodash'
 import globalState from './global-state.js'
 
 export class TerminalBase {
@@ -43,24 +42,19 @@ export class TerminalBase {
   }
 
   onEndConn () {
-    const inst = globalState.getSession(this.initOptions.sessionId)
+    const {
+      pid
+    } = this
+    const inst = globalState.getSession(pid)
     if (!inst) {
       return
     }
     if (this.ws) {
       delete this.ws
     }
-    delete inst.sftps[this.pid]
-    delete inst.terminals[this.pid]
     if (this.server && this.server.end) {
       this.server.end()
     }
-    if (
-      _.isEmpty(inst.sftps) &&
-      _.isEmpty(inst.terminals)
-    ) {
-      this.endConns && this.endConns()
-      globalState.removeSession(this.initOptions.sessionId)
-    }
+    globalState.removeSession(pid)
   }
 }

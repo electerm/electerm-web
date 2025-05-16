@@ -10,13 +10,7 @@ import globalState from './global-state.js'
 
 class TerminalRdp extends TerminalBase {
   init = async () => {
-    globalState.setSession(this.initOptions.sessionId, {
-      id: this.initOptions.sessionId,
-      sftps: {},
-      terminals: {
-        [this.pid]: this
-      }
-    })
+    globalState.setSession(this.pid, this)
     return Promise.resolve(this)
   }
 
@@ -103,7 +97,6 @@ class TerminalRdp extends TerminalBase {
           {
             action: 'session-rdp-connected',
             ..._.pick(this.initOptions, [
-              'sessionId',
               'tabId'
             ])
           }
@@ -152,23 +145,21 @@ class TerminalRdp extends TerminalBase {
   kill = () => {
     log.debug('Closed rdp session ' + this.pid)
     if (this.ws) {
-      this.ws?.close()
+      this.ws.close()
       delete this.ws
     }
     this.channel && this.channel.close()
     if (this.sessionLogger) {
       this.sessionLogger.destroy()
     }
-    const inst = globalState.getSession(this.initOptions.sessionId)
+    const {
+      pid
+    } = this
+    const inst = globalState.getSession(pid)
     if (!inst) {
       return
     }
-    delete inst.terminals[this.pid]
-    if (
-      _.isEmpty(inst.terminals)
-    ) {
-      globalState.removeSession(this.initOptions.sessionId)
-    }
+    globalState.removeSession(pid)
   }
 }
 

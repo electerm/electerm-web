@@ -13,10 +13,7 @@ import net from 'net'
 import { exec } from 'child_process'
 import log from '../common/log.js'
 import fs from 'fs'
-import alg from './ssh2-alg.js'
-import {
-  session
-} from './remote-common.js'
+import { algDefault, algAlt } from './ssh2-alg.js'
 import * as sshTunnelFuncs from './ssh-tunnel.js'
 import deepCopy from 'json-deep-copy'
 import { TerminalBase } from './session-base.js'
@@ -24,6 +21,7 @@ import { commonExtends } from './session-common.js'
 import globalState from './global-state.js'
 
 const failMsg = 'All configured authentication methods failed'
+const csFailMsg = 'no matching C->S cipher'
 
 class TerminalSshBase extends TerminalBase {
   getLocalEnv () {
@@ -62,16 +60,7 @@ class TerminalSshBase extends TerminalBase {
   }
 
   init () {
-    const {
-      isTest,
-      initOptions
-    } = this
-    const { sessionId } = initOptions
-    if (isTest || !sessionId || !globalState.getSession(sessionId)) {
-      return this.remoteInitProcess()
-    } else {
-      return this.remoteInitTerminal()
-    }
+    return this.remoteInitProcess()
   }
 
   getShellWindow (initOptions = this.initOptions) {
@@ -100,37 +89,6 @@ class TerminalSshBase extends TerminalBase {
     initOptions.connectionHoppings = [...restHoppings, currentHostHopping]
   }
 
-  remoteInitTerminal () {
-    const {
-      initOptions
-    } = this
-    const connInst = session(initOptions.sessionId)
-    const {
-      conn,
-      shellOpts
-    } = connInst
-    if (initOptions.enableSsh === false) {
-      this.conn = conn
-      connInst.terminals[this.pid] = this
-      return Promise.resolve(this)
-    }
-    return new Promise((resolve, reject) => {
-      conn.shell(
-        this.getShellWindow(),
-        shellOpts,
-        (err, channel) => {
-          if (err) {
-            return reject(err)
-          }
-          this.channel = channel
-          this.conn = conn
-          connInst.terminals[this.pid] = this
-          resolve(this)
-        }
-      )
-    })
-  }
-
   onKeyboardEvent (options) {
     if (this.initOptions.interactiveValues) {
       return Promise.resolve(this.initOptions.interactiveValues.split('\n'))
@@ -140,7 +98,6 @@ class TerminalSshBase extends TerminalBase {
       id,
       action: 'session-interactive',
       ..._.pick(this.initOptions, [
-        'sessionId',
         'tabId'
       ]),
       options
@@ -352,13 +309,7 @@ class TerminalSshBase extends TerminalBase {
       this.endConns()
       return
     } else if (initOptions.enableSsh === false) {
-      globalState.setSession(initOptions.sessionId, {
-        conn: this.conn,
-        id: initOptions.sessionId,
-        shellOpts,
-        sftps: {},
-        terminals: {}
-      })
+      globalState.setSession(this.pid, this)
       return this
     }
     const { sshTunnels = [] } = initOptions
@@ -408,15 +359,7 @@ class TerminalSshBase extends TerminalBase {
             return reject(err)
           }
           this.channel = channel
-          globalState.setSession(initOptions.sessionId, {
-            conn: this.conn,
-            id: initOptions.sessionId,
-            shellOpts,
-            sftps: {},
-            terminals: {
-              [this.pid]: this
-            }
-          })
+          globalState.setSession(this.pid, this)
           resolve(this)
         }
       )
@@ -566,7 +509,7 @@ class TerminalSshBase extends TerminalBase {
       readyTimeout: initOptions.readyTimeout,
       keepaliveCountMax: initOptions.keepaliveCountMax,
       keepaliveInterval: initOptions.keepaliveInterval,
-      algorithms: deepCopy(alg)
+      algorithms: algDefault()
     }
     if (initOptions.serverHostKey && initOptions.serverHostKey.length) {
       all.algorithms.serverHostKey = deepCopy(initOptions.serverHostKey)
@@ -677,7 +620,12 @@ class TerminalSshBase extends TerminalBase {
       skipX11
     ).catch(err => {
       log.error('error when do sshConnect', err, this.privateKeyPath)
-      if (err.message.includes('passphrase')) {
+      if (
+        err.message.includes(csFailMsg) &&
+        !this.altAlg
+      ) {
+        return this.reTryAltAlg()
+      } else if (err.message.includes('passphrase')) {
         const options = {
           name: `passphase for ${this.privateKeyPath || 'privateKey'}`,
           instructions: [''],
@@ -759,6 +707,14 @@ class TerminalSshBase extends TerminalBase {
     return this.sshConnect()
   }
 
+  reTryAltAlg () {
+    log.log('retry with default ciphers/server hosts')
+    this.doKill()
+    this.connectOptions.algorithms = algAlt()
+    this.altAlg = true
+    return this.sshConnect()
+  }
+
   resize (cols, rows) {
     this.channel?.setWindow(rows, cols)
   }
@@ -778,6 +734,26 @@ class TerminalSshBase extends TerminalBase {
   }
 
   kill () {
+    this.initOptions = null
+    this.connectOptions = null
+    this.alg = null
+    this.shellWindow = null
+    this.shellOpts = null
+    this.conn = null
+    this.sshKeys = null
+    this.privateKeyPath = null
+    this.display = null
+    this.x11Cookie = null
+    this.conns = null
+    this.jumpSshKeys = null
+    this.jumpPrivateKeyPathFrom = null
+    this.hoppingOptions = null
+    this.initHoppingOptions = null
+    this.nextConn = null
+    this.doKill()
+  }
+
+  doKill () {
     if (this.sessionLogger) {
       this.sessionLogger.destroy()
     }
