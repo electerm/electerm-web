@@ -19,7 +19,7 @@ Powered by [manate](https://github.com/tylerlong/manate)
 [![Get it from the Microsoft Store](https://img.shields.io/badge/Microsoft-Store-blue)](https://www.microsoft.com/store/apps/9NCN7272GTFF)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/electerm?label=Sponsors)](https://github.com/sponsors/electerm)
 
-开源的终端/SSH/Telnet/串口/SFTP客户端（Linux，Mac，Windows）.
+开源的终端/SSH/Telnet/串口//VNC/RDP/WEB/SFTP/FTP客户端（Linux，Mac，Windows）.
 
 <div align="center">
   <img src="https://github.com/electerm/electerm-resource/raw/master/static/images/electerm.gif", alt="" />

@@ -1,9 +1,12 @@
 import { exec } from 'child_process'
 import fs, { promises as fss } from 'fs'
 import log from '../common/log.js'
-import { isWin, isMac } from '../common/runtime-constants.js'
+import { isWin, isMac, tempDir } from '../common/runtime-constants.js'
+import path from 'path'
+import uid from '../common/uid.js'
 import { promisify } from 'util'
 import { Bash } from 'node-bash'
+import * as tar from 'tar'
 import { getSizeCount, getSizeCountWin } from '../common/count-folder-data.js'
 
 const ROOT_PATH = '/'
@@ -117,6 +120,55 @@ const openFile = (localFilePath) => {
     : 'xdg-open') +
     ` "${localFilePath}"`
   return run(cmd)
+}
+
+/**
+ * zip file
+ * @param {string} localFolerPath absolute path of a folder
+ */
+const zipFolder = (localFolerPath) => {
+  const n = uid()
+  const p = path.resolve(tempDir, `electerm-temp-${n}.tar`)
+  const cwd = path.dirname(localFolerPath)
+  const file = path.basename(localFolerPath)
+  return tar.c({
+    gzip: false,
+    file: p,
+    cwd
+  }, [file])
+    .then(() => p)
+}
+
+const handleWindowsDrive = async (localFilePath, targetFolderPath) => {
+  const tempExtractDir = path.join(tempDir, `electerm-unzip-${uid()}`)
+  await fss.mkdir(tempExtractDir, { recursive: true })
+
+  try {
+    await tar.x({ file: localFilePath, C: tempExtractDir })
+    const items = await fss.readdir(tempExtractDir)
+
+    await Promise.all(items.map(async (item) => {
+      const from = path.join(tempExtractDir, item)
+      const to = path.join(targetFolderPath, item)
+      await mv(from, to)
+    }))
+  } finally {
+    await rmrf(tempExtractDir).catch(log.error)
+  }
+}
+
+/**
+ * unzip file
+ * @param {string} localFilePath absolute path of a zip file
+ * @param {string} targetFolderPath absolute path of unzip target folder
+ */
+const unzipFile = async (localFilePath, targetFolderPath) => {
+  if (isWin && isWinDrive(targetFolderPath)) {
+    await handleWindowsDrive(localFilePath, targetFolderPath)
+  } else {
+    await tar.x({ file: localFilePath, C: targetFolderPath })
+  }
+  return 1
 }
 
 async function listWindowsRootPath () {
@@ -233,6 +285,8 @@ export const fsExport = Object.assign(
     openCustom,
     closeCustom,
     writeCustom,
+    zipFolder,
+    unzipFile,
     readdirOnly,
     readdirAndFiles
   },
