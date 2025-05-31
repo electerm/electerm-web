@@ -4,16 +4,26 @@
 import axios from 'axios'
 import log from '../common/log.js'
 import defaultSettings from '../common/config-default.js'
+import { createProxyAgent } from './proxy-agent.js'
 
 // Initialize OpenAI with DeepSeek configuration
-const createAIClient = (baseURL, apiKey) => {
-  return axios.create({
+const createAIClient = (baseURL, apiKey, proxy) => {
+  const config = {
     baseURL,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`
     }
-  })
+  }
+
+  // Add proxy agent if proxy is provided
+  const agent = proxy ? createProxyAgent(proxy) : null
+  if (agent) {
+    config.httpsAgent = agent
+    config.proxy = false // Disable default proxy behavior when using agent
+  }
+
+  return axios.create(config)
 }
 
 export const AIchat = async (
@@ -22,10 +32,11 @@ export const AIchat = async (
   role = defaultSettings.roleAI,
   baseURL = defaultSettings.baseURLAI,
   path = defaultSettings.apiPathAI,
-  apiKey
+  apiKey,
+  proxy
 ) => {
   try {
-    const client = createAIClient(baseURL, apiKey)
+    const client = createAIClient(baseURL, apiKey, proxy)
     const response = await client.post(path, {
       model,
       messages: [
