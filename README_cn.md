@@ -157,8 +157,6 @@ npm run prod
 ENABLE_AUTH=1 # 如果未启用，每个人都可以无需登录使用它。
 SERVER_SECRET=some-server-secret
 SERVER_PASS=some-login-pass-word
-SERVER=http://xxx.com # 如果要绑定域名。
-CDN=http://xxx.com # 如果要使用 CDN 提供静态文件服务。
 
 # 运行生产应用程序服务器脚本文件。
 ./run-electerm-web.sh

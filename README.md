@@ -158,8 +158,6 @@ npm run prod
 ENABLE_AUTH=1 # if not enabled, everyone can use it without login
 SERVER_SECRET=some-server-secret
 SERVER_PASS=some-login-pass-word
-SERVER=http://xxx.com # if you want to bind domain
-CDN=http://xxx.com # if you want to use cdn serve static files
 
 # run prod app
 ./run-electerm-web.sh
