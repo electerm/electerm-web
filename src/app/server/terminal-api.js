@@ -4,6 +4,7 @@
 
 import { terminals } from './remote-common.js'
 import { terminal, testConnection } from './session.js'
+import { isDev } from '../common/runtime-constants.js'
 
 export async function runCmd (ws, msg) {
   const { id, pid, cmd } = msg
@@ -57,10 +58,18 @@ export function toggleTerminalLogTimestamp (ws, msg) {
 export function createTerm (ws, msg) {
   const { id, body } = msg
   terminal(body, ws)
-    .then(data => {
+    .then(r => {
+      const data = isDev
+        ? {
+            pid: r.pid,
+            port: process.env.PORT
+          }
+        : {
+            pid: r.pid
+          }
       ws.s({
         id,
-        data: data.pid
+        data
       })
     })
     .catch(err => {
