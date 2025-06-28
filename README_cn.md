@@ -164,16 +164,6 @@ SERVER_PASS=some-login-pass-word
 # 查看 examples/nginx.conf 和 examples/nginx-ssl.conf 以获取域名绑定的 nginx 配置示例。
 ```
 
-## 测试
-
-```bash
-npx playwright install --with-deps chromium
-# 或者如果需要代理，请使用以下命令：
-HTTPS_PROXY=http://127.0.0.1:1087 npx playwright install --with-deps chromium
-# 然后编辑 .env，编辑与测试相关的环境变量。
-npm run test
-```
-
 ## 许可证
 
 MIT

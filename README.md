@@ -165,16 +165,6 @@ SERVER_PASS=some-login-pass-word
 # Check examples/nginx.conf examples/nginx-ssl.conf  for domain binding nginx conf example
 ```
 
-## Test
-
-```bash
-npx playwright install --with-deps chromium
-# or with a proxy if needed
-HTTPS_PROXY=http://127.0.0.1:1087 npx playwright install --with-deps chromium
-# then edit .env, edit test related env
-npm run test
-```
-
 ## License
 
 MIT
