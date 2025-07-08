@@ -76,7 +76,7 @@ kofi
 ## 先决条件
 
 - git
-- Nodejs 18+/npm，推荐使用 [fnm](https://github.com/Schniz/fnm) 安装 nodejs/npm
+- Nodejs 20/22, npm，推荐使用 [fnm](https://github.com/Schniz/fnm) 安装 nodejs/npm
 - python/make 工具，对于 Linux：`sudo apt install -y make python g++ build-essential`，对于 MacOS：安装 Xcode，对于 Windows，安装 `vs studio` 或 `npm install --global --production windows-build-tools`
 
 ## 一行脚本从源代码部署

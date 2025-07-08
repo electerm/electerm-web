@@ -76,7 +76,7 @@ wechat donate
 ## Prerequisites
 
 - git
-- Nodejs 20+/npm, recommend use [fnm](https://github.com/Schniz/fnm) to install nodejs/npm
+- Nodejs 20/22, npm, recommend use [fnm](https://github.com/Schniz/fnm) to install nodejs/npm
 - python/make tools, for Linux: `sudo apt install -y make python g++ build-essential`, for MacOS: install Xcode, for Windows, install `vs studio` or `npm install --global --production windows-build-tools`
 
 ## One line script to deploy from source code
