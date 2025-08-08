@@ -15,11 +15,12 @@ import { watchFile, unwatchFile } from './watch-file.js'
 import lookup from './lookup.js'
 import { init } from './init.js'
 import { showItemInFolder } from './show-item-in-folder.js'
-import { AIchat } from './ai.js'
+import { AIchat, getStreamContent } from './ai.js'
 import globalState from './global-state.js'
 
 const globs = {
   AIchat,
+  getStreamContent,
   encryptAsync,
   decryptAsync,
   showItemInFolder,
