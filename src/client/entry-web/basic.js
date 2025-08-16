@@ -53,6 +53,12 @@ async function load () {
     const url = !isDev ? cdn + `/js/electerm-${version}.js` : cdn + '/js/electerm.js'
     rcs.src = url
     rcs.type = 'module'
+    rcs.onload = () => {
+      const loadingEl = document.getElementById('content-loading')
+      if (loadingEl) {
+        document.body.removeChild(loadingEl)
+      }
+    }
     document.body.appendChild(rcs)
   }
   window.getLang = (lang = window.store?.config.language || 'en_us') => {
@@ -71,7 +77,6 @@ async function load () {
     })
   }
   loadScript()
-  document.body.removeChild(document.getElementById('content-loading'))
 }
 
 // window.addEventListener('load', load)
