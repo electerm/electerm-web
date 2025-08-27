@@ -4,7 +4,7 @@
 
 import { defaultUserName, cwd } from '../common/runtime-constants.js'
 import { resolve } from 'path'
-import Datastore from '@yetzt/nedb'
+import Datastore from '@seald-io/nedb'
 
 const reso = (name) => {
   const nedbPath = process.env.DB_PATH || resolve(cwd, 'data/nedb-database')
