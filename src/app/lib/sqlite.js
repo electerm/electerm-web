@@ -10,13 +10,14 @@ import uid from '../common/uid.js'
 import { DatabaseSync } from 'node:sqlite'
 
 // Define database folder and paths for two database files
-const dbFolder = process.env.DB_PATH || resolve(cwd, 'data', 'sqlite')
-const mainDbPath = resolve(dbFolder, 'electerm.db')
-const dataDbPath = resolve(dbFolder, 'electerm_data.db')
+const dbFolder = process.env.DB_PATH || resolve(cwd, 'data')
+const baseFolder = resolve(dbFolder, 'sqlite')
+const mainDbPath = resolve(baseFolder, 'electerm.db')
+const dataDbPath = resolve(baseFolder, 'electerm_data.db')
 
 // Ensure parent directory exists
-if (!fs.existsSync(dbFolder)) {
-  fs.mkdirSync(dbFolder, { recursive: true })
+if (!fs.existsSync(baseFolder)) {
+  fs.mkdirSync(baseFolder, { recursive: true })
 }
 // Create two database instances
 const mainDb = new DatabaseSync(mainDbPath)
