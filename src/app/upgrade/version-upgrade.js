@@ -9,7 +9,7 @@
  */
 
 import log from '../common/log.js'
-import { dbAction } from '../../../temp/nedb-lib.js'
+import { dbAction } from '../lib/db.js'
 
 export async function updateDBVersion (toVersion) {
   const versionQuery = {

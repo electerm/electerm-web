@@ -5,7 +5,7 @@
 import defaultSetting from '../common/config-default.js'
 import { userConfigId } from '../common/constants.js'
 import { isDev } from '../common/runtime-constants.js'
-import { dbAction } from '../../../temp/nedb-lib.js'
+import { dbAction } from './db.js'
 import * as langMap from '@electerm/electerm-locales/esm/index.mjs'
 
 export async function getConfig () {
