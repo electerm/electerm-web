@@ -3,7 +3,7 @@
  * just need init db
  */
 
-import { dbAction } from '../lib/db.js'
+import { dbAction } from '../../../temp/nedb-lib.js'
 import log from '../common/log.js'
 import defaults from './db-defaults.js'
 

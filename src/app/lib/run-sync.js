@@ -5,7 +5,7 @@ import log from '../common/log.js'
 import { toCss } from '../lib/style.js'
 import { listItermThemes } from '../lib/iterm-theme.js'
 import { listSerialPorts } from '../lib/serial-port.js'
-import { dbAction } from '../lib/db.js'
+import { dbAction } from './db.js'
 import { encryptAsync, decryptAsync } from '../lib/enc.js'
 import { loadFontList } from './font-list.js'
 import { loadSshConfig } from './ssh-config.js'
@@ -43,7 +43,8 @@ const globs = {
   saveUserConfig,
   registerDeepLink: () => Promise.resolve(1),
   setWindowSize: () => Promise.resolve(1),
-  getScreenSize: () => Promise.resolve({ width: 1920, height: 1080 })
+  getScreenSize: () => Promise.resolve({ width: 1920, height: 1080 }),
+  checkMigrate: () => Promise.resolve(false)
 }
 
 export function runSync (ws, msg) {
@@ -52,6 +53,7 @@ export function runSync (ws, msg) {
     func,
     args = []
   } = msg
+  // console.log('runSync', func, args)
   globs[func](...args)
     .then(data => {
       ws.s({

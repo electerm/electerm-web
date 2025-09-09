@@ -47,6 +47,29 @@ Open-sourced terminal/ssh/telnet/serialport/VNC/RDP/sftp/ftp client(linux, mac, 
 - Support mobile device(responsive design)
 - AI assistant integration (supporting [DeepSeek](https://www.deepseek.com), OpenAI, and other AI APIs) to help with command suggestions, script writing, and explaining selected terminal content
 
+## Migration from v2 to v3
+
+Since electerm-web v3, the application uses SQLite instead of NeDB for better performance and stability. If you're upgrading from v2 and have existing data, you'll need to migrate your data.
+
+### Migration Steps
+
+1. **Install electerm-data-tool**:
+
+   ```bash
+   npm install -g electerm-data-tool
+   ```
+
+2. **Export your data from NeDB**:
+
+   ```bash
+      # data folder should have a nedb-database child folder
+      electerm-data-tool --data-path "/path/to/your/data-folder-which-has-nedb-database-sub-folder" --app-type web migrate
+   ```
+
+3. **Start electerm-web v3** and go to the **Data Sync** panel
+
+4. **Import your data**: Upload the `data.json` file in the Data Sync panel to restore your data
+
 ## Download
 
 todo
@@ -170,5 +193,3 @@ SERVER_PASS=some-login-pass-word
 MIT
 
 [![DigitalOcean Referral Badge](https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%202.svg)](https://www.digitalocean.com/?refcode=c10bcb28b846&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge)
-
-[![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com?aff=NuttyMonkey521 "Powered by DartNode - Free VPS for Open Source")

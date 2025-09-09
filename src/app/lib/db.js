@@ -1,55 +1,18 @@
-import {
-  getConf
-} from './conf.js'
+/**
+ * db loader
+ */
 
-const db = {}
-let dbActionRef = null
+let dbModule = null
 
-const tables = [
-  'bookmarks',
-  'history',
-  'bookmarkGroups',
-  'addressBookmarks',
-  'terminalThemes',
-  'lastStates',
-  'data',
-  'quickCommands',
-  'log',
-  'dbUpgradeLog',
-  'profiles'
-]
-
-export async function getDb () {
-  if (dbActionRef) {
-    return dbActionRef
+async function getDbModule () {
+  if (!dbModule) {
+    // await performMigration()
+    dbModule = await import('./sqlite.js')
   }
-  const conf = await getConf()
-  let Db = null
-  if (conf.Db) {
-    Db = conf.Db
-  } else {
-    Db = await import('./nedb.js').then(d => d.Db)
-  }
-  tables.forEach(table => {
-    const conf = {
-      tableName: table
-    }
-    db[table] = new Db(conf)
-  })
-  dbActionRef = (dbName, op, ...args) => {
-    return new Promise((resolve, reject) => {
-      db[dbName][op](...args, (err, result) => {
-        if (err) {
-          return reject(err)
-        }
-        resolve(result)
-      })
-    })
-  }
-  return dbActionRef
+  return dbModule
 }
 
 export async function dbAction (...args) {
-  const func = await getDb()
-  return func(...args)
+  const db = await getDbModule()
+  return db.dbAction ? db.dbAction(...args) : db.default.dbAction(...args)
 }

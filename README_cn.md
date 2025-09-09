@@ -47,6 +47,29 @@ Powered by [manate](https://github.com/tylerlong/manate)
 - 支持移动设备(响应式设计)
 - AI助手集成（支持[DeepSeek](https://www.deepseek.com)、OpenAI等AI API），协助命令建议、脚本编写、以及解释所选终端内容
 
+## 从 v2 迁移到 v3
+
+从 electerm-web v3 开始，应用程序使用 SQLite 而不是 NeDB 以获得更好的性能和稳定性。如果您正在从 v2 升级并且有现有数据，则需要迁移数据。
+
+### 迁移步骤
+
+1. **安装 electerm-data-tool**：
+
+   ```bash
+   npm install -g electerm-data-tool
+   ```
+
+2. **从 NeDB 导出数据**：
+
+   ```bash
+      # data folder should have a nedb-database child folder
+      electerm-data-tool --data-path "/path/to/your/data-folder" --app-type web export data.json
+   ```
+
+3. **启动 electerm-web v3** 并进入 **数据同步** 面板
+
+4. **导入数据**：在数据同步面板中上传 `data.json` 文件以恢复您的数据
+
 ## 下载
 
 待完成
@@ -169,5 +192,3 @@ SERVER_PASS=some-login-pass-word
 MIT
 
 [![DigitalOcean Referral Badge](https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%202.svg)](https://www.digitalocean.com/?refcode=c10bcb28b846&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge)
-
-[![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com?aff=NuttyMonkey521 "Powered by DartNode - Free VPS for Open Source")

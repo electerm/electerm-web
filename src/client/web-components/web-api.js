@@ -78,6 +78,8 @@ window.api = {
         window.et.initTime = Date.now()
         return window.et.initTime
       }
+    } else if (func === 'nodePtyCheck') {
+      return window.et.hasNodePty
     }
     return window.wsFetch({
       action: 'runSync',
