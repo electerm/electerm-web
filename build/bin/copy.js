@@ -10,7 +10,7 @@ const f1 = resolve(
 )
 const from0 = resolve(
   cwd,
-  'node_modules/vscode-icons/icons'
+  'node_modules/electerm-icons/icons'
 )
 const from1 = resolve(
   cwd,

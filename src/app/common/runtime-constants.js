@@ -24,7 +24,7 @@ export const iconPath = resolve(
     : 'dist/assets/images/electerm-round-128x128.png'
 )
 export const extIconPath = isDev
-  ? '/node_modules/vscode-icons/icons/'
+  ? '/node_modules/electerm-icons/icons/'
   : '/icons/'
 export const defaultUserName = 'default_user'
 export const minWindowWidth = 590

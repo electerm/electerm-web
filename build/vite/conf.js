@@ -134,8 +134,8 @@ export default defineConfig({
             if (id.includes('zmodem-ts')) {
               return 'zmodem-ts'
             }
-            if (id.includes('vscode-icons-js')) {
-              return 'vscode-icons-js'
+            if (id.includes('electerm-icons')) {
+              return 'electerm-icons'
             }
             if (id.includes('@novnc/novnc')) {
               return 'novnc'
