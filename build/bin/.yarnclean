@@ -20,6 +20,8 @@ CONTRIBUTORS
 *.md
 *.ts
 *.jst
+*.js.map
+*.ts.map
 *.coffee
 
 # folders

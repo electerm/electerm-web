@@ -44,7 +44,10 @@ const globs = {
   registerDeepLink: () => Promise.resolve(1),
   setWindowSize: () => Promise.resolve(1),
   getScreenSize: () => Promise.resolve({ width: 1920, height: 1080 }),
-  checkMigrate: () => Promise.resolve(false)
+  checkMigrate: () => Promise.resolve(false),
+  setBackgroundColor: () => {
+    return Promise.resolve(1)
+  }
 }
 
 export function runSync (ws, msg) {
