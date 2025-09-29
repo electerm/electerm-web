@@ -1,12 +1,11 @@
-@require '../electerm-react/css/includes/theme-default'
 
 .dialog-file-item
   padding 6px 10px
   &:hover
-    background-color primary
-    color contrastColor(primary)
+    background-color var(--primary)
+    color var(--primary-contrast)
   &.selected
-    background-color darken(primary, 30%)
+    background-color var(--primary)
     color contrastColor(primary)
 .file-dialog-list-wrap
   height 70vh

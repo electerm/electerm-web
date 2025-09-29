@@ -18,7 +18,6 @@ import proxy from 'express-http-proxy'
 import fsFunctions from '../../src/app/common/fs-functions.js'
 import { createToken } from '../../src/app/lib/jwt.js'
 import { logDir } from '../../src/app/server/session-log.js'
-import { loadDevStylus } from '../../src/app/lib/style.js'
 import { resolve } from 'path'
 import fs from 'fs'
 import { defaultUserName } from '../../src/app/common/runtime-constants.js'
@@ -41,7 +40,6 @@ const base = {
   home: os.homedir(),
   server: h,
   cdn: h,
-  stylus: loadDevStylus(),
   isWebApp: true,
   sessionLogPath: logDir,
   tokenElecterm: process.env.ENABLE_AUTH ? '' : createToken()

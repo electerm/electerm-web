@@ -2,7 +2,6 @@
  * serial port lib
  */
 import log from '../common/log.js'
-import { toCss } from '../lib/style.js'
 import { listItermThemes } from '../lib/iterm-theme.js'
 import { listSerialPorts } from '../lib/serial-port.js'
 import { dbAction } from './db.js'
@@ -33,7 +32,6 @@ const globs = {
   doUpgrade,
   loadSshConfig,
   listItermThemes,
-  toCss,
   init,
   initCommandLine: () => Promise.resolve(0),
   getInitTime: () => {

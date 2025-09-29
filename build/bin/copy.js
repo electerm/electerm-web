@@ -16,10 +16,7 @@ const from1 = resolve(
   cwd,
   'src/app/views'
 )
-const from3 = resolve(
-  cwd,
-  'build/iTerm2-Color-Schemes/electerm/*'
-)
+
 const t1 = resolve(
   cwd,
   'dist/assets/'
@@ -31,10 +28,6 @@ const to1 = resolve(
 const to2 = resolve(
   cwd,
   'dist/assets/icons'
-)
-const to4 = resolve(
-  cwd,
-  'dist/assets/iTerm2-Color-Schemes/'
 )
 const arr = [
   {
@@ -48,9 +41,6 @@ const arr = [
   {
     from: from0,
     to: to2
-  }, {
-    from: from3,
-    to: to4
   }
 ]
 

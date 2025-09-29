@@ -2,7 +2,7 @@
  * build
  */
 import pkg from 'shelljs'
-const { exec, echo, mkdir } = pkg
+const { exec, echo } = pkg
 
 echo('start build')
 
@@ -10,7 +10,6 @@ const timeStart = Date.now()
 
 // echo('clean')
 // exec('npm run clean')
-mkdir('-p', 'dist/assets/iTerm2-Color-Schemes')
 echo('js/css file')
 exec('npm run vite-build')
 echo('copy file')

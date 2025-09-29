@@ -14,14 +14,12 @@ import {
 } from '../common/runtime-constants.js'
 import { migrationNotice } from './fancy-console.js'
 import fsFunctions from '../common/fs-functions.js'
-import { loadDevStylus } from './style.js'
 import copy from 'json-deep-copy'
 import { createToken } from './jwt.js'
 import { logDir } from '../server/session-log.js'
 import { resolve } from 'path'
 import fs from 'fs'
 
-const stylus = loadDevStylus()
 let needMigrate
 
 function buildServer () {
@@ -70,7 +68,6 @@ export async function index (req, res) {
     )
   }
   const data = {
-    stylus,
     isDev,
     isMac,
     isWin,
