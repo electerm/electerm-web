@@ -31,6 +31,11 @@ export function forwardRemoteToLocal ({
         srcStream.end()
       })
 
+      server.on('close', () => {
+        log.log('Local server connection closed')
+        srcStream.end()
+      })
+
       srcStream.pipe(server).pipe(srcStream)
     }).on('close', () => {
       server && server.close && server.close()
@@ -56,8 +61,14 @@ export function forwardLocalToRemote ({
   sshTunnelLocalHost = '127.0.0.1'
 }) {
   return new Promise((resolve, reject) => {
-    const localServer = net.createServer((socket) => {
-      // Add error handling for client socket
+    const activeSockets = new Set()
+    const localServer = require('net').createServer((socket) => {
+      // ⬇️ 2. Add new sockets to the set and remove them when they close
+      activeSockets.add(socket)
+      socket.on('close', () => {
+        activeSockets.delete(socket)
+      })
+
       socket.on('error', (err) => {
         log.error('Client socket error:', err)
         socket.end()
@@ -70,7 +81,6 @@ export function forwardLocalToRemote ({
           return reject(err)
         }
 
-        // Add error handling for remote socket
         remoteSocket.on('error', (err) => {
           log.error('Remote socket error:', err)
           socket.end()
@@ -79,7 +89,7 @@ export function forwardLocalToRemote ({
         socket.pipe(remoteSocket).pipe(socket)
       })
     })
-    // Start listening for local connections
+
     localServer.listen(sshTunnelLocalPort, sshTunnelLocalHost, () => {
       log.log(`Local server listening on port ${sshTunnelLocalPort}`)
       resolve(1)
@@ -88,7 +98,13 @@ export function forwardLocalToRemote ({
       log.error('Error listening for local connections:', err)
       reject(err)
     })
+
     conn.on('close', () => {
+      log.log('SSH connection closed, closing local server.')
+      // ⬇️ 3. Destroy all active sockets before closing the server
+      for (const socket of activeSockets) {
+        socket.destroy()
+      }
       localServer && localServer.close()
     })
   })
