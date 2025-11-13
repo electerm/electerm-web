@@ -38,7 +38,8 @@ export function wsRoutes (app) {
     const term = terminals(req.params.pid)
     const { pid } = term
     log.debug('ws: connected to terminal ->', pid)
-
+    const dataBuffer = []
+    let sendTimeout = null
     term.on('data', function (data) {
       try {
         if (term.sessionLogger) {
@@ -47,9 +48,25 @@ export function wsRoutes (app) {
             : ''
           term.sessionLogger.write(`${dt}${strip(data.toString())}`)
         }
-        ws.send(Buffer.from(data))
+
+        // Buffer incoming data instead of sending immediately
+        dataBuffer.push(data)
+
+        // If no timeout is pending, schedule a batched send
+        if (!sendTimeout) {
+          sendTimeout = setTimeout(() => {
+            // Combine buffered data (optional: limit size to avoid memory issues)
+            const combinedData = dataBuffer.splice(0).join('')
+
+            // Send to WebSocket
+            ws.send(combinedData)
+
+            // Reset timeout
+            sendTimeout = null
+          }, 10) // Small delay (10ms) to throttle; adjust based on testing
+        }
       } catch (ex) {
-        console.log('kkk', ex)
+        console.log(ex)
       // The WebSocket is not open, ignore
       }
     })

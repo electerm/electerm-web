@@ -3,7 +3,6 @@
  */
 import pty from 'node-pty'
 import { resolve as pathResolve } from 'path'
-import log from '../common/log.js'
 import globalState from './global-state.js'
 import { TerminalBase } from './session-base.js'
 
@@ -56,14 +55,7 @@ class TerminalLocal extends TerminalBase {
   }
 
   write (data) {
-    try {
-      this.term.write(data)
-      if (this.sessionLogger) {
-        this.sessionLogger.write(data)
-      }
-    } catch (e) {
-      log.error(e)
-    }
+    this.term.write(data)
   }
 
   kill () {
