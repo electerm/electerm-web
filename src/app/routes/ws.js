@@ -56,7 +56,7 @@ export function wsRoutes (app) {
         if (!sendTimeout) {
           sendTimeout = setTimeout(() => {
             // Combine buffered data (optional: limit size to avoid memory issues)
-            const combinedData = dataBuffer.splice(0).join('')
+            const combinedData = Buffer.concat(dataBuffer.splice(0).map(d => Buffer.isBuffer(d) ? d : Buffer.from(d)))
 
             // Send to WebSocket
             ws.send(combinedData)
