@@ -143,7 +143,7 @@ cp .sample.env .env
 # for Mac OS DB_PATH="/Users/<your-user-name>/Library/Application Support/electerm"
 # for Linux OS DB_PATH="/home/<your-user-name>/.config/electerm"
 # for Windows OS DB_PATH="C:\\Users\\<your-user-name>\\AppData\\Roaming\\electerm"
-
+npm config set legacy-peer-deps true
 npm i
 
 # start webpack dev server

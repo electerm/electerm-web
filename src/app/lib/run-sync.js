@@ -15,6 +15,12 @@ import lookup from './lookup.js'
 import { init } from './init.js'
 import { showItemInFolder } from './show-item-in-folder.js'
 import { AIchat, getStreamContent } from './ai.js'
+import {
+  listWidgets,
+  runWidget,
+  stopWidget,
+  runWidgetFunc
+} from '../widgets/load-widget.js'
 import globalState from './global-state.js'
 
 const globs = {
@@ -45,7 +51,11 @@ const globs = {
   checkMigrate: () => Promise.resolve(false),
   setBackgroundColor: () => {
     return Promise.resolve(1)
-  }
+  },
+  listWidgets,
+  runWidget,
+  stopWidget,
+  runWidgetFunc
 }
 
 export function runSync (ws, msg) {
