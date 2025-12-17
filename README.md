@@ -99,7 +99,7 @@ wechat donate
 ## Prerequisites
 
 - git
-- Nodejs 20/22, npm, recommend use [fnm](https://github.com/Schniz/fnm) to install nodejs/npm
+- Nodejs 22, npm, recommend use [fnm](https://github.com/Schniz/fnm) to install nodejs/npm
 - python/make tools, for Linux: `sudo apt install -y make python g++ build-essential`, for MacOS: install Xcode, for Windows, install `vs studio` or `npm install --global --production windows-build-tools`
 
 ## One line script to deploy from source code
@@ -133,7 +133,7 @@ Check [electerm-web-docker](https://github.com/electerm/electerm-web-docker)
 # tested in ubuntu16.04+/mac os 10.13+ only
 # needs nodejs/npm, suggest using nvm to install nodejs/npm
 # https://github.com/creationix/nvm
-# with nodejs 18.x
+# with nodejs 22.x
 
 git clone git@github.com:electerm/electerm-web.git
 cd electerm-web

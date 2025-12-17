@@ -132,7 +132,7 @@ cmd.exe /c ".\one-line-web.bat"
 # 仅在 ubuntu16.04+/mac os 10.13+ 上测试过
 # 需要 nodejs/npm，建议使用 nvm 安装 nodejs/npm
 # https://github.com/creationix/nvm
-# 使用 nodejs 18.x
+# 使用 nodejs 22.x
 
 git clone git@github.com:electerm/electerm-web.git
 cd electerm-web
