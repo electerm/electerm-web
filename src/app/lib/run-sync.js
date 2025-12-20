@@ -55,7 +55,8 @@ const globs = {
   listWidgets,
   runWidget,
   stopWidget,
-  runWidgetFunc
+  runWidgetFunc,
+  getPendingDeepLink: () => Promise.resolve(null)
 }
 
 export function runSync (ws, msg) {
