@@ -1,4 +1,4 @@
-import ftp from 'basic-ftp'
+import { FtpClientWrapper } from './ftp-client.js'
 import { TerminalBase } from './session-base.js'
 import { commonExtends } from './session-common.js'
 import { readRemoteFile, writeRemoteFile } from './ftp-file.js'
@@ -15,8 +15,8 @@ class FtpClient extends TerminalBase {
   }
 
   async connect (initOptions) {
-    this.client = new ftp.Client()
-    this.client.ftp.verbose = initOptions.debug
+    this.client = new FtpClientWrapper()
+    this.client.verbose = initOptions.debug
     await this.client.access({
       host: initOptions.host,
       port: initOptions.port || 21,

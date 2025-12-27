@@ -59,10 +59,12 @@ export default (initOptions) => {
         host: proxyHost,
         path: `${host}:${port}`,
         method: 'CONNECT',
-        timeout: readyTimeout
+        timeout: readyTimeout,
+        headers: {}
       }
       if (username) {
-        opts.auth = `${username}:${password}`
+        const auth = Buffer.from(`${username}:${password}`).toString('base64')
+        opts.headers['Proxy-Authorization'] = `Basic ${auth}`
       }
       request(opts)
         .on('error', (e) => {

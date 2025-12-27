@@ -33,7 +33,8 @@ export const tables = [
   'quickCommands',
   'log',
   'dbUpgradeLog',
-  'profiles'
+  'profiles',
+  'workspaces'
 ]
 
 // Create tables in appropriate databases
