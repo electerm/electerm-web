@@ -59,24 +59,40 @@ async function listWidgets () {
   // ]
 }
 
+function hasRunningInstance (widgetId) {
+  for (const [, instance] of runningInstances) {
+    if (instance.widgetId === widgetId) {
+      return true
+    }
+  }
+  return false
+}
+
 async function runWidget (widgetId, config) {
   const file = `widget-${widgetId}.js`
   const widgetPath = path.join(__dirname, file)
   const widget = await import(`file://${widgetPath}`)
 
-  const { type } = widget.widgetInfo
+  const { type, singleInstance } = widget.widgetInfo
   if (type !== 'instance') {
     return widget.widgetRun(config)
   }
 
+  // Check if singleInstance widget already has a running instance
+  if (singleInstance && hasRunningInstance(widgetId)) {
+    return Promise.reject(new Error(`Widget ${widgetId} already has a running instance. Only one instance is allowed.`))
+  }
+
   const instance = widget.widgetRun(config)
+  instance.widgetId = widgetId
   runningInstances.set(instance.instanceId, instance)
 
   return instance.start()
     .then((result) => {
       return {
         instanceId: instance.instanceId,
-        widgetId: widget.id,
+        widgetId,
+        singleInstance: !!singleInstance,
         ...result
       }
     })

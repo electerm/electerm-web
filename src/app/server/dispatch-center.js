@@ -27,6 +27,7 @@ import {
   toggleTerminalLog,
   toggleTerminalLogTimestamp
 } from './terminal-api.js'
+import globalState from './global-state.js'
 
 const {
   SERVER_USER
@@ -157,6 +158,7 @@ export function initWs (app) {
   app.ws('/common/s', (ws, req) => {
     verifyWs(req)
     wsDec(ws)
+    globalState.setCommonWs(ws)
     ws.on('message', async (message) => {
       try {
         const msg = JSON.parse(message)

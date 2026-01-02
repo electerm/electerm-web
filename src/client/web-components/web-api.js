@@ -62,6 +62,12 @@ window.api = {
       func
     })
   },
+  sendMcpResponse: data => {
+    window.et.commonWs.s({
+      type: 'mcp-response',
+      ...data
+    })
+  },
   runSync: (func, ...args) => {
     if (func === 'isMaximized') {
       return false
