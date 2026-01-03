@@ -120,7 +120,15 @@ async function onMsg (e) {
   } else if (action === 'addEventListener') {
     const ws = self.insts[wsId]
     if (ws) {
-      ws.cb = (e) => {
+      // Support multiple listeners using a Map keyed by listener ID
+      if (!ws.listeners) {
+        ws.listeners = new Map()
+      }
+      // Check if this listener ID already exists (prevent duplicates for same ID)
+      if (ws.listeners.has(id)) {
+        ws.removeEventListener(type, ws.listeners.get(id).cb)
+      }
+      const cb = (e) => {
         send({
           wsId,
           id,
@@ -129,13 +137,15 @@ async function onMsg (e) {
           }
         })
       }
-      ws.addEventListener(type, ws.cb)
+      ws.listeners.set(id, { type, cb })
+      ws.addEventListener(type, cb)
     }
   } else if (action === 'removeEventListener') {
     const ws = self.insts[wsId]
-    if (ws) {
-      ws.removeEventListener(type, ws.cb)
-      delete ws.cb
+    if (ws && ws.listeners && ws.listeners.has(id)) {
+      const listener = ws.listeners.get(id)
+      ws.removeEventListener(listener.type, listener.cb)
+      ws.listeners.delete(id)
     }
   }
 }

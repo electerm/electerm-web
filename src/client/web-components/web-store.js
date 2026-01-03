@@ -28,7 +28,6 @@ class Store extends StateStore {
 }
 
 Store.prototype.initMcpHandler = function () {
-  const { ipcOnEvent } = window.pre
   // Listen for MCP requests from main process
   window.et.commonWs.addEventListener('message', (e) => {
     if (e &&
@@ -42,12 +41,6 @@ Store.prototype.initMcpHandler = function () {
       if (action === 'tool-call') {
         window.store.handleMcpToolCall(requestId, data.toolName, data.args)
       }
-    }
-  })
-  ipcOnEvent('mcp-request', (event, request) => {
-    const { requestId, action, data } = request
-    if (action === 'tool-call') {
-      window.store.handleMcpToolCall(requestId, data.toolName, data.args)
     }
   })
 }

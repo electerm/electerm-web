@@ -64,7 +64,7 @@ window.api = {
   },
   sendMcpResponse: data => {
     window.et.commonWs.s({
-      type: 'mcp-response',
+      type: 'mcp-response-back',
       ...data
     })
   },
