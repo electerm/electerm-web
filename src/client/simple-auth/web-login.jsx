@@ -3,9 +3,9 @@ import { useState, useEffect, useRef } from 'react'
 import LogoElem from '../electerm-react/components/common/logo-elem.jsx'
 import {
   Input,
-  message,
   Spin
 } from 'antd'
+import message from '../electerm-react/components/common/message'
 import {
   ArrowRightOutlined,
   Loading3QuartersOutlined

@@ -6,11 +6,11 @@ import { Component } from 'react'
 import {
   Modal,
   Spin,
-  notification,
   Pagination,
   Button,
   ConfigProvider
 } from 'antd'
+import { notification } from '../electerm-react/components/common/notification'
 import FileItem from './file-item'
 import AddressBar from '../electerm-react/components/sftp/address-bar'
 import isValidPath from '../electerm-react/common/is-valid-path'

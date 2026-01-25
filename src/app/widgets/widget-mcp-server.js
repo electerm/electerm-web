@@ -276,13 +276,10 @@ class ElectermMCPServer {
         'list_electerm_bookmarks',
         {
           description: 'List all electerm SSH/terminal bookmarks',
-          inputSchema: {
-            groupId: z.string().optional().describe('Optional: Filter by bookmark group ID')
-          }
+          inputSchema: {}
         },
         async (args) => {
-          const groupId = args?.groupId
-          const result = await self.sendToRenderer('tool-call', { toolName: 'list_bookmarks', args: { groupId } })
+          const result = await self.sendToRenderer('tool-call', { toolName: 'list_bookmarks', args: {} })
           return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
         }
       )
@@ -470,17 +467,19 @@ class ElectermMCPServer {
         'add_electerm_quick_command',
         {
           description: 'Add a new electerm quick command',
-          inputSchema: {
+          inputSchema: z.object({
             name: z.string().describe('Quick command name'),
-            command: z.string().describe('Command to execute'),
-            inputOnly: z.boolean().optional().describe('Input only mode (no enter)'),
+            commands: z.array(z.object({
+              command: z.string().describe('Command'),
+              delay: z.number().optional().describe('Delay in ms before executing this command')
+            })).optional().describe('Multiple commands with delays'),
             labels: z.array(z.string()).optional().describe('Tags/labels for the command')
-          }
+          })
         },
-        async ({ name, command, inputOnly, labels }) => {
+        async ({ name, commands, labels }) => {
           const result = await self.sendToRenderer('tool-call', {
             toolName: 'add_quick_command',
-            args: { name, command, inputOnly, labels }
+            args: { name, commands, labels }
           })
           return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
         }

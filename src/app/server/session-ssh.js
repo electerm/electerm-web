@@ -4,7 +4,7 @@
 import { Client } from '@electerm/ssh2'
 import proxySock from './socks.js'
 import _ from 'lodash'
-import uid from '../common/uid.js'
+import generate from '../common/uid.js'
 import {
   sshKeysPath
 } from '../common/runtime-constants.js'
@@ -24,49 +24,34 @@ const failMsg = 'All configured authentication methods failed'
 const csFailMsg = 'no matching C->S cipher'
 
 class TerminalSshBase extends TerminalBase {
-  getLocalEnv () {
-    return {
-      env: process.env
-    }
+  async remoteInitProcess () {
+    this.adjustConnectionOrder()
+    const {
+      initOptions
+    } = this
+    const hasX11 = initOptions.x11 === true
+    this.display = hasX11 ? await this.getDisplay() : undefined
+    this.x11Cookie = hasX11 ? await this.getX11Cookie() : undefined
+    return this.sshConnect()
   }
 
-  getDisplay () {
-    return new Promise((resolve) => {
-      exec('echo $DISPLAY', this.getLocalEnv(), (err, out, e) => {
-        if (err || e) {
-          resolve('')
-        } else {
-          resolve((out || '').trim())
-        }
-      })
-    })
-  }
-
-  getX11Cookie () {
-    return new Promise((resolve) => {
-      exec('xauth list :0', this.getLocalEnv(), (err, out, e) => {
-        if (err || e) {
-          resolve('')
-        } else {
-          const s = out || ''
-          const reg = /MIT-MAGIC-COOKIE-1 +([\d\w]{1,38})/
-          const arr = s.match(reg)
-          resolve(
-            arr ? arr[1] || '' : ''
-          )
-        }
-      })
-    })
-  }
-
-  init () {
-    return this.remoteInitProcess()
+  reTryAltAlg () {
+    log.log('retry with default ciphers/server hosts')
+    this.doKill()
+    this.connectOptions.algorithms = algAlt()
+    this.altAlg = true
+    return this.sshConnect()
   }
 
   getShellWindow (initOptions = this.initOptions) {
     return _.pick(initOptions, [
       'rows', 'cols', 'term'
     ])
+  }
+
+  getAgent () {
+    const { initOptions } = this
+    return initOptions.useSshAgent !== false ? (initOptions.sshAgent || process.env.SSH_AUTH_SOCK) : undefined
   }
 
   adjustConnectionOrder () {
@@ -93,11 +78,12 @@ class TerminalSshBase extends TerminalBase {
     if (this.initOptions.interactiveValues) {
       return Promise.resolve(this.initOptions.interactiveValues.split('\n'))
     }
-    const id = uid()
+    const id = generate()
     this.ws?.s({
       id,
       action: 'session-interactive',
       ..._.pick(this.initOptions, [
+        'interactiveValues',
         'tabId'
       ]),
       options
@@ -184,18 +170,28 @@ class TerminalSshBase extends TerminalBase {
                 this.hoppingOptions.passphrase = data[0]
                 this.jumpSshKeys && this.jumpSshKeys.unshift(this.jumpPrivateKeyPathFrom)
               }
-              return this.jumpConnect(true)
+              return this.jumpConnect(true, true)
             })
             .catch(e => {
               log.error('errored get passphrase for', this.jumpHostFrom, this.jumpPrivateKeyPathFrom, e)
-              return this.jumpConnect(true)
+              return this.jumpConnect(true, false)
             })
         } else if (
           !this.jumpSshKeys &&
+          !this.hoppingOptions.sshKeysDrain &&
           !this.hoppingOptions.password &&
           !this.hoppingOptions.privateKey &&
           err.message.includes(failMsg)
         ) {
+          // SSH agent failed or no agent, try reading private keys from jump server
+          // This will read ~/.ssh keys and retry
+          return this.jumpConnect(true, false)
+        } else if (
+          this.hoppingOptions.sshKeysDrain &&
+          !this.hoppingOptions.password &&
+          err.message.includes(failMsg)
+        ) {
+          // All private keys exhausted, ask for password
           const options = {
             name: `password for ${this.hoppingOptions.username}@${this.initHoppingOptions.host}`,
             instructions: [''],
@@ -208,7 +204,7 @@ class TerminalSshBase extends TerminalBase {
             .then(data => {
               if (data && data[0]) {
                 this.hoppingOptions.password = data[0]
-                return this.jumpConnect(true)
+                return this.jumpConnect(true, true)
               } else if (data && data[0] === '') {
                 throw err
               }
@@ -220,19 +216,24 @@ class TerminalSshBase extends TerminalBase {
         } else if (
           this.jumpSshKeys
         ) {
-          return this.jumpConnect(true)
+          return this.jumpConnect(true, false)
         } else {
           throw err
         }
       })
   }
 
-  async jumpConnect (reBuildSock = false) {
+  async jumpConnect (reBuildSock = false, skipReadKeys = false) {
     if (reBuildSock) {
       this.hoppingOptions.sock.end()
       this.hoppingOptions.sock = await this.forwardOut(this.conn, this.initHoppingOptions)
     }
-    await this.readPrivateKeyInJumpServer(this.conn)
+    // Only read private keys if skipReadKeys is false
+    // On first connect, we skip reading keys to let SSH agent try first
+    // If SSH agent fails, we then read and try private keys
+    if (!skipReadKeys) {
+      await this.readPrivateKeyInJumpServer(this.conn)
+    }
     return this.retryJump()
   }
 
@@ -261,7 +262,12 @@ class TerminalSshBase extends TerminalBase {
       ...hopping
     }
     this.nextConn = new Client()
-    await this.jumpConnect()
+    // If we have an agent and no explicit privateKey/password, try agent first
+    // by skipping reading private keys from jump server
+    const hasAgent = !!this.hoppingOptions.agent
+    const hasExplicitAuth = this.hoppingOptions.password || this.hoppingOptions.privateKey
+    const skipReadKeys = hasAgent && !hasExplicitAuth
+    await this.jumpConnect(false, skipReadKeys)
     return this.nextConn
   }
 
@@ -275,6 +281,7 @@ class TerminalSshBase extends TerminalBase {
       this.conns.push(this.conn)
       this.initHoppingOptions = {
         ...hopping,
+        agent: this.getAgent(),
         ...this.getShareOptions()
       }
       this.isLast = i === len - 1
@@ -525,7 +532,7 @@ class TerminalSshBase extends TerminalBase {
     const connectOptions = Object.assign(
       this.getShareOptions(),
       {
-        agent: initOptions.useSshAgent !== false ? (initOptions.sshAgent || process.env.SSH_AUTH_SOCK) : undefined
+        agent: this.getAgent()
       },
       _.pick(initOptions, [
         'host',
@@ -533,7 +540,8 @@ class TerminalSshBase extends TerminalBase {
         'username',
         'password',
         'privateKey',
-        'passphrase'
+        'passphrase',
+        'certificate'
       ])
     )
     if (initOptions.debug) {
@@ -696,25 +704,6 @@ class TerminalSshBase extends TerminalBase {
     }
   }
 
-  async remoteInitProcess () {
-    this.adjustConnectionOrder()
-    const {
-      initOptions
-    } = this
-    const hasX11 = initOptions.x11 === true
-    this.display = hasX11 ? await this.getDisplay() : undefined
-    this.x11Cookie = hasX11 ? await this.getX11Cookie() : undefined
-    return this.sshConnect()
-  }
-
-  reTryAltAlg () {
-    log.log('retry with default ciphers/server hosts')
-    this.doKill()
-    this.connectOptions.algorithms = algAlt()
-    this.altAlg = true
-    return this.sshConnect()
-  }
-
   resize (cols, rows) {
     this.channel?.setWindow(rows, cols)
   }
@@ -755,6 +744,50 @@ class TerminalSshBase extends TerminalBase {
     this.channel && this.channel.end()
     delete this.channel
     this.onEndConn()
+    // Clean up any remaining connection
+    if (this.conn) {
+      this.conn.end()
+      this.conn = null
+    }
+  }
+
+  getLocalEnv () {
+    return {
+      env: process.env
+    }
+  }
+
+  getDisplay () {
+    return new Promise((resolve) => {
+      exec('echo $DISPLAY', this.getLocalEnv(), (err, out, e) => {
+        if (err || e) {
+          resolve('')
+        } else {
+          resolve((out || '').trim())
+        }
+      })
+    })
+  }
+
+  getX11Cookie () {
+    return new Promise((resolve) => {
+      exec('xauth list :0', this.getLocalEnv(), (err, out, e) => {
+        if (err || e) {
+          resolve('')
+        } else {
+          const s = out || ''
+          const reg = /MIT-MAGIC-COOKIE-1 +([\d\w]{1,38})/
+          const arr = s.match(reg)
+          resolve(
+            arr ? arr[1] || '' : ''
+          )
+        }
+      })
+    })
+  }
+
+  init () {
+    return this.remoteInitProcess()
   }
 }
 

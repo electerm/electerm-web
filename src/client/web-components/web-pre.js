@@ -1,5 +1,5 @@
 import * as path from './path.js'
-import { message } from 'antd'
+import message from '../electerm-react/components/common/message'
 
 const {
   ipcOnEvent,
