@@ -78,6 +78,16 @@ class TerminalSshBase extends TerminalBase {
     if (this.initOptions.interactiveValues) {
       return Promise.resolve(this.initOptions.interactiveValues.split('\n'))
     }
+    // Auto-fill password prompt if we have a saved password
+    const { prompts } = options
+    if (prompts && prompts.length === 1 && this.initOptions.password) {
+      const prompt = prompts[0]
+      const promptText = (prompt.prompt || '').toLowerCase()
+      // Check if this is a password prompt (hidden input, contains "password" or is empty)
+      if (!prompt.echo && (promptText.includes('password') || promptText === '')) {
+        return Promise.resolve([this.initOptions.password])
+      }
+    }
     const id = generate()
     this.ws?.s({
       id,
@@ -138,6 +148,9 @@ class TerminalSshBase extends TerminalBase {
       this.jumpPrivateKeyPathFrom = p
       hoppingOptions.privateKey = await this.catPrivateKeyInJumpServer(conn, p)
       this.jumpSshKeys = list
+    } else {
+      // No private keys found in jump server, mark as drained so we can prompt for password
+      hoppingOptions.sshKeysDrain = true
     }
   }
 
@@ -538,7 +551,7 @@ class TerminalSshBase extends TerminalBase {
         'host',
         'port',
         'username',
-        'password',
+        // 'password',
         'privateKey',
         'passphrase',
         'certificate'
@@ -547,9 +560,9 @@ class TerminalSshBase extends TerminalBase {
     if (initOptions.debug) {
       connectOptions.debug = log.log
     }
-    if (!connectOptions.password) {
-      delete connectOptions.password
-    }
+    // if (!connectOptions.password) {
+    //   delete connectOptions.password
+    // }
     if (!connectOptions.passphrase) {
       delete connectOptions.passphrase
     }
