@@ -1,12 +1,13 @@
 /**
  * terminal/sftp/serial class
  */
-import _ from 'lodash'
 import log from '../common/log.js'
-import rdp from '@electerm/rdpjs'
 import { TerminalBase } from './session-base.js'
-import { isDev } from '../common/runtime-constants.js'
 import globalState from './global-state.js'
+import {
+  handleConnection
+} from './rdp-proxy.js'
+import net from 'net'
 
 class TerminalRdp extends TerminalBase {
   init = async () => {
@@ -14,141 +15,56 @@ class TerminalRdp extends TerminalBase {
     return Promise.resolve(this)
   }
 
+  /**
+   * Start the RDCleanPath proxy for this session.
+   * Called when the WebSocket connects from the browser.
+   * The WASM client will send an RDCleanPath Request as the first message.
+   */
   start = async (width, height) => {
-    if (this.isRunning) {
+    if (!this.ws) {
+      log.error(`[RDP:${this.pid}] No WebSocket available`)
       return
     }
-    this.isRunning = true
-    if (this.channel) {
-      this.channel.close()
-      delete this.channel
-    }
-    const {
-      host,
-      port,
-      ...rest
-    } = this.initOptions
-    const opts = {
-      ...rest,
-      logLevel: isDev ? 'DEBUG' : 'ERROR',
-      screen: {
-        width,
-        height
-      }
-    }
-    if (!opts.domain) {
-      opts.domain = host
-    }
-    const channel = rdp.createClient(opts)
-      .on('error', this.onError)
-      .on('connect', this.onConnect)
-      .on('bitmap', this.onBitmap)
-      .on('end', this.kill)
-      .connect(host, port)
-    this.channel = channel
     this.width = width
     this.height = height
+
+    handleConnection(this.ws)
   }
 
   resize () {
-
-  }
-
-  onError = (err) => {
-    if (err.message.includes('read ECONNRESET')) {
-      this.ws && this.start(
-        this.width,
-        this.height
-      )
-    } else {
-      log.error('rdp error', err)
-    }
+    // IronRDP handles resize via the WASM session.resize() method
+    // which sends resize PDUs through the existing relay
   }
 
   test = async () => {
+    const {
+      host,
+      port = 3389
+    } = this.initOptions
     return new Promise((resolve, reject) => {
-      const {
-        host,
-        port,
-        ...rest
-      } = this.initOptions
-      const client = rdp.createClient(rest)
-        .on('error', (err) => {
-          log.error(err)
-          reject(err)
-        })
-        .on('connect', () => {
-          resolve(client)
-        })
-        .connect(host, port)
+      const socket = net.createConnection({ host, port }, () => {
+        socket.destroy()
+        resolve(true)
+      })
+      socket.on('error', (err) => {
+        reject(err)
+      })
+      socket.setTimeout(10000, () => {
+        socket.destroy()
+        reject(new Error('Connection timed out'))
+      })
     })
   }
 
-  onConnect = () => {
-    this.isRunning = false
-    if (this.ws) {
-      if (!this.isWsEventRegistered) {
-        this.ws.on('message', this.onAction)
-        this.ws.on('close', this.kill)
-        this.isWsEventRegistered = true
-      }
-      this.ws.send(
-        JSON.stringify(
-          {
-            action: 'session-rdp-connected',
-            ..._.pick(this.initOptions, [
-              'tabId'
-            ])
-          }
-        )
-      )
-    }
-  }
-
-  onBitmap = (bitmap) => {
-    this.ws && this.ws.send(JSON.stringify(
-      bitmap
-    ))
-  }
-
-  // action: 'sendPointerEvent', params: x, y, button, isPressed
-  // action: 'sendWheelEvent', params: x, y, step, isNegative, isHorizontal
-  // action: 'sendKeyEventScancode', params: code, isPressed
-  // action: 'sendKeyEventUnicode', params: code, isPressed
-  onAction = (_data) => {
-    if (!this.channel || this.isRunning) {
-      return
-    }
-    const data = JSON.parse(_data)
-    const {
-      action,
-      params
-    } = data
-    if (action === 'reload') {
-      this.start(
-        ...params
-      )
-    } else if (
-      [
-        'sendPointerEvent',
-        'sendWheelEvent',
-        'sendKeyEventScancode',
-        'sendKeyEventUnicode'
-      ].includes(action)
-    ) {
-      this.channel[action](...params)
-    } else {
-      log.error('invalid action', action)
-    }
-  }
-
   kill = () => {
-    log.debug('Closed rdp session ' + this.pid)
     if (this.ws) {
-      this.ws.close()
+      try {
+        this.ws.close()
+      } catch (e) {
+        log.debug(`[RDP:${this.pid}] ws.close() error: ${e.message}`)
+      }
       delete this.ws
     }
-    this.channel && this.channel.close()
     if (this.sessionLogger) {
       this.sessionLogger.destroy()
     }

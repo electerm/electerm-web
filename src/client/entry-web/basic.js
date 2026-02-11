@@ -14,14 +14,16 @@ window.et.buildWsUrl = (
   host,
   port,
   tokenElecterm,
-  id
+  id,
+  type = 'terminals',
+  extra = ''
 ) => {
   const ss = isDev ? window.et.server : window.location.href
   const s = ss
     ? ss.replace(/https?:\/\//, '').replace(/\/$/, '')
     : `${host}:${port}`
   const pre = ss.startsWith('https') ? 'wss' : 'ws'
-  return `${pre}://${s}/terminals/${id}?token=${tokenElecterm}`
+  return `${pre}://${s}/${type}/${id}?token=${tokenElecterm}${extra}`
 }
 
 async function loadWorker () {

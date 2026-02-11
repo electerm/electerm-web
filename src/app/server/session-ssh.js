@@ -570,7 +570,8 @@ class TerminalSshBase extends TerminalBase {
         // This avoids PAM state corruption on 2FA servers
         'privateKey',
         'passphrase',
-        'certificate'
+        'certificate',
+        'encode'
       ])
     )
     if (initOptions.encode) {
