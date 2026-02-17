@@ -7,6 +7,7 @@ import globalState from './global-state.js'
 import {
   handleConnection
 } from './rdp-proxy.js'
+import proxySock from './socks.js'
 import net from 'net'
 
 class TerminalRdp extends TerminalBase {
@@ -28,7 +29,15 @@ class TerminalRdp extends TerminalBase {
     this.width = width
     this.height = height
 
-    handleConnection(this.ws)
+    const {
+      proxy,
+      readyTimeout
+    } = this.initOptions
+
+    handleConnection(this.ws, {
+      proxy,
+      readyTimeout
+    })
   }
 
   resize () {
@@ -39,8 +48,25 @@ class TerminalRdp extends TerminalBase {
   test = async () => {
     const {
       host,
-      port = 3389
+      port = 3389,
+      proxy,
+      readyTimeout = 10000
     } = this.initOptions
+
+    if (proxy) {
+      // Test connection through proxy
+      const proxyResult = await proxySock({
+        readyTimeout,
+        host,
+        port,
+        proxy
+      })
+      const socket = proxyResult.socket
+      socket.destroy()
+      return true
+    }
+
+    // Direct connection test
     return new Promise((resolve, reject) => {
       const socket = net.createConnection({ host, port }, () => {
         socket.destroy()
@@ -49,7 +75,7 @@ class TerminalRdp extends TerminalBase {
       socket.on('error', (err) => {
         reject(err)
       })
-      socket.setTimeout(10000, () => {
+      socket.setTimeout(readyTimeout, () => {
         socket.destroy()
         reject(new Error('Connection timed out'))
       })

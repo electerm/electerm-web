@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 import { cwd, version } from './common.js'
 import { resolve } from 'path'
 import def from './def.js'
-import circleDependency from 'vite-plugin-circular-dependency'
 // import commonjs from 'vite-plugin-commonjs'
 
 const manualChunks = (id) => {
@@ -118,9 +117,6 @@ function combineCSSPlugin () {
 export default defineConfig({
   plugins: [
     // commonjs(),
-    circleDependency({
-        outputFilePath: './circleDep'
-    }),
     react({ include: /\.(mdx|js|jsx|ts|tsx|mjs)$/ }),
     combineCSSPlugin()
   ],
