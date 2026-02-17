@@ -50,7 +50,6 @@ export function wsRoutes (app) {
         // Check if zmodem session is active and handle data
         if (zmodemManager.isActive(pid)) {
           // Let zmodem handle the data, but still log it
-          term.writeLog(data)
           zmodemManager.handleData(pid, data, term, ws)
           return
         }
