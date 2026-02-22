@@ -41,3 +41,5 @@ coverage
 
 # ignores
 !*.d.ts
+zmodem2/dist/cjs
+zmodem2/dist/browser

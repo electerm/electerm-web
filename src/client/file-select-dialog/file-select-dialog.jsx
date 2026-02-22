@@ -269,7 +269,7 @@ export default class FileSelectDialog extends Component {
     const { list, fileSelected, page, pageSize } = this.state
     const all = list.slice((page - 1) * pageSize, page * pageSize)
     return (
-      <div class='file-dialog-list-wrap'>
+      <div className='file-dialog-list-wrap'>
         {
           all.map((item, i) => {
             return (

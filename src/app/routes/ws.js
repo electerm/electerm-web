@@ -9,6 +9,7 @@ import {
   terminals
 } from '../server/remote-common.js'
 import { zmodemManager } from '../server/zmodem.js'
+import { trzszManager } from '../server/trzsz.js'
 
 export function wsRoutes (app) {
   expressWs(app, undefined, {
@@ -34,6 +35,17 @@ export function wsRoutes (app) {
       }
     }
   })
+  app.ws('/spice/:pid', function (ws, req) {
+    const { query } = req
+    verifyWs(req)
+    const { pid } = req.params
+    const term = terminals(pid)
+    log.debug('ws: connected to spice session ->', pid)
+    term.start(query, ws)
+    ws.on('error', (err) => {
+      log.error(err)
+    })
+  })
   app.ws('/terminals/:pid', function (ws, req) {
     verifyWs(req)
     const term = terminals(req.params.pid)
@@ -53,6 +65,11 @@ export function wsRoutes (app) {
           zmodemManager.handleData(pid, data, term, ws)
           return
         }
+        // Check if trzsz session is active and handle data
+        if (trzszManager.isActive(pid)) {
+          trzszManager.handleData(pid, data, term, ws)
+          return
+        }
         if (term.sessionLogger) {
           const dt = term.initOptions.addTimeStampToTermLog
             ? `[${new Date()}] `
@@ -70,12 +87,21 @@ export function wsRoutes (app) {
             const combinedData = Buffer.concat(dataBuffer.splice(0).map(d => Buffer.isBuffer(d) ? d : Buffer.from(d)))
 
             // Check for zmodem escape sequence before sending to client
-            const consumed = zmodemManager.handleData(pid, combinedData, term, ws)
-            if (!consumed) {
-              // Not zmodem data, send to WebSocket
-              ws.send(combinedData)
+            const zmodemConsumed = zmodemManager.handleData(pid, combinedData, term, ws)
+            if (zmodemConsumed) {
+              sendTimeout = null
+              return
             }
 
+            // Check for trzsz magic key before sending to client
+            const trzszConsumed = trzszManager.handleData(pid, combinedData, term, ws)
+            if (trzszConsumed) {
+              sendTimeout = null
+              return
+            }
+
+            // Not zmodem or trzsz data, send to WebSocket
+            ws.send(combinedData)
             // Reset timeout
             sendTimeout = null
           }, 10) // Small delay (10ms) to throttle; adjust based on testing
@@ -89,6 +115,7 @@ export function wsRoutes (app) {
     function onClose () {
       // Clean up zmodem session
       zmodemManager.destroySession(pid)
+      trzszManager.destroySession(pid)
       term.kill()
       log.debug('Closed terminal ' + pid)
 
@@ -108,6 +135,10 @@ export function wsRoutes (app) {
             const parsed = JSON.parse(msg)
             if (parsed.action === 'zmodem-event') {
               zmodemManager.handleMessage(pid, parsed, term, ws)
+              return
+            }
+            if (parsed.action === 'trzsz-event') {
+              trzszManager.handleMessage(pid, parsed, term, ws)
               return
             }
           } catch (e) {

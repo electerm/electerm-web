@@ -19,7 +19,7 @@ Powered by [manate](https://github.com/tylerlong/manate)
 [![Get it from the Microsoft Store](https://img.shields.io/badge/Microsoft-Store-blue)](https://www.microsoft.com/store/apps/9NCN7272GTFF)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/electerm?label=Sponsors)](https://github.com/sponsors/electerm)
 
-开源的终端/SSH/Telnet/串口//VNC/RDP/WEB/SFTP/FTP客户端（Linux，Mac，Windows）.
+开源终端/ssh/telnet/serialport/RDP/VNC/Spice/sftp/ftp客户端(linux, mac, win)。
 
 <div align="center">
   <img src="https://github.com/electerm/electerm-resource/raw/master/static/images/electerm.gif", alt="" />
@@ -27,7 +27,7 @@ Powered by [manate](https://github.com/tylerlong/manate)
 
 ## 功能
 
-- 可作为终端/文件管理器或 ssh/telnet/serialport/RDP/VNC/sftp/ftp 客户端
+- 可作为终端/文件管理器或 ssh/telnet/serialport/RDP/VNC/Spice/sftp/ftp 客户端
 - 可全局热键切换窗口可见性（类似于 guake，默认是 `ctrl + 2`）
 - 支持多平台（Linux、Mac、Win）
 - 🇺🇸 🇨🇳 🇧🇷 🇷🇺 🇪🇸 🇫🇷 🇹🇷 🇭🇰 🇯🇵 🇸🇦 🇩🇪 🇰🇷 支持多语言（[electerm-locales](https://github.com/electerm/electerm-locales)，欢迎贡献/修复）

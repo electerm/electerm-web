@@ -36,9 +36,6 @@ const manualChunks = (id) => {
     if (id.includes('@xterm')) {
       return 'xterm'
     }
-    if (id.includes('trzsz')) {
-      return 'trzsz'
-    }
     if (id.includes('manate')) {
       return 'manate'
     }
@@ -53,6 +50,9 @@ const manualChunks = (id) => {
     }
     if (id.includes('ironrdp-wasm')) {
       return 'ironrdp-wasm'
+    }
+    if (id.includes('spice-client')) {
+      return 'spice'
     }
     // Combine rest of node_modules into one chunk
     return 'vendor'
@@ -81,7 +81,7 @@ function combineCSSPlugin () {
           const cssSource = bundle[fileName].source
           // Check if this CSS is from basic.js's imports
           // We can check the source for imports from mobile.styl or basic.styl
-          if (fileName.includes('basic.css')) {
+          if (fileName.includes('basic.css') && !fileName.includes('xterm.css')) {
             basicCSS += cssSource
           } else {
             mainCSS += cssSource
@@ -148,6 +148,9 @@ export default defineConfig({
         chunkFileNames: `chunk/[name]-${version}-[hash].js`,
         assetFileNames: chunkInfo => {
           const { name } = chunkInfo
+          if (name.includes('xterm.css')) {
+            return `css/${version}-[hash]-${name}`
+          }
           return name.endsWith('.css')
             ? `css/_temp_${name}`
             : `images/${name}`

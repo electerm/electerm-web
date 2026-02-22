@@ -28,6 +28,11 @@ import {
   testConnectionVnc
 } from './session-vnc.js'
 
+import {
+  terminalSpice,
+  testConnectionSpice
+} from './session-spice.js'
+
 export const terminal = async function (initOptions, ws) {
   const type = initOptions.termType || initOptions.type
   if (type === 'telnet') {
@@ -40,6 +45,8 @@ export const terminal = async function (initOptions, ws) {
     return terminalSerial(initOptions, ws)
   } else if (type === 'local') {
     return terminalLocal(initOptions, ws)
+  } else if (type === 'spice') {
+    return terminalSpice(initOptions, ws)
   } else {
     return terminalSsh(initOptions, ws)
   }
@@ -57,6 +64,8 @@ export const testConnection = (initOptions) => {
     return testConnectionRdp(initOptions)
   } else if (type === 'vnc') {
     return testConnectionVnc(initOptions)
+  } else if (type === 'spice') {
+    return testConnectionSpice(initOptions)
   } else if (type === 'local') {
     return testConnectionLocal(initOptions)
   } else if (type === 'serial') {
