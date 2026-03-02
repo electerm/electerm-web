@@ -47,6 +47,14 @@ export function onDestroyTerminal (id) {
   onDestroySftp(id)
 }
 
+export function cleanAllSessions () {
+  const { sessions } = globalState.data
+  for (const id in sessions) {
+    const inst = sessions[id]
+    inst && inst.kill && inst.kill()
+  }
+}
+
 export function onDestroyTransfer (id, sftpId) {
   const sftpInst = sftp(sftpId)
   const inst = transfer(id, sftpId)

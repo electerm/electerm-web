@@ -5,6 +5,8 @@ import uid from '../common/uid.js'
 import { createLogFileName } from '../common/create-session-log-file-path.js'
 import { SessionLog } from './session-log.js'
 import globalState from './global-state.js'
+import time from '../common/time.js'
+import stripAnsi from '@electerm/strip-ansi'
 
 export class TerminalBase {
   constructor (initOptions, ws, isTest) {
@@ -23,6 +25,28 @@ export class TerminalBase {
     if (isTest) {
       this.isTest = isTest
     }
+  }
+
+  cache = ''
+  prevNewLine = true
+
+  writeLog (data) {
+    if (!this.sessionLogger) {
+      return
+    }
+    const s = data.toString()
+    if (!s.includes('\r\n')) {
+      this.cache += s
+      return
+    }
+    const p = this.parse(this.cache)
+    const dt = this.prevNewLine && this.initOptions.addTimeStampToTermLog
+      ? `[${time()}] `
+      : ''
+    const str = stripAnsi(dt + p + s)
+    this.sessionLogger.write(str)
+    this.cache = ''
+    this.prevNewLine = str.endsWith('\n')
   }
 
   toggleTerminalLogTimestamp () {
