@@ -5,6 +5,7 @@
 import fs from 'fs'
 import _ from 'lodash'
 import log from '../common/log.js'
+import { Transfer as Ssh2ScpTransfer } from 'ssh2-scp/transfer'
 
 export class Transfer {
   constructor ({
@@ -40,7 +41,43 @@ export class Transfer {
     this.timers = {}
 
     this.ws = ws
-    this.fastXfer(options, type)
+    this.initTransfer(type)
+  }
+
+  shouldUseSsh2ScpTransfer = () => {
+    if ((this.src && this.src.isSshFsFallback) || (this.dst && this.dst.isSshFsFallback)) {
+      return true
+    }
+    return false
+  }
+
+  initTransfer = async (type) => {
+    if (this.shouldUseSsh2ScpTransfer()) {
+      return this.ssh2ScpTransfer(type)
+    }
+    this.fastXfer(type)
+  }
+
+  ssh2ScpTransfer = async (type) => {
+    try {
+      const sshFs = type === 'download' ? this.src : this.dst
+      const remotePath = type === 'download' ? this.srcPath : this.dstPath
+      const localPath = type === 'download' ? this.dstPath : this.srcPath
+
+      this.scpTransfer = new Ssh2ScpTransfer(sshFs, {
+        type,
+        remotePath,
+        localPath,
+        chunkSize: this.chunkSize,
+        onProgress: (transferred) => {
+          this.onData(transferred)
+        }
+      })
+      await this.scpTransfer.startTransfer()
+      this.onEnd()
+    } catch (err) {
+      this.onError(err)
+    }
   }
 
   tryCreateBuffer = (size) => {
@@ -52,7 +89,7 @@ export class Transfer {
   }
 
   // from https://github.com/mscdex/ssh2-streams/blob/master/lib/sftp.js
-  fastXfer = () => {
+  fastXfer () {
     const { src, srcPath } = this
     src.open(srcPath, 'r', this.onSrcOpen)
   }
@@ -247,7 +284,7 @@ export class Transfer {
   }
 
   onEnd = (id = this.id, ws = this.ws) => {
-    ws.s({
+    ws?.s({
       id: 'transfer:end:' + id,
       data: null
     })
@@ -268,17 +305,19 @@ export class Transfer {
 
   pause = () => {
     this.pausing = true
+    this.scpTransfer && this.scpTransfer.pause && this.scpTransfer.pause()
   }
 
   resume = () => {
     this.pausing = false
+    this.scpTransfer && this.scpTransfer.resume && this.scpTransfer.resume()
   }
 
   kill = () => {
-    if (this.src && this.srcHandle) {
+    if (this.src && this.srcHandle && this.src.close) {
       this.src.close(this.srcHandle, log.error)
     }
-    if (this.dst && this.dstHandle) {
+    if (this.dst && this.dstHandle && this.dst.close) {
       this.dst.close(this.dstHandle, log.error)
     }
     this.src = null
@@ -289,6 +328,7 @@ export class Transfer {
 
   destroy = () => {
     this.onDestroy = true
+    this.scpTransfer && this.scpTransfer.destroy && this.scpTransfer.destroy()
     setTimeout(this.kill, 200)
     if (this.ws) {
       this.ws.close()

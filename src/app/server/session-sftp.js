@@ -9,13 +9,35 @@ import { commonExtends } from './session-common.js'
 import { TerminalBase } from './session-base.js'
 import { getSizeCount } from '../common/count-folder-data.js'
 import globalState from './global-state.js'
+import { SshFs } from 'ssh2-scp'
 
 class SftpBase extends TerminalBase {
   connect (initOptions) {
     return this.remoteInitSftp(initOptions)
   }
 
-  remoteInitSftp (initOptions) {
+  applySshFsOverride = (sshFs) => {
+    sshFs.isSshFsFallback = true
+    this.sftp = sshFs
+    this.isSshFsFallback = true
+    const proto = Object.getPrototypeOf(sshFs)
+    const keys = Object.getOwnPropertyNames(proto)
+    for (const method of keys) {
+      if (method === 'constructor') {
+        continue
+      }
+      if (typeof sshFs[method] === 'function') {
+        this[method] = sshFs[method].bind(sshFs)
+      }
+    }
+  }
+
+  initSshFsFallback = (conn) => {
+    const sshFs = new SshFs(conn)
+    this.applySshFsOverride(sshFs)
+  }
+
+  async remoteInitSftp (initOptions) {
     this.transfers = {}
     const terminalInst = globalState.getSession(initOptions.terminalId)
     const {
@@ -23,16 +45,22 @@ class SftpBase extends TerminalBase {
     } = terminalInst
     this.client = conn
     this.enableSsh = initOptions.enableSsh
-    return new Promise((resolve, reject) => {
-      conn.sftp((err, sftp) => {
-        if (err) {
-          return reject(err)
-        }
-        this.sftp = sftp
-        globalState.setSession(this.pid, this)
-        resolve('ok')
+    try {
+      const sftp = await new Promise((resolve, reject) => {
+        conn.sftp((err, sftp) => {
+          if (err) {
+            return reject(err)
+          }
+          resolve(sftp)
+        })
       })
-    })
+      this.sftp = sftp
+    } catch (err) {
+      this.initSshFsFallback(conn)
+    }
+
+    globalState.setSession(this.pid, this)
+    return 'ok'
   }
 
   kill () {
@@ -42,7 +70,7 @@ class SftpBase extends TerminalBase {
       jj && jj.destroy && jj.destroy()
       delete this.transfers[k]
     }
-    this.sftp && this.sftp.end()
+    this.sftp && this.sftp.end && this.sftp.end()
     delete this.sftp
     this.onEndConn()
   }
@@ -83,7 +111,9 @@ class SftpBase extends TerminalBase {
    */
   rmdir (remotePath) {
     return this.rmrf(remotePath)
-      .then(r => r)
+      .then(r => {
+        return r
+      })
       .catch(err => {
         console.error('rm -rf dir error', err)
         return this.removeDirectoryRecursively(remotePath)
@@ -92,6 +122,18 @@ class SftpBase extends TerminalBase {
 
   rmrf (remotePath) {
     return this.runExec(`rm -rf "${remotePath}"`)
+    // return new Promise((resolve, reject) => {
+    //   const { client } = this
+    //   const cmd = `rm -rf "${remotePath}"`
+    //   this.runExec(cmd, this.getExecOpts(), (err, stream) => {
+    //     if (err) {
+    //       return reject(err)
+    //     } else {
+    //       console.log('rm -rf done', stream)
+    //       resolve(1)
+    //     }
+    //   })
+    // })
   }
 
   async removeDirectoryRecursively (remotePath) {
@@ -118,12 +160,22 @@ class SftpBase extends TerminalBase {
    * @return {Promise}
    */
   touch (remotePath) {
+    // if (this.enableSsh) {
+    //   return new Promise((resolve, reject) => {
+    //     const { client } = this
+    //     const cmd = `touch "${remotePath}"`
+    //     client.exec(cmd, this.getExecOpts(), err => {
+    //       if (err) reject(err)
+    //       else resolve(1)
+    //     })
+    //   })
+    // }
     return this.touchFile(remotePath)
   }
 
-  openFile (remotePath) {
+  openFile = (remotePath) => {
     return new Promise((resolve, reject) => {
-      this.sftp.open(remotePath, 'r', (err, fd) => {
+      this.sftp.open(remotePath, 'w', (err, fd) => {
         if (err) {
           return reject(err)
         }
@@ -132,7 +184,7 @@ class SftpBase extends TerminalBase {
     })
   }
 
-  closeFile (fd) {
+  closeFile = (fd) => {
     return new Promise((resolve, reject) => {
       this.sftp.close(fd, err => {
         if (err) {
@@ -143,7 +195,7 @@ class SftpBase extends TerminalBase {
     })
   }
 
-  touchFile (remotePath) {
+  touchFile = (remotePath) => {
     return this.openFile(remotePath)
       .then(this.closeFile)
   }

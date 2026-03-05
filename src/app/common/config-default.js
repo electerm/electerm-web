@@ -27,5 +27,6 @@ export default {
     'rxvt'
   ],
   host: '127.0.0.1',
+  keyword2FA: 'verification code,otp,one-time,two-factor,2fa,totp,authenticator,duo,yubikey,security code,mfa,passcode',
   enableSixel: true
 }

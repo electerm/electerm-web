@@ -6,9 +6,6 @@ import { Client } from '@electerm/ssh2'
 import proxySock from './socks.js'
 import _ from 'lodash'
 import generate from '../common/uid.js'
-import {
-  sshKeysPath
-} from '../common/runtime-constants.js'
 import { resolve as pathResolve } from 'path'
 import net from 'net'
 import { exec } from 'child_process'
@@ -73,6 +70,37 @@ class TerminalSshBase extends TerminalBase {
     const [firstHopping, ...restHoppings] = initOptions.connectionHoppings
     Object.assign(initOptions, firstHopping)
     initOptions.connectionHoppings = [...restHoppings, currentHostHopping]
+  }
+
+  isLikely2FAPrompts (prompts) {
+    if (!prompts || !prompts.length) return false
+    const defaultKeywords = [
+      'verification code',
+      'otp',
+      'one-time',
+      'two-factor',
+      '2fa',
+      'totp',
+      'authenticator',
+      'duo',
+      'yubikey',
+      'security code',
+      'mfa',
+      'passcode'
+    ]
+    const rawKeywords = this.initOptions?.keyword2FA
+    const twofaKeywords = Array.isArray(rawKeywords)
+      ? rawKeywords
+      : typeof rawKeywords === 'string'
+        ? rawKeywords.split(/[,\n]/).map(s => s.trim()).filter(Boolean)
+        : []
+    const finalKeywords = twofaKeywords.length
+      ? twofaKeywords.map(s => s.toLowerCase())
+      : defaultKeywords
+    return prompts.some(p => {
+      const text = (p.prompt || '').toLowerCase()
+      return finalKeywords.some(kw => text.includes(kw))
+    })
   }
 
   onKeyboardEvent (options) {
@@ -417,9 +445,9 @@ class TerminalSshBase extends TerminalBase {
   }
 
   getSSHKeys () {
+    const { sshKeysPath } = process.env
     try {
-      return fs
-        .readdirSync(sshKeysPath)
+      return fs.readdirSync(sshKeysPath)
         .filter(file => file.endsWith('.pub'))
         .map(file => pathResolve(sshKeysPath, file.replace('.pub', '')))
     } catch (e) {
@@ -478,6 +506,17 @@ class TerminalSshBase extends TerminalBase {
               return i ? '' : (connectOptions.password || '')
             })
           )
+        }
+        // Detect 2FA: if we connected with password and prompts look like 2FA,
+        // disconnect and retry without password so keyboard-interactive handles both
+        if (
+          !this.retry2FA &&
+          connectOptions.password &&
+          this.isLikely2FAPrompts(prompts)
+        ) {
+          this.retry2FA = true
+          conn.end()
+          return reject(new Error('2FA_RETRY'))
         }
         const options = {
           name,
@@ -566,17 +605,13 @@ class TerminalSshBase extends TerminalBase {
         'host',
         'port',
         'username',
-        // Don't include password here - use keyboard-interactive instead
-        // This avoids PAM state corruption on 2FA servers
+        'password',
         'privateKey',
         'passphrase',
         'certificate',
         'encode'
       ])
     )
-    if (initOptions.encode) {
-      connectOptions.sftpEncoding = initOptions.encode
-    }
     if (initOptions.debug) {
       connectOptions.debug = log.log
     }
@@ -667,6 +702,10 @@ class TerminalSshBase extends TerminalBase {
       !this.altAlg
     ) {
       return this.reTryAltAlg()
+    } else if (err.message === '2FA_RETRY') {
+      log.log('2FA detected, retrying without password in auth')
+      delete this.connectOptions.password
+      return this.sshConnect()
     } else if (err.message.includes('passphrase')) {
       const options = {
         name: `passphase for ${this.privateKeyPath || 'privateKey'}`,
@@ -695,11 +734,37 @@ class TerminalSshBase extends TerminalBase {
     ) {
       return this.nextTry(err)
     } else if (
+      !this.retry2FA &&
       !this.connectOptions.password &&
       this.initOptions.password
     ) {
       this.connectOptions.password = this.initOptions.password
       return this.sshConnect()
+    } else if (
+      err.message.includes(failMsg) &&
+      !this.connectOptions.password
+    ) {
+      const options = {
+        name: `password for ${this.initOptions.username}@${this.initOptions.host}`,
+        instructions: [''],
+        prompts: [{
+          echo: false,
+          prompt: 'password'
+        }]
+      }
+      return this.onKeyboardEvent(options)
+        .then(data => {
+          if (data && data[0]) {
+            this.connectOptions.password = data[0]
+            return this.sshConnect()
+          } else if (data && data[0] === '') {
+            throw err
+          }
+        })
+        .catch(err => {
+          log.error('errored get password for', err)
+          throw err
+        })
     }
     return this.nextTry(err)
   }
@@ -718,16 +783,6 @@ class TerminalSshBase extends TerminalBase {
     }
   }
 
-  setNoDelay (noDelay = true) {
-    try {
-      if (this.conn && typeof this.conn.setNoDelay === 'function') {
-        this.conn.setNoDelay(noDelay)
-      }
-    } catch (e) {
-      log.warn('failed to set ssh noDelay', e)
-    }
-  }
-
   resize (cols, rows) {
     this.channel?.setWindow(rows, cols)
   }
@@ -739,6 +794,16 @@ class TerminalSshBase extends TerminalBase {
 
   write (data) {
     this.channel.write(data)
+  }
+
+  setNoDelay (noDelay = true) {
+    try {
+      if (this.conn && typeof this.conn.setNoDelay === 'function') {
+        this.conn.setNoDelay(noDelay)
+      }
+    } catch (e) {
+      log.warn('failed to set ssh noDelay', e)
+    }
   }
 
   kill () {
