@@ -6,7 +6,9 @@ import { createLogFileName } from '../common/create-session-log-file-path.js'
 import { SessionLog } from './session-log.js'
 import globalState from './global-state.js'
 import time from '../common/time.js'
-import stripAnsi from '@electerm/strip-ansi'
+import stripAnsiExport from '@electerm/strip-ansi'
+
+const stripAnsi = stripAnsiExport.default
 
 export class TerminalBase {
   constructor (initOptions, ws, isTest) {
@@ -29,6 +31,19 @@ export class TerminalBase {
 
   cache = ''
   prevNewLine = true
+
+  parse (rawText) {
+    let result = ''
+    const len = rawText.length
+    for (let i = 0; i < len; i++) {
+      if (rawText[i] === '\b') {
+        result = result.slice(0, -1)
+      } else {
+        result += rawText[i]
+      }
+    }
+    return result
+  }
 
   writeLog (data) {
     if (!this.sessionLogger) {
