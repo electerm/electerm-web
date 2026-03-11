@@ -17,6 +17,9 @@ import deepCopy from 'json-deep-copy'
 import { TerminalBase } from './session-base.js'
 import { commonExtends } from './session-common.js'
 import globalState from './global-state.js'
+import {
+  sshKeysPath
+} from '../common/runtime-constants.js'
 
 const failMsg = 'All configured authentication methods failed'
 const csFailMsg = 'no matching C->S cipher'
@@ -445,7 +448,7 @@ class TerminalSshBase extends TerminalBase {
   }
 
   getSSHKeys () {
-    const { sshKeysPath } = process.env
+    console.log('sshKeysPath', sshKeysPath)
     try {
       return fs.readdirSync(sshKeysPath)
         .filter(file => file.endsWith('.pub'))

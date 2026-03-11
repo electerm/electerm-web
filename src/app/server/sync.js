@@ -2,53 +2,16 @@
  * handle sync with github/gitee
  */
 
-import GitHubOri from 'gist-wrapper'
-import GiteeOri from 'gitee-client'
-import customSync from 'electerm-sync'
+import {
+  electermSync
+} from 'electerm-sync'
 import log from '../common/log.js'
+import rp from 'axios'
 import { createProxyAgent } from '../lib/proxy-agent.js'
 
-class Gitee extends GiteeOri {
-  create (data, conf) {
-    return this.post('/v5/gists', data, conf)
-  }
-
-  update (gistId, data, conf) {
-    return this.patch(`/v5/gists/${gistId}`, data, conf)
-  }
-
-  getOne (gistId, conf) {
-    return this.get(`/v5/gists/${gistId}`, conf)
-  }
-
-  delOne (gistId, conf) {
-    return this.delete(`/gists/${gistId}`, conf)
-  }
-
-  test (conf) {
-    return this.get('/v5/gists?page=1&per_page=1', conf)
-  }
-}
-
-class GitHub extends GitHubOri {
-  test (conf) {
-    return this.get('/gists?page=1&per_page=1', conf)
-  }
-}
-
-const dist = {
-  gitee: Gitee,
-  github: GitHub,
-  custom: customSync,
-  cloud: customSync
-}
+rp.defaults.proxy = false
 
 async function doSync (type, func, args, token, proxy) {
-  const argsArr = [...args]
-  const inst = new dist[type](token)
-  if (type === 'cloud' && func === 'getOne') {
-    argsArr[0] = ''
-  }
   const agent = createProxyAgent(proxy)
   const conf = agent
     ? {
@@ -57,8 +20,14 @@ async function doSync (type, func, args, token, proxy) {
     : {
         proxy: false
       }
-  return inst[func](...argsArr, conf)
-    .then(r => r.data)
+  const axiosInst = rp.create(conf)
+  if (type === 'cloud') {
+    args[0] = ''
+  }
+  return electermSync(axiosInst, type, func, args, token)
+    .then(r => {
+      return r
+    })
     .catch(e => {
       log.error('sync error')
       log.error(e)
