@@ -1,6 +1,7 @@
 // global-state.js
 class GlobalState {
   #commonWs = null
+  #sessions = {}
 
   // Common WebSocket management
   getCommonWs () {
@@ -10,8 +11,6 @@ class GlobalState {
   setCommonWs (ws) {
     this.#commonWs = ws
   }
-
-  #sessions = {}
 
   // Sessions management
   getSession (id) {
@@ -24,6 +23,10 @@ class GlobalState {
 
   removeSession (id) {
     delete this.#sessions[id]
+  }
+
+  get data () {
+    return this.#sessions
   }
 }
 
