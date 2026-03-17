@@ -32,7 +32,7 @@ class TerminalLocal extends TerminalBase {
       ? execWindowsArgs
       : platform === 'darwin' ? execMacArgs : execLinuxArgs
     const cwd = process.env[platform === 'win32' ? 'USERPROFILE' : 'HOME']
-    const argv = platform.startsWith('darwin') ? ['--login', ...arg] : arg
+    const argv = platform.startsWith('darwin') ? ['--login', ...(arg || [])] : arg
     this.term = pty.spawn(exec, argv, {
       name: term,
       encoding: null,

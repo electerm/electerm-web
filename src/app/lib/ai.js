@@ -171,3 +171,25 @@ function processStream (sessionId, sessionData) {
     sessionData.completed = true
   })
 }
+
+// Stop an ongoing streaming session
+export const stopStream = (sessionId) => {
+  const session = streamingSessions.get(sessionId)
+  if (!session) {
+    return { error: 'Session not found' }
+  }
+
+  // Destroy the stream to stop receiving data
+  if (session.stream && !session.stream.destroyed) {
+    session.stream.destroy()
+  }
+
+  // Mark as completed (not an error, just stopped by user)
+  session.completed = true
+  session.stopped = true
+
+  // Clean up
+  streamingSessions.delete(sessionId)
+
+  return { stopped: true }
+}
