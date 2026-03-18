@@ -85,7 +85,7 @@
     "vite": "7.3.1"
   },
   "dependencies": {
-    "@electerm/electerm-locales": "2.2.0",
+    "@electerm/electerm-locales": "2.2.1",
     "@electerm/electerm-themes": "^1.0.1",
     "@electerm/strip-ansi": "^1.0.0",
     "@electerm/ssh2": "1.19.0",
