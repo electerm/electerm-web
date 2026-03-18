@@ -13,9 +13,6 @@ import { trzszManager } from '../server/trzsz.js'
 
 function cleanup () {
   cleanAllSessions()
-  setTimeout(() => {
-    process.exit(0)
-  }, 2000)
 }
 
 export function wsRoutes (app) {
