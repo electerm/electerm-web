@@ -78,3 +78,6 @@ export const terminalLocal = function (initOptions, ws) {
 export const testConnectionLocal = (initOptions) => {
   return Promise.resolve(true)
 }
+
+export const terminal = terminalLocal
+export const testConnection = testConnectionLocal

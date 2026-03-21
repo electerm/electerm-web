@@ -100,3 +100,6 @@ export function testConnectionSerial (initOptions) {
       return false
     })
 }
+
+export const terminal = terminalSerial
+export const testConnection = testConnectionSerial

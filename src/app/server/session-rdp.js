@@ -126,3 +126,6 @@ export const testConnectionRdp = (options) => {
       return false
     })
 }
+
+export const terminal = terminalRdp
+export const testConnection = testConnectionRdp

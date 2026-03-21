@@ -191,3 +191,6 @@ export const testConnectionVnc = (options) => {
       return false
     })
 }
+
+export const terminal = terminalVnc
+export const testConnection = testConnectionVnc

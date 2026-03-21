@@ -1,7 +1,7 @@
 import defaultSettings from './default-setting.js'
 
 export default {
-  keepaliveInterval: 0,
+  keepaliveInterval: 10000,
   rightClickSelectsWord: false,
   pasteWhenContextMenu: false,
   ctrlOrMetaOpenTerminalLink: false,

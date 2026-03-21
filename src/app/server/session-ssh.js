@@ -906,3 +906,6 @@ export const testConnectionSsh = (options) => {
       return false
     })
 }
+
+export const terminal = terminalSsh
+export const testConnection = testConnectionSsh

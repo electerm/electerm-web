@@ -124,3 +124,6 @@ export const testConnectionTelnet = (options) => {
       return false
     })
 }
+
+export const terminal = terminalTelnet
+export const testConnection = testConnectionTelnet

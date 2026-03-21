@@ -1,76 +1,32 @@
-import {
-  terminalTelnet,
-  testConnectionTelnet
-} from './session-telnet.js'
-
-import {
-  terminalSsh,
-  testConnectionSsh
-} from './session-ssh.js'
-
-import {
-  terminalLocal,
-  testConnectionLocal
-} from './session-local.js'
-
-import {
-  terminalSerial,
-  testConnectionSerial
-} from './session-serial.js'
-
-import {
-  terminalRdp,
-  testConnectionRdp
-} from './session-rdp.js'
-
-import {
-  terminalVnc,
-  testConnectionVnc
-} from './session-vnc.js'
-
-import {
-  terminalSpice,
-  testConnectionSpice
-} from './session-spice.js'
-
-export const terminal = async function (initOptions, ws) {
+function getModulePath (type) {
+  return `./session-${type}.js`
+}
+function getType (initOptions) {
   const type = initOptions.termType || initOptions.type
-  if (type === 'telnet') {
-    return terminalTelnet(initOptions, ws)
-  } else if (type === 'rdp') {
-    return terminalRdp(initOptions, ws)
-  } else if (type === 'vnc') {
-    return terminalVnc(initOptions, ws)
-  } else if (type === 'serial') {
-    return terminalSerial(initOptions, ws)
-  } else if (type === 'local') {
-    return terminalLocal(initOptions, ws)
-  } else if (type === 'spice') {
-    return terminalSpice(initOptions, ws)
-  } else {
-    return terminalSsh(initOptions, ws)
-  }
+  const tail = [
+    'telnet',
+    'serial',
+    'local',
+    'rdp',
+    'vnc',
+    'spice'
+  ].includes(type)
+    ? type
+    : 'ssh'
+  return tail
 }
 
-/**
- * test ssh connection
- * @param {object} options
- */
-export const testConnection = (initOptions) => {
-  const type = initOptions.termType || initOptions.type
-  if (type === 'telnet') {
-    return testConnectionTelnet(initOptions)
-  } else if (type === 'rdp') {
-    return testConnectionRdp(initOptions)
-  } else if (type === 'vnc') {
-    return testConnectionVnc(initOptions)
-  } else if (type === 'spice') {
-    return testConnectionSpice(initOptions)
-  } else if (type === 'local') {
-    return testConnectionLocal(initOptions)
-  } else if (type === 'serial') {
-    return testConnectionSerial(initOptions)
-  } else {
-    return testConnectionSsh(initOptions)
-  }
+export const terminal = async function (initOptions, ws) {
+  const type = getType(initOptions)
+  console.log('type', type)
+  const modulePath = getModulePath(type)
+  const { terminal } = await import(modulePath)
+  return terminal(initOptions, ws)
+}
+
+export const testConnection = async (initOptions) => {
+  const type = getType(initOptions)
+  const modulePath = getModulePath(type)
+  const { testConnection } = await import(modulePath)
+  return testConnection(initOptions)
 }

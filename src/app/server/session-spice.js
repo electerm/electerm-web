@@ -131,3 +131,6 @@ export const testConnectionSpice = (options) => {
       return false
     })
 }
+
+export const terminal = terminalSpice
+export const testConnection = testConnectionSpice

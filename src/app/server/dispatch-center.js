@@ -162,7 +162,7 @@ export function initWs (app) {
     ws.on('message', async (message) => {
       try {
         const msg = JSON.parse(message)
-        const { action } = msg
+        const { action, body = {}, id } = msg
         if (action === 'fetch') {
           fetch(ws, msg)
         } else if (action === 'sync') {
@@ -170,6 +170,15 @@ export function initWs (app) {
         } else if (action === 'fs') {
           fs(ws, msg)
         } else if (action === 'create-terminal') {
+          if (body.termType === 'ftp') {
+            ws.s({
+              id,
+              data: {
+                pid: 'ok'
+              }
+            })
+            return
+          }
           createTerm(ws, msg)
         } else if (action === 'test-terminal') {
           testTerm(ws, msg)
