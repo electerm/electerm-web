@@ -5,6 +5,26 @@ import pty from 'node-pty'
 import { resolve as pathResolve } from 'path'
 import globalState from './global-state.js'
 import { TerminalBase } from './session-base.js'
+import { execSync } from 'child_process'
+
+// const { MockBinding } = require('@serialport/binding-mock')
+// MockBinding.createPort('/dev/ROBOT', { echo: true, record: true })
+
+function getUserPathFromRegistry () {
+  try {
+    // Use reg.exe instead of powershell to avoid PATH-length-induced command line corruption
+    const output = execSync(
+      'reg query "HKCU\\Environment" /v Path',
+      { encoding: 'utf8', windowsHide: true, env: { SystemRoot: process.env.SystemRoot } }
+    ).trim()
+    // Output format: "    Path    REG_SZ    <value>" or "    Path    REG_EXPAND_SZ    <value>"
+    const match = output.match(/Path\s+REG(?:_EXPAND)?_SZ\s+(.+)$/im)
+    return match ? match[1].trim() : ''
+  } catch (e) {
+    console.error('[electerm] getUserPathFromRegistry failed:', e.message)
+    return ''
+  }
+}
 
 class TerminalLocal extends TerminalBase {
   init () {
@@ -33,13 +53,27 @@ class TerminalLocal extends TerminalBase {
       : platform === 'darwin' ? execMacArgs : execLinuxArgs
     const cwd = process.env[platform === 'win32' ? 'USERPROFILE' : 'HOME']
     const argv = platform.startsWith('darwin') ? ['--login', ...(arg || [])] : arg
+    const env = Object.assign({}, process.env)
+    // if (!env.SystemRoot) {
+    //   env.SystemRoot = process.env.windir
+    // }
+    if (platform.startsWith('win')) {
+      const userPath = getUserPathFromRegistry()
+      if (userPath) {
+        const currentPath = env.PATH || ''
+        const pathParts = currentPath.split(';').filter(p => p)
+        const pathPartsLower = pathParts.map(p => p.toLowerCase())
+        const userPathParts = userPath.split(';').filter(p => p && !pathPartsLower.includes(p.toLowerCase()))
+        env.PATH = [...userPathParts, ...pathParts].join(';')
+      }
+    }
     this.term = pty.spawn(exec, argv, {
       name: term,
       encoding: null,
       cols: cols || 80,
       rows: rows || 24,
       cwd,
-      env: process.env
+      env
     })
     this.term.termType = termType
     globalState.setSession(this.pid, this)
