@@ -40,49 +40,6 @@ export function wsRoutes (app) {
 
     const dataBuffer = []
     let sendTimeout = null
-    let inSixel = false
-    let prevWasEsc = false
-
-    const scanSixelState = (buf, commit = false) => {
-      const len = buf.length
-      let nextInSixel = inSixel
-      let nextPrevWasEsc = prevWasEsc
-      let hitBoundary = false
-
-      for (let i = 0; i < len; i++) {
-        const ch = buf[i]
-
-        if (!nextInSixel) {
-          // DCS start: ESC P (7-bit) or 0x90 (8-bit)
-          if ((nextPrevWasEsc && ch === 0x50) || ch === 0x90) {
-            nextInSixel = true
-            nextPrevWasEsc = false
-            hitBoundary = true
-            continue
-          }
-        } else {
-          // ST end: ESC \ (7-bit) or 0x9c (8-bit)
-          if ((nextPrevWasEsc && ch === 0x5c) || ch === 0x9c) {
-            nextInSixel = false
-            nextPrevWasEsc = false
-            hitBoundary = true
-            continue
-          }
-        }
-
-        nextPrevWasEsc = ch === 0x1b
-      }
-
-      if (commit) {
-        inSixel = nextInSixel
-        prevWasEsc = nextPrevWasEsc
-      }
-
-      return {
-        hitBoundary,
-        inSixel: nextInSixel
-      }
-    }
 
     const flushBufferedData = () => {
       if (!dataBuffer.length) {
@@ -110,7 +67,6 @@ export function wsRoutes (app) {
 
       // Not zmodem or trzsz data, send to WebSocket
       ws.send(combinedData)
-      scanSixelState(combinedData, true)
       sendTimeout = null
     }
 
@@ -138,10 +94,9 @@ export function wsRoutes (app) {
       }
 
       const chunk = Buffer.isBuffer(data) ? data : Buffer.from(data)
-      const sixelScan = scanSixelState(chunk, false)
-      const shouldBypassBatch = inSixel || sixelScan.hitBoundary || chunk.length > 16384
+      const shouldBypassBatch = chunk.length > 16384
 
-      // Bypass batching for SIXEL/control-heavy or very large chunks to avoid parser desync.
+      // Bypass batching for very large chunks to avoid parser desync.
       if (shouldBypassBatch) {
         if (sendTimeout) {
           clearTimeout(sendTimeout)
@@ -153,16 +108,13 @@ export function wsRoutes (app) {
         term.writeLog(chunk)
         const zmodemConsumed = zmodemManager.handleData(pid, chunk, term, ws)
         if (zmodemConsumed) {
-          scanSixelState(chunk, true)
           return
         }
         const trzszConsumed = trzszManager.handleData(pid, chunk, term, ws)
         if (trzszConsumed) {
-          scanSixelState(chunk, true)
           return
         }
         ws.send(chunk)
-        scanSixelState(chunk, true)
         return
       }
 
@@ -176,6 +128,11 @@ export function wsRoutes (app) {
     })
 
     function onClose () {
+      // Cancel any pending batched send
+      if (sendTimeout) {
+        clearTimeout(sendTimeout)
+        sendTimeout = null
+      }
       // Clean up zmodem session
       zmodemManager.destroySession(pid)
       // Clean up trzsz session
