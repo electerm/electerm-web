@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../lib/zod.js'
 
 const runScriptSchema = z.object({
   delay: z.number().optional().describe('Delay in ms before executing this command'),

@@ -7,7 +7,7 @@
 
 import { McpServer } from '../mcp/server/mcp.js'
 import { StreamableHTTPServerTransport } from '../mcp/server/streamableHttp.js'
-import { z } from 'zod'
+import { z } from '../lib/zod.js'
 import express from 'express'
 import uid from '../common/uid.js'
 import globalState from '../server/global-state.js'

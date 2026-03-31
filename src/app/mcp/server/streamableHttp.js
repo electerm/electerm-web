@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.js'
 
 function zodToJsonSchema (zodSchema) {
   if (!zodSchema) {

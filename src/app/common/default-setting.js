@@ -64,5 +64,6 @@ export default {
   sessionLogPath: '',
   sshSftpSplitView: false,
   showCmdSuggestions: false,
-  startDirectoryLocal: ''
+  startDirectoryLocal: '',
+  autoReconnectTerminal: false
 }
