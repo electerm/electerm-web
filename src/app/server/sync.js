@@ -8,10 +8,15 @@ import {
 import log from '../common/log.js'
 import rp from 'axios'
 import { createProxyAgent } from '../lib/proxy-agent.js'
+import { doWebdavSync } from './webdav-sync.js'
 
 rp.defaults.proxy = false
 
 async function doSync (type, func, args, token, proxy) {
+  // Handle WebDAV sync separately
+  if (type === 'webdav') {
+    return doWebdavSync(func, args, token, proxy)
+  }
   const agent = createProxyAgent(proxy)
   const conf = agent
     ? {
