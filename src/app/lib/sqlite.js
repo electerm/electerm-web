@@ -34,7 +34,10 @@ export const tables = [
   'log',
   'dbUpgradeLog',
   'profiles',
-  'workspaces'
+  'workspaces',
+  'history',
+  'terminalCommandHistory',
+  'aiChatHistory'
 ]
 
 // Create tables in appropriate databases
