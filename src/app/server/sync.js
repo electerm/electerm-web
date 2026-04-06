@@ -35,7 +35,7 @@ async function doSync (type, func, args, token, proxy) {
     })
     .catch(e => {
       log.error('sync error')
-      log.error(e)
+      log.error(e.message)
       return {
         error: e
       }
@@ -47,7 +47,9 @@ export default async function wsSyncHandler (ws, msg) {
   const res = await doSync(type, func, args, token, proxy)
   if (res.error) {
     ws.s({
-      error: res.error,
+      error: {
+        message: 'sync error: ' + res.error.message
+      },
       id
     })
   } else {
