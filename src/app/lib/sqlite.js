@@ -37,7 +37,8 @@ export const tables = [
   'workspaces',
   'history',
   'terminalCommandHistory',
-  'aiChatHistory'
+  'aiChatHistory',
+  'autoRunWidgets'
 ]
 
 // Create tables in appropriate databases
@@ -56,8 +57,14 @@ function getDatabase (dbName) {
 
 function toDoc (row) {
   if (!row) return null
+  let r = {}
+  try {
+    r = JSON.parse(row.data || '{}')
+  } catch (e) {
+    log.error(e)
+  }
   return {
-    ...JSON.parse(row.data || '{}'),
+    ...r,
     _id: row._id
   }
 }
@@ -101,7 +108,7 @@ export async function dbAction (dbName, op, ...args) {
     const inserted = []
     for (const doc of inserts) {
       const { _id, data } = toRow(doc)
-      const stmt = db.prepare(`INSERT INTO \`${dbName}\` (_id, data) VALUES (?, ?)`)
+      const stmt = db.prepare(`INSERT OR REPLACE INTO \`${dbName}\` (_id, data) VALUES (?, ?)`)
       stmt.run(_id, data)
       inserted.push({ ...doc, _id })
     }

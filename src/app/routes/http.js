@@ -24,6 +24,18 @@ export function httpRoutes (app) {
       resolve(cwd, 'src/client/statics')
     ))
   } else {
+    app.use((req, res, next) => {
+      if (
+        (req.url.startsWith('/css/_temp_') &&
+        req.url.endsWith('.css')) ||
+        req.url.endsWith('xterm.css')
+      ) {
+        res.setHeader('Content-Type', 'text/css')
+        res.send('')
+        return
+      }
+      next()
+    })
     app.use(express.static(
       resolve(cwd, 'dist/assets')
     ))

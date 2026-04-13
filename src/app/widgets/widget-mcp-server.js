@@ -62,6 +62,12 @@ const widgetInfo = {
       type: 'boolean',
       default: false,
       description: 'Enable settings APIs'
+    },
+    {
+      name: 'autoRun',
+      type: 'boolean',
+      default: false,
+      description: 'Automatically start this MCP server when the app launches'
     }
   ]
 }
@@ -550,6 +556,30 @@ class ElectermMCPServer {
         },
         async ({ tabId, remoteFiles, saveFolder, protocol }) => {
           const result = await self.sendToRenderer('tool-call', { toolName: 'zmodem_download', args: { tabId, remoteFiles, saveFolder, protocol } })
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+        }
+      )
+
+      server.registerTool(
+        'electerm_sftp_transfer_list',
+        {
+          description: 'Get the list of all currently active/pending SFTP file transfers',
+          inputSchema: z.object({})
+        },
+        async () => {
+          const result = await self.sendToRenderer('tool-call', { toolName: 'sftp_transfer_list', args: {} })
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+        }
+      )
+
+      server.registerTool(
+        'electerm_sftp_transfer_history',
+        {
+          description: 'Get the history of completed/failed SFTP file transfers',
+          inputSchema: z.object({})
+        },
+        async () => {
+          const result = await self.sendToRenderer('tool-call', { toolName: 'sftp_transfer_history', args: {} })
           return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
         }
       )
