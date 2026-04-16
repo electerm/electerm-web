@@ -13,7 +13,9 @@ export default {
   theme: 'default',
   syncSetting: {
     lastUpdateTime: Date.now(),
-    autoSync: false
+    autoSync: false,
+    autoSyncInterval: 0,
+    autoSyncDirection: 'upload'
   },
   terminalTypes: [
     'xterm-256color',
