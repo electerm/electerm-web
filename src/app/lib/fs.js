@@ -195,9 +195,9 @@ async function listWindowsRootPath () {
   })
 }
 
-const readCustom = (p1, arr, ...args) => {
+const readCustom = (p1, len, ...args) => {
   return new Promise((resolve, reject) => {
-    fs.read(p1, decodeBase64String(arr), ...args, (err, n, buffer) => {
+    fs.read(p1, new Uint8Array(len), ...args, (err, n, buffer) => {
       if (err) {
         return reject(err)
       }
@@ -216,13 +216,6 @@ const writeCustom = (p1, arr) => {
       return resolve(1)
     })
   })
-}
-
-const statCustom = async (...args) => {
-  const st = await fss.stat(...args)
-  st.isD = st.isDirectory()
-  st.isF = st.isFile()
-  return st
 }
 
 const openCustom = async (...args) => {
@@ -245,6 +238,13 @@ const closeCustom = async (...args) => {
       return resolve(true)
     })
   })
+}
+
+const statCustom = async (...args) => {
+  const st = await fss.stat(...args)
+  st.isD = st.isDirectory()
+  st.isF = st.isFile()
+  return st
 }
 
 const readdirOnly = async (path) => {
