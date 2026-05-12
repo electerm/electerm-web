@@ -38,7 +38,7 @@ const commonNetworkBookmarkProps = {
   username: z.string().optional().describe('Username'),
   password: z.string().optional().describe('Password'),
   description: z.string().optional().describe('Bookmark description'),
-  runScripts: z.array(runScriptSchema).optional().describe('Run scripts after connected'),
+  // runScripts: z.array(runScriptSchema).optional().describe('Run scripts after connected'),
   startDirectoryRemote: z.string().optional().describe('Remote starting directory'),
   startDirectoryLocal: z.string().optional().describe('Local starting directory'),
   profile: z.string().optional().describe('Profile id'),
@@ -67,9 +67,9 @@ const sshBookmarkSchema = {
   displayRaw: z.boolean().optional().describe('Display raw output, default is false'),
   encode: z.string().optional().describe('Charset, default is utf8'),
   envLang: z.string().optional().describe('ENV LANG, default is en_US.UTF-8'),
-  setEnv: z.string().optional().describe('Environment variables, format: KEY1=VALUE1 KEY2=VALUE2'),
+  // setEnv: z.string().optional().describe('Environment variables, format: KEY1=VALUE1 KEY2=VALUE2'),
   color: z.string().optional().describe('Tag color, like #000000'),
-  interactiveValues: z.string().optional().describe('Strings separated by newline'),
+  // interactiveValues: z.string().optional().describe('Strings separated by newline'),
   sshTunnels: z.array(sshTunnelSchema).optional().describe('SSH tunnel definitions'),
   connectionHoppings: z.array(connectionHoppingSchema).optional().describe('Connection hopping definitions')
 }
@@ -95,21 +95,21 @@ const serialBookmarkSchema = {
   xon: z.boolean().optional().describe('XON flow control'),
   xoff: z.boolean().optional().describe('XOFF flow control'),
   xany: z.boolean().optional().describe('XANY flow control'),
-  description: z.string().optional().describe('Bookmark description'),
-  runScripts: z.array(runScriptSchema).optional().describe('Run scripts after connected')
+  description: z.string().optional().describe('Bookmark description')
+  // runScripts: z.array(runScriptSchema).optional().describe('Run scripts after connected')
 }
 
 const localBookmarkSchema = {
   title: z.string().describe('Bookmark title'),
   description: z.string().optional().describe('Bookmark description'),
-  startDirectoryLocal: z.string().optional().describe('Local starting directory'),
-  runScripts: z.array(runScriptSchema).optional().describe('Run scripts after connected'),
-  execWindows: z.string().optional().describe('Windows exec path (overrides global setting)'),
-  execMac: z.string().optional().describe('Mac exec path (overrides global setting)'),
-  execLinux: z.string().optional().describe('Linux exec path (overrides global setting)'),
-  execWindowsArgs: z.array(z.string()).optional().describe('Windows exec arguments'),
-  execMacArgs: z.array(z.string()).optional().describe('Mac exec arguments'),
-  execLinuxArgs: z.array(z.string()).optional().describe('Linux exec arguments')
+  startDirectoryLocal: z.string().optional().describe('Local starting directory')
+  // runScripts: z.array(runScriptSchema).optional().describe('Run scripts after connected'),
+  // execWindows: z.string().optional().describe('Windows exec path (overrides global setting)'),
+  // execMac: z.string().optional().describe('Mac exec path (overrides global setting)'),
+  // execLinux: z.string().optional().describe('Linux exec path (overrides global setting)'),
+  // execWindowsArgs: z.array(z.string()).optional().describe('Windows exec arguments'),
+  // execMacArgs: z.array(z.string()).optional().describe('Mac exec arguments'),
+  // execLinuxArgs: z.array(z.string()).optional().describe('Linux exec arguments')
 }
 
 export {

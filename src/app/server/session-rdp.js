@@ -7,6 +7,7 @@ import globalState from './global-state.js'
 import {
   handleConnection
 } from './rdp-proxy.js'
+import { createHopProxy } from './session-hop.js'
 import proxySock from './socks.js'
 import net from 'net'
 
@@ -29,15 +30,25 @@ class TerminalRdp extends TerminalBase {
     this.width = width
     this.height = height
 
-    const {
-      proxy,
-      readyTimeout
-    } = this.initOptions
+    // Buffer any messages that arrive during the async hop setup so they
+    // are not dropped before handleConnection sets up its own listener.
+    const bufferedMessages = []
+    const bufferMsg = (data) => bufferedMessages.push(data)
+    this.ws.on('message', bufferMsg)
 
+    const { readyTimeout } = this.initOptions
+
+    const { proxyUrl, ssh } = await createHopProxy(this.initOptions)
+    if (ssh) {
+      this.ssh = ssh
+    }
+
+    // Hand off to the proxy handler, replaying any buffered messages.
+    this.ws.off('message', bufferMsg)
     handleConnection(this.ws, {
-      proxy,
+      proxy: proxyUrl,
       readyTimeout
-    })
+    }, bufferedMessages)
   }
 
   resize () {
@@ -49,37 +60,38 @@ class TerminalRdp extends TerminalBase {
     const {
       host,
       port = 3389,
-      proxy,
       readyTimeout = 10000
     } = this.initOptions
 
-    if (proxy) {
-      // Test connection through proxy
-      const proxyResult = await proxySock({
-        readyTimeout,
-        host,
-        port,
-        proxy
-      })
-      const socket = proxyResult.socket
-      socket.destroy()
-      return true
+    const { proxyUrl, ssh } = await createHopProxy(this.initOptions)
+    if (ssh) {
+      this.ssh = ssh
     }
 
-    // Direct connection test
-    return new Promise((resolve, reject) => {
-      const socket = net.createConnection({ host, port }, () => {
-        socket.destroy()
-        resolve(true)
+    try {
+      if (proxyUrl) {
+        const proxyResult = await proxySock({ readyTimeout, host, port, proxy: proxyUrl })
+        proxyResult.socket.destroy()
+        return true
+      }
+
+      return await new Promise((resolve, reject) => {
+        const socket = net.createConnection({ host, port }, () => {
+          socket.destroy()
+          resolve(true)
+        })
+        socket.on('error', (err) => reject(err))
+        socket.setTimeout(readyTimeout, () => {
+          socket.destroy()
+          reject(new Error('Connection timed out'))
+        })
       })
-      socket.on('error', (err) => {
-        reject(err)
-      })
-      socket.setTimeout(readyTimeout, () => {
-        socket.destroy()
-        reject(new Error('Connection timed out'))
-      })
-    })
+    } finally {
+      if (this.ssh) {
+        this.ssh.kill()
+        delete this.ssh
+      }
+    }
   }
 
   kill = () => {
@@ -90,6 +102,10 @@ class TerminalRdp extends TerminalBase {
         log.debug(`[RDP:${this.pid}] ws.close() error: ${e.message}`)
       }
       delete this.ws
+    }
+    if (this.ssh) {
+      this.ssh.kill()
+      delete this.ssh
     }
     if (this.sessionLogger) {
       this.sessionLogger.destroy()

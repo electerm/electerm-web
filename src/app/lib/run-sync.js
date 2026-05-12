@@ -22,6 +22,7 @@ import {
   runWidgetFunc
 } from '../widgets/load-widget.js'
 import globalState from './global-state.js'
+import { getEnv } from './get-constants.js'
 
 const globs = {
   AIchat,
@@ -57,7 +58,8 @@ const globs = {
   runWidget,
   stopWidget,
   runWidgetFunc,
-  getPendingDeepLink: () => Promise.resolve(null)
+  getPendingDeepLink: () => Promise.resolve(null),
+  getEnv: () => Promise.resolve(getEnv())
 }
 
 export function runSync (ws, msg) {

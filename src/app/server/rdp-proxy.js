@@ -559,11 +559,10 @@ function setupTlsRelay (ws, tlsSocket, tcpSocket) {
  * @param {string} options.proxy - Proxy URL (e.g., 'socks5://127.0.0.1:1080' or 'http://proxy:8080')
  * @param {number} options.readyTimeout - Connection timeout in ms
  */
-function handleConnection (ws, options = {}) {
+function handleConnection (ws, options = {}, bufferedMessages = []) {
   log.debug(`${LOG_PREFIX} New WebSocket connection for RDP proxy`)
 
-  // Wait for the first binary message: RDCleanPath Request
-  ws.once('message', async (data) => {
+  const handleFirstMessage = async (data) => {
     try {
       const requestData = Buffer.isBuffer(data) ? data : Buffer.from(data)
       log.debug(`${LOG_PREFIX} Received RDCleanPath request (${requestData.length} bytes)`)
@@ -606,7 +605,15 @@ function handleConnection (ws, options = {}) {
 
       try { ws.close() } catch (_) {}
     }
-  })
+  }
+
+  // If a message arrived during async setup (before this handler was registered),
+  // process it immediately; otherwise wait for the next message event.
+  if (bufferedMessages.length > 0) {
+    handleFirstMessage(bufferedMessages[0])
+  } else {
+    ws.once('message', handleFirstMessage)
+  }
 
   ws.on('error', (err) => {
     log.error(`${LOG_PREFIX} WebSocket error:`, err.message)

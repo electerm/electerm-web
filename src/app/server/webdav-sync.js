@@ -4,6 +4,7 @@
 
 import log from '../common/log.js'
 import rp from 'axios'
+import https from 'https'
 import { createProxyAgent } from '../lib/proxy-agent.js'
 
 rp.defaults.proxy = false
@@ -11,11 +12,16 @@ rp.defaults.proxy = false
 /**
  * Create an axios client for WebDAV operations
  */
-function createClient (serverUrl, username, password, proxy) {
+function createClient (serverUrl, username, password, proxy, skipVerify = false) {
   const agent = createProxyAgent(proxy)
-  const conf = agent
-    ? { httpsAgent: agent }
-    : { proxy: false }
+  let conf
+  if (agent) {
+    conf = { httpsAgent: agent }
+  } else if (skipVerify) {
+    conf = { httpsAgent: new https.Agent({ rejectUnauthorized: false }) }
+  } else {
+    conf = { proxy: false }
+  }
 
   const auth = Buffer.from(`${username}:${password}`).toString('base64')
 
@@ -94,8 +100,8 @@ async function downloadFile (client, filePath) {
 /**
  * Test connection to WebDAV server
  */
-async function test (serverUrl, username, password, proxy) {
-  const client = createClient(serverUrl, username, password, proxy)
+async function test (serverUrl, username, password, proxy, skipVerify) {
+  const client = createClient(serverUrl, username, password, proxy, skipVerify)
   try {
     log.info(`[WebDAV] test: probing ${serverUrl}`)
     const res = await client.request({
@@ -120,8 +126,8 @@ async function test (serverUrl, username, password, proxy) {
 /**
  * Upload electerm data to WebDAV server
  */
-async function upload (serverUrl, username, password, data, proxy) {
-  const client = createClient(serverUrl, username, password, proxy)
+async function upload (serverUrl, username, password, data, proxy, skipVerify) {
+  const client = createClient(serverUrl, username, password, proxy, skipVerify)
   const basePath = '/electerm'
 
   try {
@@ -152,8 +158,8 @@ async function upload (serverUrl, username, password, data, proxy) {
 /**
  * Download electerm data from WebDAV server
  */
-async function download (serverUrl, username, password, proxy) {
-  const client = createClient(serverUrl, username, password, proxy)
+async function download (serverUrl, username, password, proxy, skipVerify) {
+  const client = createClient(serverUrl, username, password, proxy, skipVerify)
   const basePath = '/electerm'
 
   try {
@@ -210,11 +216,12 @@ async function download (serverUrl, username, password, proxy) {
 async function doWebdavSync (func, args, token, proxy) {
   log.info(`[WebDAV] doWebdavSync: func=${func}`)
 
-  // token format: serverUrl####username####password
+  // token format: serverUrl####username####password####skipVerify
   const parts = token ? token.split('####') : []
   const serverUrl = parts[0] || ''
   const username = parts[1] || ''
   const password = parts[2] || ''
+  const skipVerify = parts[3] === 'true'
 
   log.info(`[WebDAV] serverUrl=${serverUrl}, username=${username}`)
 
@@ -227,11 +234,11 @@ async function doWebdavSync (func, args, token, proxy) {
   try {
     switch (func) {
       case 'test':
-        return await test(serverUrl, username, password, proxy)
+        return await test(serverUrl, username, password, proxy, skipVerify)
       case 'upload':
-        return await upload(serverUrl, username, password, args[0], proxy)
+        return await upload(serverUrl, username, password, args[0], proxy, skipVerify)
       case 'download':
-        return await download(serverUrl, username, password, proxy)
+        return await download(serverUrl, username, password, proxy, skipVerify)
       default: {
         const msg = `Unknown WebDAV function: ${func}`
         log.error(`[WebDAV] ${msg}`)
