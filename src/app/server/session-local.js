@@ -76,6 +76,9 @@ class TerminalLocal extends TerminalBase {
 }
 
 export const terminalLocal = function (initOptions, ws) {
+  if (process.env.DISABLE_LOCAL_TERMINAL) {
+    return Promise.reject(new Error('Local terminal is disabled'))
+  }
   return (new TerminalLocal(initOptions, ws)).init()
 }
 
@@ -84,6 +87,9 @@ export const terminalLocal = function (initOptions, ws) {
  * @param {object} options
  */
 export const testConnectionLocal = (initOptions) => {
+  if (process.env.DISABLE_LOCAL_TERMINAL) {
+    return Promise.reject(new Error('Local terminal is disabled'))
+  }
   return Promise.resolve(true)
 }
 

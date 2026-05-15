@@ -49,6 +49,9 @@ function checkNeedMigrate () {
 }
 
 async function checkNodePty () {
+  if (process.env.DISABLE_LOCAL_TERMINAL) {
+    return false
+  }
   return import('node-pty')
     .then(() => true)
     .catch(() => false)

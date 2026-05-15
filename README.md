@@ -179,6 +179,7 @@ npm run prod
 ```sh
 # Edit .env, set
 ENABLE_AUTH=1 # if not enabled, everyone can use it without login
+DISABLE_LOCAL_TERMINAL=1 # disable local terminal for safety
 SERVER_SECRET=some-server-secret
 SERVER_PASS=some-login-pass-word
 

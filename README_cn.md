@@ -178,6 +178,7 @@ npm run prod
 ```sh
 # 编辑 .env，设置以下参数：
 ENABLE_AUTH=1 # 如果未启用，每个人都可以无需登录使用它。
+DISABLE_LOCAL_TERMINAL=1 # 禁用本地终端以提高安全性
 SERVER_SECRET=some-server-secret
 SERVER_PASS=some-login-pass-word
 
