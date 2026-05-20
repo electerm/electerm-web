@@ -55,6 +55,18 @@ export function toggleTerminalLogTimestamp (ws, msg) {
   })
 }
 
+export function setTerminalLogPath (ws, msg) {
+  const { id, pid, logPath } = msg
+  const term = terminals(pid)
+  if (term) {
+    term.setTerminalLogPath(logPath)
+  }
+  ws.s({
+    id,
+    data: 'ok'
+  })
+}
+
 export function createTerm (ws, msg) {
   const { id, body } = msg
   terminal(body, ws)

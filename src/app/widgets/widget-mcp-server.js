@@ -68,6 +68,18 @@ const widgetInfo = {
       type: 'boolean',
       default: false,
       description: 'Automatically start this MCP server when the app launches'
+    },
+    {
+      name: 'commandBlacklist',
+      type: 'textarea',
+      default: '',
+      description: 'Newline-separated list of regex patterns. Commands matching any pattern are rejected. Built-in dangerous patterns are always active.'
+    },
+    {
+      name: 'commandWhitelist',
+      type: 'textarea',
+      default: '',
+      description: 'Newline-separated list of regex patterns. When non-empty, only commands matching at least one pattern are allowed (whitelist mode).'
     }
   ]
 }
@@ -88,6 +100,45 @@ class ElectermMCPServer {
     this.ipcHandler = null
     this.pendingRequests = new Map()
     this.transports = {}
+  }
+
+  static get BUILTIN_BLACKLIST () {
+    return [
+      /rm\s+-[^\s]*[rR][^\s]*\s+\//,
+      /rm\s+-[^\s]*[rR][^\s]*\s+~/,
+      /rm\s+--recursive/,
+      /:\s*\(\s*\)\s*\{.*\|.*:.*&.*\}\s*;.*:/,
+      /\bdd\b.*\bof\s*=\s*\/dev\//,
+      /\bmkfs\b/,
+      />\s*\/dev\/[sh]d[a-z]/,
+      /\bsudo\s+rm\b/,
+      /curl\s+.*\|\s*sh/,
+      /wget\s+.*\|\s*sh/,
+      /curl\s+.*\|\s*bash/,
+      /wget\s+.*\|\s*bash/
+    ]
+  }
+
+  validateCommand (command) {
+    for (const pattern of ElectermMCPServer.BUILTIN_BLACKLIST) {
+      if (pattern.test(command)) {
+        return { allowed: false, reason: `Command blocked by built-in safety rule: ${pattern}` }
+      }
+    }
+    const userBlacklist = (this.config.commandBlacklist || '').split('\n').map(s => s.trim()).filter(Boolean)
+    for (const raw of userBlacklist) {
+      try {
+        if (new RegExp(raw).test(command)) {
+          return { allowed: false, reason: `Command blocked by blacklist pattern: ${raw}` }
+        }
+      } catch (_) {}
+    }
+    const userWhitelist = (this.config.commandWhitelist || '').split('\n').map(s => s.trim()).filter(Boolean)
+    if (userWhitelist.length > 0) {
+      const allowed = userWhitelist.some(raw => { try { return new RegExp(raw).test(command) } catch (_) { return false } })
+      if (!allowed) { return { allowed: false, reason: 'Command not in whitelist' } }
+    }
+    return { allowed: true }
   }
 
   // Send request to renderer process via IPC
@@ -230,6 +281,10 @@ class ElectermMCPServer {
         }
       },
       async ({ command, tabId, inputOnly }) => {
+        const check = self.validateCommand(command)
+        if (!check.allowed) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: check.reason }, null, 2) }], isError: true }
+        }
         const result = await self.sendToRenderer('tool-call', {
           toolName: 'send_terminal_command',
           args: { command, tabId, inputOnly }
@@ -837,5 +892,6 @@ function widgetRun (instanceConfig) {
 
 export {
   widgetInfo,
-  widgetRun
+  widgetRun,
+  ElectermMCPServer
 }

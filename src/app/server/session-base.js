@@ -78,6 +78,23 @@ export class TerminalBase {
     this.initOptions.addTimeStampToTermLog = !this.initOptions.addTimeStampToTermLog
   }
 
+  setTerminalLogPath (logPath) {
+    if (!logPath) { return }
+    this.initOptions.sessionLogPath = logPath
+    if (this.sessionLogger) {
+      this.sessionLogger.destroy()
+      if (this._vtTerm) {
+        this._vtTerm.dispose()
+        delete this._vtTerm
+      }
+      this.sessionLogger = new SessionLog({
+        logDir: this.initOptions.sessionLogPath,
+        fileName: createLogFileName(this.initOptions.logName)
+      })
+      this._initVtParser()
+    }
+  }
+
   toggleTerminalLog () {
     if (this.sessionLogger) {
       this.sessionLogger.destroy()
