@@ -40,6 +40,13 @@ const widgetInfo = {
       description: 'The port number to listen on'
     },
     {
+      name: 'apiKey',
+      type: 'string',
+      default: '',
+      showGenerator: true,
+      description: 'Optional API key for authenticating MCP requests. If set, clients must send this in the Authorization header as: Bearer <apiKey>. Leave empty to skip authentication.'
+    },
+    {
       name: 'enableBookmarks',
       type: 'boolean',
       default: true,
@@ -94,6 +101,7 @@ function getDefaultConfig () {
 class ElectermMCPServer {
   constructor (config) {
     this.config = config
+    // API key is optional; when empty, authentication is skipped.
     this.instanceId = uid()
     this.httpServer = null
     this.mcpServer = null
@@ -720,17 +728,40 @@ class ElectermMCPServer {
     const app = express()
     app.use(express.json())
 
-    // Handle CORS
+    // Handle CORS, defaulting to same-origin only.
     app.use((req, res, next) => {
-      res.setHeader('Access-Control-Allow-Origin', '*')
+      const allowedOrigin = this.config.allowedOrigin || ''
+      if (allowedOrigin) {
+        res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
+      }
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id')
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id, Authorization')
       if (req.method === 'OPTIONS') {
         res.status(204).end()
         return
       }
       next()
     })
+
+    // Authenticate requests with API key when configured.
+    if (this.config.apiKey) {
+      app.use((req, res, next) => {
+        const authHeader = req.headers.authorization || ''
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+        if (!token || token !== this.config.apiKey) {
+          res.status(401).json({
+            jsonrpc: '2.0',
+            error: {
+              code: -32600,
+              message: 'Unauthorized: invalid or missing API key'
+            },
+            id: null
+          })
+          return
+        }
+        next()
+      })
+    }
 
     const self = this
 
@@ -811,9 +842,12 @@ class ElectermMCPServer {
         const serverInfo = {
           url: `http://${host}:${port}/mcp`,
           protocol: 'mcp',
-          version: '2024-11-05'
+          version: '2024-11-05',
+          apiKey: self.config.apiKey
         }
-        const msg = `MCP Server is running at ${serverInfo.url}`
+        const msg = self.config.apiKey
+          ? `MCP Server is running at ${serverInfo.url} (API key required)`
+          : `MCP Server is running at ${serverInfo.url}`
         resolve({
           serverInfo,
           msg,

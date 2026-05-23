@@ -32,6 +32,28 @@ const createAIClient = (baseURL, apiKey, proxy) => {
   return axios.create(config)
 }
 
+export const AIchatWithTools = async (messages, model, baseURL, path, apiKey, proxy, tools) => {
+  try {
+    const client = createAIClient(baseURL, apiKey, proxy)
+    const requestData = {
+      model,
+      messages,
+      stream: false
+    }
+    if (tools?.length) {
+      requestData.tools = tools
+    }
+    const response = await client.post(path, requestData)
+    const choice = response.data.choices[0]
+    return {
+      message: choice.message
+    }
+  } catch (e) {
+    log.error('AI chat with tools error', e)
+    return { error: e.message }
+  }
+}
+
 export const AIchat = async (
   prompt,
   model = defaultSettings.modelAI,

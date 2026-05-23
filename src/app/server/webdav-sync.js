@@ -13,10 +13,15 @@ rp.defaults.proxy = false
  * Create an axios client for WebDAV operations
  */
 function createClient (serverUrl, username, password, proxy, skipVerify = false) {
-  const agent = createProxyAgent(proxy)
+  const proxyAgent = createProxyAgent(proxy)
   let conf
-  if (agent) {
-    conf = { httpsAgent: agent }
+  if (proxyAgent) {
+    if (skipVerify) {
+      // Apply skipVerify through the proxy tunnel as well.
+      conf = { httpsAgent: createProxyAgent(proxy, { rejectUnauthorized: false }) }
+    } else {
+      conf = { httpsAgent: proxyAgent }
+    }
   } else if (skipVerify) {
     conf = { httpsAgent: new https.Agent({ rejectUnauthorized: false }) }
   } else {

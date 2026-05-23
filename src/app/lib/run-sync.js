@@ -14,7 +14,7 @@ import { watchFile, unwatchFile } from './watch-file.js'
 import lookup from './lookup.js'
 import { init } from './init.js'
 import { showItemInFolder } from './show-item-in-folder.js'
-import { AIchat, getStreamContent, stopStream } from './ai.js'
+import { AIchat, AIchatWithTools, getStreamContent, stopStream } from './ai.js'
 import {
   listWidgets,
   runWidget,
@@ -26,6 +26,7 @@ import { getEnv } from './get-constants.js'
 
 const globs = {
   AIchat,
+  AIchatWithTools,
   getStreamContent,
   stopStream,
   encryptAsync,

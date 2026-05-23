@@ -8,8 +8,15 @@ import {
   cwd
 } from '../common/runtime-constants.js'
 import { resolve } from 'path'
+import log from '../common/log.js'
+import { applySystemCAsToGlobalAgent } from '../lib/system-ca.js'
 
 export async function createApp () {
+  const loadedCount = applySystemCAsToGlobalAgent()
+  if (loadedCount > 0) {
+    log.info(`[TLS] loaded ${loadedCount} system CA certificate(s) into main process`)
+  }
+
   const app = express()
   // parse application/x-www-form-urlencoded
   app.use(express.urlencoded({ extended: true }))
