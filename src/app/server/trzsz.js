@@ -5,6 +5,7 @@ import fs from 'fs'
 import { open } from 'fs/promises'
 import path from 'path'
 import log from '../common/log.js'
+import sanitizeFilename from '../common/sanitize-filename.js'
 import { TrzszTransfer } from 'trzsz2'
 
 const TRZSZ_STATE = {
@@ -507,7 +508,7 @@ class TrzszSession {
         progressCallback
       )
 
-      const savedFilePaths = savedFiles.map(name => path.join(downloadDir, name))
+      const savedFilePaths = savedFiles.map(name => path.join(downloadDir, sanitizeFilename(name)))
       await Promise.all(this.fileWriters.map(w => w.closeFile()))
       const totalElapsed = this.transferStartTime > 0
         ? (Date.now() - this.transferStartTime) / 1000
@@ -545,10 +546,11 @@ class TrzszSession {
   }
 
   getUniqueFilePath (dir, fileName) {
-    let filePath = path.join(dir, fileName)
+    const safeName = sanitizeFilename(fileName)
+    let filePath = path.join(dir, safeName)
     if (!fs.existsSync(filePath)) return filePath
-    const ext = path.extname(fileName)
-    const baseName = path.basename(fileName, ext)
+    const ext = path.extname(safeName)
+    const baseName = path.basename(safeName, ext)
     let counter = 1
     while (fs.existsSync(filePath)) {
       filePath = path.join(dir, `${baseName}.${counter}${ext}`)

@@ -7,6 +7,7 @@ import fs from 'fs'
 import path from 'path'
 import log from '../common/log.js'
 import generate from '../common/uid.js'
+import sanitizeFilename from '../common/sanitize-filename.js'
 import { Sender, Receiver, SenderEvent, ReceiverEvent } from 'zmodem2'
 
 // Zmodem state constants
@@ -730,7 +731,7 @@ class ZmodemSession {
     }
 
     try {
-      let filePath = path.join(this.savePath, name)
+      let filePath = path.join(this.savePath, sanitizeFilename(name))
 
       // Check if file exists, add suffix if needed
       if (fs.existsSync(filePath)) {
