@@ -984,8 +984,8 @@ export const terminalSsh = function (initOptions, ws) {
  * test ssh connection
  * @param {object} options
  */
-export const testConnectionSsh = (options) => {
-  return (new TerminalSsh(options, undefined, true))
+export const testConnectionSsh = (options, ws) => {
+  return (new TerminalSsh(options, ws, true))
     .init()
     .then(() => true)
     .catch((err) => {

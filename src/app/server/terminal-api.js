@@ -97,7 +97,7 @@ export function createTerm (ws, msg) {
 
 export function testTerm (ws, msg) {
   const { id, body } = msg
-  testConnection(body)
+  testConnection(body, ws)
     .then(data => {
       if (data) {
         ws.s({
@@ -113,5 +113,14 @@ export function testTerm (ws, msg) {
           }
         })
       }
+    })
+    .catch(err => {
+      ws.s({
+        id,
+        error: {
+          message: err.message || 'test failed',
+          stack: err.stack || 'test failed'
+        }
+      })
     })
 }

@@ -24,9 +24,9 @@ export const terminal = async function (initOptions, ws) {
   return terminal(initOptions, ws)
 }
 
-export const testConnection = async (initOptions) => {
+export const testConnection = async (initOptions, ws) => {
   const type = getType(initOptions)
   const modulePath = getModulePath(type)
   const { testConnection } = await import(modulePath)
-  return testConnection(initOptions)
+  return testConnection(initOptions, ws)
 }

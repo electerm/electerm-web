@@ -10,6 +10,7 @@ import {
 } from '../server/remote-common.js'
 import { zmodemManager } from '../server/zmodem.js'
 import { trzszManager } from '../server/trzsz.js'
+import { xmodemManager } from '../server/xmodem.js'
 
 function cleanup () {
   cleanAllSessions()
@@ -65,7 +66,14 @@ export function wsRoutes (app) {
         return
       }
 
-      // Not zmodem or trzsz data, send to WebSocket
+      // Check for xmodem protocol before sending to client
+      const xmodemConsumed = xmodemManager.handleData(pid, combinedData, term, ws)
+      if (xmodemConsumed) {
+        sendTimeout = null
+        return
+      }
+
+      // Not zmodem, trzsz, or xmodem data, send to WebSocket
       ws.send(combinedData)
       sendTimeout = null
     }
@@ -93,6 +101,18 @@ export function wsRoutes (app) {
         return
       }
 
+      // Check if xmodem session is active and handle data.
+      // For serial terminals (term.port exists) a raw port listener (registered below)
+      // bypasses rxLineEnding transformation and feeds raw bytes to xmodem.
+      if (xmodemManager.isActive(pid)) {
+        if (!term.port) {
+          // Non-serial fallback (should not normally happen)
+          term.writeLog(data)
+          xmodemManager.handleData(pid, data, term, ws)
+        }
+        return
+      }
+
       const chunk = Buffer.isBuffer(data) ? data : Buffer.from(data)
       const shouldBypassBatch = chunk.length > 16384
 
@@ -114,6 +134,10 @@ export function wsRoutes (app) {
         if (trzszConsumed) {
           return
         }
+        const xmodemConsumed = xmodemManager.handleData(pid, chunk, term, ws)
+        if (xmodemConsumed) {
+          return
+        }
         ws.send(chunk)
         return
       }
@@ -127,6 +151,17 @@ export function wsRoutes (app) {
       }
     })
 
+    // For serial terminals, register a raw data listener directly on the port to
+    // feed binary XMODEM data to xmodemManager without rxLineEnding transformation.
+    if (term.port) {
+      term.port.on('data', function (rawData) {
+        if (xmodemManager.isActive(pid)) {
+          term.writeLog(rawData)
+          xmodemManager.handleData(pid, rawData, term, ws)
+        }
+      })
+    }
+
     function onClose () {
       // Cancel any pending batched send
       if (sendTimeout) {
@@ -137,6 +172,8 @@ export function wsRoutes (app) {
       zmodemManager.destroySession(pid)
       // Clean up trzsz session
       trzszManager.destroySession(pid)
+      // Clean up xmodem session
+      xmodemManager.destroySession(pid)
       term.kill()
       log.debug('Closed terminal ' + pid)
       // Clean things up
@@ -161,6 +198,10 @@ export function wsRoutes (app) {
             }
             if (parsed.action === 'trzsz-event') {
               trzszManager.handleMessage(pid, parsed, term, ws)
+              return
+            }
+            if (parsed.action === 'xmodem-event') {
+              xmodemManager.handleMessage(pid, parsed, term, ws)
               return
             }
             if (parsed.action === 'keepalive') {
