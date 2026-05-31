@@ -155,7 +155,7 @@ async function createServer () {
     '/api/login',
     proxy(tar, {
       proxyReqPathResolver: function (req) {
-        return '/api/login'
+        return req.originalUrl
       }
     })
   )
@@ -163,7 +163,23 @@ async function createServer () {
     '/api/get-constants',
     proxy(tar, {
       proxyReqPathResolver: function (req) {
-        return '/api/get-constants'
+        return req.originalUrl
+      }
+    })
+  )
+  app.use(
+    '/api/download',
+    proxy(tar, {
+      proxyReqPathResolver: function (req) {
+        return req.originalUrl
+      }
+    })
+  )
+  app.use(
+    '/api/upload',
+    proxy(tar, {
+      proxyReqPathResolver: function (req) {
+        return '/api/upload'
       }
     })
   )

@@ -11,11 +11,13 @@ import {
   jwtAuth,
   errHandler
 } from '../lib/jwt.js'
+import { fileTransferRoutes } from './file-transfer.js'
 
 export function httpRoutes (app) {
   app.get('/', index)
   app.post('/api/login', login)
   app.get('/api/get-constants', jwtAuth, errHandler, getConstants)
+  fileTransferRoutes(app)
   if (isDev) {
     app.use(express.static(
       resolve(cwd, 'node_modules')
