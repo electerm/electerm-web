@@ -24,6 +24,26 @@ window.api = {
       }, '*')
     })
   },
+  saveDialog: (opts) => {
+    return new Promise((resolve, reject) => {
+      window.et.handleSaveDialogEvent = (e) => {
+        if (e?.data?.type === 'handleSaveDialog') {
+          window.removeEventListener('message', window.et.handleSaveDialogEvent)
+          delete window.et.handleSaveDialogEvent
+          resolve(e.data.data)
+        } else if (e?.data?.type === 'closeSaveDialog') {
+          window.removeEventListener('message', window.et.handleSaveDialogEvent)
+          delete window.et.handleSaveDialogEvent
+          resolve({ canceled: true, filePath: '' })
+        }
+      }
+      window.addEventListener('message', window.et.handleSaveDialogEvent)
+      window.postMessage({
+        type: 'saveDialog',
+        data: opts
+      }, '*')
+    })
+  },
   ipcOnEvent: (event, cb) => {
 
   },

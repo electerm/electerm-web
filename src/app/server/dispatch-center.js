@@ -26,7 +26,8 @@ import {
   runCmd,
   toggleTerminalLog,
   toggleTerminalLogTimestamp,
-  setTerminalLogPath
+  setTerminalLogPath,
+  startTerminalLogFile
 } from './terminal-api.js'
 import globalState from './global-state.js'
 
@@ -194,6 +195,8 @@ export function initWs (app) {
           toggleTerminalLogTimestamp(ws, msg)
         } else if (action === 'set-terminal-log-path') {
           setTerminalLogPath(ws, msg)
+        } else if (action === 'start-terminal-log-file') {
+          startTerminalLogFile(ws, msg)
         } else if (action === 'run-cmd') {
           runCmd(ws, msg)
         } if (action === 'runSync') {

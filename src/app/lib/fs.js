@@ -243,8 +243,7 @@ const unzipFile = async (localFilePath, targetFolderPath) => {
 }
 
 async function listWindowsRootPath () {
-  return new Promise((resolve, reject) => {
-    const { exec } = require('child_process')
+  const drives = await new Promise((resolve, reject) => {
     const command = 'powershell.exe -Command "Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Root"'
 
     exec(command, { encoding: 'utf8' }, (error, stdout, stderr) => {
@@ -264,6 +263,22 @@ async function listWindowsRootPath () {
       resolve(drives)
     })
   })
+  const distros = await listWslDistros()
+  return [...drives, ...distros]
+}
+
+async function listWslDistros () {
+  try {
+    const { stdout } = await execAsync('wsl.exe -l -q', { encoding: 'buffer' })
+    const output = Buffer.from(stdout).toString('utf16le').replace(/^\uFEFF/, '')
+    const distros = output.split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .map(name => '\\\\wsl.localhost\\' + name)
+    return distros
+  } catch {
+    return []
+  }
 }
 
 const readCustom = (p1, len, ...args) => {

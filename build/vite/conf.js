@@ -25,7 +25,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'ironrdp-wasm': resolve(cwd, 'node_modules/ironrdp-wasm/pkg/rdp_client.js')
+      'ironrdp-wasm': resolve(cwd, 'node_modules/ironrdp-wasm/pkg/rdp_client.js'),
+      '@novnc/novnc/core/rfb': resolve(cwd, 'node_modules/@novnc/novnc/core/rfb.js')
     }
   },
   optimizeDeps: {

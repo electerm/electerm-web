@@ -6,6 +6,7 @@ import { createLogFileName } from '../common/create-session-log-file-path.js'
 import { SessionLog } from './session-log.js'
 import globalState from './global-state.js'
 import time from '../common/time.js'
+import path from 'path'
 import pkg from '@xterm/headless'
 const { Terminal } = pkg
 
@@ -93,6 +94,26 @@ export class TerminalBase {
       })
       this._initVtParser()
     }
+  }
+
+  startTerminalLogFile (logFilePath, addTimeStamp) {
+    if (!logFilePath) {
+      return
+    }
+    const { dirname, basename } = path
+    const logDir = dirname(logFilePath)
+    const fileName = basename(logFilePath)
+    if (this.sessionLogger) {
+      this.sessionLogger.destroy()
+      delete this.sessionLogger
+    }
+    if (this._vtTerm) {
+      this._vtTerm.dispose()
+      delete this._vtTerm
+    }
+    this.initOptions.addTimeStampToTermLog = !!addTimeStamp
+    this.sessionLogger = new SessionLog({ logDir, fileName })
+    this._initVtParser()
   }
 
   toggleTerminalLog () {

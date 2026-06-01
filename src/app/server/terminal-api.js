@@ -67,6 +67,18 @@ export function setTerminalLogPath (ws, msg) {
   })
 }
 
+export function startTerminalLogFile (ws, msg) {
+  const { id, pid, logFilePath, addTimeStampToTermLog } = msg
+  const term = terminals(pid)
+  if (term) {
+    term.startTerminalLogFile(logFilePath, addTimeStampToTermLog)
+  }
+  ws.s({
+    id,
+    data: 'ok'
+  })
+}
+
 export function createTerm (ws, msg) {
   const { id, body } = msg
   terminal(body, ws)

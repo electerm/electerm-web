@@ -4,12 +4,14 @@
 
 import { Component } from 'react'
 import {
-  Modal,
   Spin,
   Pagination,
   Button,
+  Input,
   ConfigProvider
 } from 'antd'
+import { SaveOutlined } from '@ant-design/icons'
+import Modal from '../electerm-react/components/common/modal'
 import { notification } from '../electerm-react/components/common/notification'
 import FileItem from './file-item'
 import AddressBar from '../electerm-react/components/sftp/address-bar'
@@ -28,6 +30,8 @@ export default class FileSelectDialog extends Component {
     const p = window.localStorage.getItem(this.lsKey) || window.et.home
     this.state = {
       opts: null,
+      isSaveDialog: false,
+      saveFileName: '',
       loading: false,
       page: 1,
       localShowHiddenFile: false,
@@ -53,7 +57,11 @@ export default class FileSelectDialog extends Component {
 
   handleMsg = (e) => {
     if (e?.data?.type === 'openDialog') {
-      this.setState({ opts: e.data.data }, this.localList)
+      this.setState({ opts: e.data.data, isSaveDialog: false, saveFileName: '' }, this.localList)
+    } else if (e?.data?.type === 'saveDialog') {
+      const opts = e.data.data || {}
+      const defaultName = opts.defaultPath || ''
+      this.setState({ opts, isSaveDialog: true, saveFileName: defaultName }, this.localList)
     }
   }
 
@@ -70,14 +78,34 @@ export default class FileSelectDialog extends Component {
   }
 
   handleClose = () => {
-    window.postMessage({
-      type: 'closeDialog'
-    }, '*')
+    const { isSaveDialog } = this.state
+    if (isSaveDialog) {
+      window.postMessage({
+        type: 'closeSaveDialog'
+      }, '*')
+    } else {
+      window.postMessage({
+        type: 'closeDialog'
+      }, '*')
+    }
     this.setState({ opts: null })
   }
 
   handleSubmit = () => {
-    const { fileSelected, localPath } = this.state
+    const { fileSelected, localPath, isSaveDialog, saveFileName } = this.state
+    if (isSaveDialog) {
+      const name = saveFileName.trim()
+      if (!name) {
+        return notification.warning({ message: 'Please enter a file name' })
+      }
+      const filePath = resolve(localPath, name)
+      this.setState({ opts: null })
+      window.postMessage({
+        type: 'handleSaveDialog',
+        data: { canceled: false, filePath }
+      }, '*')
+      return
+    }
     const p = fileSelected
       ? resolve(localPath, fileSelected.name)
       : localPath
@@ -94,9 +122,11 @@ export default class FileSelectDialog extends Component {
     this.setState({ loading: true, fileSelected: null })
     const {
       localPath,
-      opts
+      opts,
+      isSaveDialog
     } = this.state
-    const func = opts.properties.includes('openDirectory')
+    const properties = opts?.properties || []
+    const func = !isSaveDialog && properties.includes('openDirectory')
       ? window.fs.readdirOnly
       : window.fs.readdirAndFiles
     const list = await func(localPath)
@@ -180,9 +210,17 @@ export default class FileSelectDialog extends Component {
   }
 
   handleClickFile = item => {
-    this.setState({
-      fileSelected: item
-    })
+    const { isSaveDialog } = this.state
+    if (isSaveDialog && !item.isDirectory) {
+      this.setState({
+        fileSelected: item,
+        saveFileName: item.name
+      })
+    } else {
+      this.setState({
+        fileSelected: item
+      })
+    }
   }
 
   handleDbClickFile = (item) => {
@@ -195,6 +233,26 @@ export default class FileSelectDialog extends Component {
       localPath: np,
       localPathTemp: np
     }, this.localList)
+  }
+
+  renderSaveInput () {
+    const {
+      isSaveDialog,
+      saveFileName
+    } = this.state
+    if (!isSaveDialog) {
+      return null
+    }
+    return (
+      <div className='pd1b'>
+        <Input
+          value={saveFileName}
+          placeholder='File name'
+          prefix={<SaveOutlined />}
+          onChange={e => this.setState({ saveFileName: e.target.value })}
+        />
+      </div>
+    )
   }
 
   renderHeader () {
@@ -233,12 +291,12 @@ export default class FileSelectDialog extends Component {
 
   renderFooter () {
     const {
-      properties
-    } = this.state.opts
-    const {
+      isSaveDialog,
       fileSelected
     } = this.state
-    const disabled = properties.includes('openFile') && !fileSelected
+    const opts = this.state.opts
+    const properties = opts?.properties || []
+    const disabled = !isSaveDialog && properties.includes('openFile') && !fileSelected
     return (
       <div className='fix'>
         <div className='fleft'>
@@ -312,22 +370,22 @@ export default class FileSelectDialog extends Component {
   renderContent = () => {
     const {
       opts,
-      loading
+      loading,
+      isSaveDialog
     } = this.state
     const props = {
       maskClosable: false,
       open: true,
       width: '80%',
-      okText: s('submit'),
-      title: opts.title,
+      title: opts.title || (isSaveDialog ? 'Save As' : 'Open'),
       footer: this.renderFooter(),
-      onOk: this.handleSubmit,
       onCancel: this.handleClose
     }
     return (
       <ConfigProvider theme={window.store.uiThemeConfig}>
         <Modal {...props}>
           <Spin spinning={loading}>
+            {this.renderSaveInput()}
             {this.renderHeader()}
             {this.renderList()}
           </Spin>
