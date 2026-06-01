@@ -57,7 +57,8 @@ export function fileTransferRoutes (app) {
       return res.status(400).json({ error: 'path and file are required' })
     }
     try {
-      const destPath = path.join(targetDir, req.file.originalname)
+      const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8')
+      const destPath = path.join(targetDir, originalName)
       fs.renameSync(req.file.path, destPath)
       res.json({ success: true, path: destPath })
     } catch (err) {
