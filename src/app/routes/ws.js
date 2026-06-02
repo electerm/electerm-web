@@ -42,6 +42,27 @@ export function wsRoutes (app) {
     const dataBuffer = []
     let sendTimeout = null
 
+    // Auto-trigger XMODEM when the serial device sends a marker message.
+    // The serial-shell.js sends these markers when the user types tx/rx.
+    function detectXmodemMarker (text) {
+      const txMatch = text.match(/\[XMODEM:TX:(.+?)\]/)
+      if (txMatch) {
+        ws.s({
+          action: 'xmodem-event',
+          event: 'auto-trigger-receive',
+          name: txMatch[1]
+        })
+        return
+      }
+      const rxMatch = text.match(/\[XMODEM:RX\]/)
+      if (rxMatch) {
+        ws.s({
+          action: 'xmodem-event',
+          event: 'auto-trigger-send'
+        })
+      }
+    }
+
     const flushBufferedData = () => {
       if (!dataBuffer.length) {
         sendTimeout = null
@@ -51,6 +72,11 @@ export function wsRoutes (app) {
 
       // Write to log (keep this)
       term.writeLog(combinedData)
+
+      // Detect XMODEM auto-trigger markers from serial device
+      if (term.port) {
+        detectXmodemMarker(combinedData.toString('utf8'))
+      }
 
       // Check for zmodem escape sequence before sending to client
       const zmodemConsumed = zmodemManager.handleData(pid, combinedData, term, ws)
@@ -111,6 +137,12 @@ export function wsRoutes (app) {
           xmodemManager.handleData(pid, data, term, ws)
         }
         return
+      }
+
+      // Detect XMODEM auto-trigger markers from serial device
+      if (term.port) {
+        const text = Buffer.isBuffer(data) ? data.toString('utf8') : data
+        detectXmodemMarker(text)
       }
 
       const chunk = Buffer.isBuffer(data) ? data : Buffer.from(data)
