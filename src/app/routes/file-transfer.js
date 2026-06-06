@@ -4,14 +4,16 @@
 
 import multer from 'multer'
 import fs from 'fs'
-import path from 'path'
+import path, { resolve } from 'path'
 import { spawn } from 'child_process'
 import {
   jwtAuth,
   errHandler
 } from '../lib/jwt.js'
 
-const upload = multer({ dest: 'uploads/' })
+const uploadDir = resolve(process.env.DB_PATH || resolve(process.cwd(), 'data'), 'uploads')
+fs.mkdirSync(uploadDir, { recursive: true })
+const upload = multer({ dest: uploadDir })
 
 export function fileTransferRoutes (app) {
   app.get('/api/download', jwtAuth, errHandler, (req, res) => {
