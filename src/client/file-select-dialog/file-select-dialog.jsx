@@ -82,7 +82,7 @@ export default class FileSelectDialog extends Component {
 
   handleBrowserDownload = () => {
     const { opts } = this.state
-    const { filename, content } = opts._browserDownload
+    const { filename, content } = opts
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -338,8 +338,9 @@ export default class FileSelectDialog extends Component {
     const opts = this.state.opts
     const properties = opts?.properties || []
     const disabled = !isSaveDialog && properties.includes('openFile') && !fileSelected
-    const showBrowserUpload = !isSaveDialog && properties.includes('openFile')
-    const showBrowserDownload = !isSaveDialog && properties.includes('openDirectory')
+    const noBrowserTransfer = opts?.noBrowserTransfer
+    const showBrowserUpload = !noBrowserTransfer && !isSaveDialog && properties.includes('openFile')
+    const showBrowserDownload = !noBrowserTransfer && !isSaveDialog && opts?.content
     return (
       <div className='fix'>
         <div className='fleft'>

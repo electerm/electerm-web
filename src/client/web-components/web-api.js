@@ -14,6 +14,8 @@ window.api = {
           delete window.et.handleDialogEvent
           resolve(e.data.data)
         } else if (e?.data?.type === 'closeDialog') {
+          window.removeEventListener('message', window.et.handleDialogEvent)
+          delete window.et.handleDialogEvent
           resolve(false)
         }
       }
