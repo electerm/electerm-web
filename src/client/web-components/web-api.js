@@ -2,6 +2,23 @@
 // import { message } from 'antd'
 
 window.api = {
+  fetch: (url, options = {}) => {
+    const headers = {
+      token: window.store?.config.tokenElecterm,
+      ...options.headers
+    }
+    return window.fetch(url, { ...options, headers })
+      .then(res => {
+        if (res.status > 304) {
+          return res.json()
+            .catch(() => ({}))
+            .then(data => {
+              throw new Error(data.error || `Request failed (${res.status})`)
+            })
+        }
+        return res
+      })
+  },
   getZoomFactor: () => 1,
   setZoomFactor: (nl) => {
     // message.info('Set ZoomFactor not supported')
