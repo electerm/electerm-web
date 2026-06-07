@@ -376,7 +376,7 @@ export default class FileSelectDialog extends Component {
     const props = {
       maskClosable: false,
       open: true,
-      width: '80%',
+      width: 'min(800px, 90vw)',
       title: opts.title || (isSaveDialog ? 'Save As' : 'Open'),
       footer: this.renderFooter(),
       onCancel: this.handleClose

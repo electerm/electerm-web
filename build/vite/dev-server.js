@@ -25,7 +25,7 @@ import { migrationNotice } from '../../src/app/lib/fancy-console.js'
 
 const devPort = env.DEV_PORT || 5570
 const devHost = env.DEV_HOST || '127.0.0.1'
-const port = env.PORT || 5577
+const port = env.PORT || 5572
 const host = env.HOST || '127.0.0.1'
 const h = ''
 const tar = `http://${host}:${port}`
@@ -120,7 +120,7 @@ async function createServer () {
       middlewareMode: true,
       hmr: {
         overlay: true,
-        port: env.DEV_HMR_PORT || 24679
+        port: env.DEV_HMR_PORT || 23579
       }
     },
     appType: 'custom'
