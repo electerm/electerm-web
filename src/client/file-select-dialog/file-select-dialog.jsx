@@ -10,7 +10,7 @@ import {
   Input,
   ConfigProvider
 } from 'antd'
-import { SaveOutlined } from '@ant-design/icons'
+import { SaveOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons'
 import Modal from '../electerm-react/components/common/modal'
 import { notification } from '../electerm-react/components/common/notification'
 import FileItem from './file-item'
@@ -54,6 +54,46 @@ export default class FileSelectDialog extends Component {
   }
 
   lsKey = 'dialog-start-path'
+
+  fileInputRef = null
+
+  handleBrowserUpload = () => {
+    if (this.fileInputRef) {
+      this.fileInputRef.click()
+    }
+  }
+
+  handleBrowserFileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      const fileContent = evt.target.result
+      const fileName = file.name
+      this.setState({ opts: null })
+      window.postMessage({
+        type: 'handleDialog',
+        data: { fileContent, fileName }
+      }, '*')
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
+  handleBrowserDownload = () => {
+    const { opts } = this.state
+    const { filename, content } = opts._browserDownload
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    this.handleClose()
+  }
 
   handleMsg = (e) => {
     if (e?.data?.type === 'openDialog') {
@@ -290,6 +330,7 @@ export default class FileSelectDialog extends Component {
   }
 
   renderFooter () {
+    const e = window.translate
     const {
       isSaveDialog,
       fileSelected
@@ -297,10 +338,28 @@ export default class FileSelectDialog extends Component {
     const opts = this.state.opts
     const properties = opts?.properties || []
     const disabled = !isSaveDialog && properties.includes('openFile') && !fileSelected
+    const showBrowserUpload = !isSaveDialog && properties.includes('openFile')
+    const showBrowserDownload = !isSaveDialog && properties.includes('openDirectory')
     return (
       <div className='fix'>
         <div className='fleft'>
           {this.renderPager()}
+          {showBrowserUpload && (
+            <Button
+              className='iblock mg1r'
+              onClick={this.handleBrowserUpload}
+            >
+              <UploadOutlined /> {e('uploadFromBrowser')}
+            </Button>
+          )}
+          {showBrowserDownload && (
+            <Button
+              className='iblock mg1r'
+              onClick={this.handleBrowserDownload}
+            >
+              <DownloadOutlined /> {e('downloadFromBrowser')}
+            </Button>
+          )}
         </div>
         <div className='fright'>
           <Button
@@ -379,10 +438,17 @@ export default class FileSelectDialog extends Component {
       width: 'min(800px, 90vw)',
       title: opts.title || (isSaveDialog ? 'Save As' : 'Open'),
       footer: this.renderFooter(),
-      onCancel: this.handleClose
+      onCancel: this.handleClose,
+      wrapClassName: 'file-select-modal'
     }
     return (
       <ConfigProvider theme={window.store.uiThemeConfig}>
+        <input
+          type='file'
+          ref={r => { this.fileInputRef = r }}
+          className='hide'
+          onChange={this.handleBrowserFileChange}
+        />
         <Modal {...props}>
           <Spin spinning={loading}>
             {this.renderSaveInput()}
