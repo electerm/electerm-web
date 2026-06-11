@@ -1,6 +1,6 @@
 import os from 'os'
 import uid from '../common/uid.js'
-import { customRequire } from '../lib/custom-require.js'
+import FtpSrv from '@electerm/ftp-srv'
 
 const widgetInfo = {
   name: 'Local FTP Server',
@@ -66,17 +66,11 @@ function widgetRun (instanceConfig) {
   const config = { ...getDefaultConfig(), ...instanceConfig }
   const instanceId = uid()
   let server = null
-  let FtpSrv = null
 
   const start = async () => {
     if (server) {
       throw new Error('Server is already running')
     }
-
-    FtpSrv = await customRequire('@electerm/ftp-srv', {
-      isCustomModule: true,
-      downloadModule: true
-    })
 
     server = new FtpSrv({
       url: `ftp://${config.host}:${config.port}`,
@@ -110,11 +104,6 @@ function widgetRun (instanceConfig) {
           const msg = `${widgetInfo.name} is running at ${serverInfo.url}`
           console.log(msg)
           console.log(`Serving files from: ${serverInfo.path}`)
-          if (!config.anonymous) {
-            console.log(`Login credentials: ${config.username} / ${config.password}`)
-          } else {
-            console.log('Anonymous access enabled')
-          }
           resolve({ serverInfo, msg, success: true })
         })
         .catch(reject)
