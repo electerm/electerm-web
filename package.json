@@ -1,6 +1,6 @@
 {
   "name": "electerm-web",
-  "version": "4.15.60",
+  "version": "4.15.66",
   "description": "Running electerm in as web app",
   "main": "src/app/app.js",
   "type": "module",
@@ -47,8 +47,8 @@
   "preferGlobal": true,
   "devDependencies": {
     "@ant-design/icons": "^6.2.5",
-    "@electerm/electerm-react": "^3.15.58",
-    "@electerm/electerm-resource": "2.0.6",
+    "@electerm/electerm-react": "^3.15.66",
+    "@electerm/electerm-resource": "2.0.8",
     "@fontsource/maple-mono": "^5.2.6",
     "@novnc/novnc": "^1.7.0",
     "@types/node": "22.9.3",

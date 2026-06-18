@@ -671,6 +671,9 @@ class TerminalSshBase extends TerminalBase {
     if (initOptions.cipher && initOptions.cipher.length) {
       all.algorithms.cipher = deepCopy(initOptions.cipher)
     }
+    if (initOptions.compress && initOptions.compress.length) {
+      all.algorithms.compress = deepCopy(initOptions.compress)
+    }
     return all
   }
 
