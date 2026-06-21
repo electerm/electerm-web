@@ -6,11 +6,9 @@
 
 [中文](README_cn.md)
 
-# electerm-web [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Open%20sourced%20terminal%2Fssh%2Fsftp%20client(linux%2C%20mac%2C%20win)&url=https%3A%2F%2Fgithub.com%2Felecterm%2Felecterm-web&hashtags=electerm,ssh,terminal,sftp)
+# electerm-web [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Open%20sourced%20terminal%2Fssh%2Fsftp%20client(linux%2C%20mac%2C%20win)&url=https%3A%2F%2Fgithub.com%2Felecterm%2Felecterm-web&hashtags=electerm,ssh,terminal,sftp,vnc,rdp,spice,ftp,telnet,serialport)
 
 This is web app version of [electerm app](https://github.com/electerm/electerm), running in browser, almost has the same features as the desktop version.
-
-Powered by [manate](https://github.com/tylerlong/manate)
 
 [![GitHub version](https://img.shields.io/github/release/electerm/electerm/all.svg)](https://github.com/electerm/electerm/releases)
 [![license](https://img.shields.io/github/license/electerm/electerm.svg)](https://github.com/electerm/electerm-dev/blob/master/LICENSE)
@@ -19,7 +17,13 @@ Powered by [manate](https://github.com/tylerlong/manate)
 [![Get it from the Microsoft Store](https://img.shields.io/badge/Microsoft-Store-blue)](https://www.microsoft.com/store/apps/9NCN7272GTFF)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/electerm?label=Sponsors)](https://github.com/sponsors/electerm)
 
-Open-sourced terminal/ssh/sftp/telnet/serialport/RDP/VNC/Spice/ftp client(linux, mac, win).
+electerm is open-sourced terminal/ssh/sftp/telnet/serialport/RDP/VNC/Spice/ftp client(linux, mac, win).
+
+- [electerm.org](https://electerm.org): Homepage, downloads, videos, etc
+- [electerm-web](https://github.com/electerm/electerm-web): Web app version running in browser(including mobile device)
+- [electerm-web-docker](https://github.com/electerm/electerm-web-docker): Docker image for electerm-web
+- [electerm online](https://cloud.electerm.org): Public free online electerm app
+- [electerm demo](https://demo.electerm.org): Online demo
 
 <div align="center">
   <img src="https://github.com/electerm/electerm-resource/raw/master/static/images/electerm.gif", alt="" />
@@ -94,7 +98,7 @@ kofi
 
 wechat donate
 
-[![wechat donate](https://electerm.html5beta.com/electerm-wechat-donate.png)](https://github.com/electerm)
+[![wechat donate](https://electerm.org/electerm-wechat-donate.png)](https://github.com/electerm)
 
 ## Prerequisites
 
@@ -107,18 +111,18 @@ wechat donate
 for Linux or Mac
 
 ```sh
-curl -o- https://electerm.html5beta.com/scripts/one-line-web.sh | bash
+curl -o- https://electerm.org/scripts/one-line-web.sh | bash
 ```
 or
 
 ```sh
-wget -qO- https://electerm.html5beta.com/scripts/one-line-web.sh | bash
+wget -qO- https://electerm.org/scripts/one-line-web.sh | bash
 ```
 
 for Windows
 
 ```powershell
-Invoke-WebRequest -Uri "https://electerm.html5beta.com/scripts/one-line-web.bat" -OutFile "one-line-web.bat"
+Invoke-WebRequest -Uri "https://electerm.org/scripts/one-line-web.bat" -OutFile "one-line-web.bat"
 cmd.exe /c ".\one-line-web.bat"
 
 ```

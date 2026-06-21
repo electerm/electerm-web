@@ -21,6 +21,12 @@ Powered by [manate](https://github.com/tylerlong/manate)
 
 开源终端/ssh/telnet/serialport/RDP/VNC/Spice/sftp/ftp客户端(linux, mac, win)。
 
+- [electerm.org](https://electerm.org): 主页，下载，视频等
+- [electerm-web](https://github.com/electerm/electerm-web): 运行于浏览器(支持移动设备)的web app版本
+- [electerm-web-docker](https://github.com/electerm/electerm-web-docker): electerm-web的docker镜像
+- [electerm online](https://cloud.electerm.org): 公共免费在线electerm应用
+- [electerm demo](https://demo.electerm.org): 在线演示
+
 <div align="center">
   <img src="https://github.com/electerm/electerm-resource/raw/master/static/images/electerm.gif", alt="" />
 </div>
@@ -94,7 +100,7 @@ kofi
 
 微信捐赠
 
-[![wechat donate](https://electerm.html5beta.com/electerm-wechat-donate.png)](https://github.com/electerm)
+[![wechat donate](https://electerm.org/electerm-wechat-donate.png)](https://github.com/electerm)
 
 ## 先决条件
 
@@ -107,18 +113,18 @@ kofi
 对于 Linux 或 Mac
 
 ```sh
-curl -o- https://electerm.html5beta.com/scripts/one-line-web.sh | bash
+curl -o- https://electerm.org/scripts/one-line-web.sh | bash
 ```
 或
 
 ```sh
-wget -qO- https://electerm.html5beta.com/scripts/one-line-web.sh | bash
+wget -qO- https://electerm.org/scripts/one-line-web.sh | bash
 ```
 
 对于 Windows
 
 ```powershell
-Invoke-WebRequest -Uri "https://electerm.html5beta.com/scripts/one-line-web.bat" -OutFile "one-line-web.bat"
+Invoke-WebRequest -Uri "https://electerm.org/scripts/one-line-web.bat" -OutFile "one-line-web.bat"
 cmd.exe /c ".\one-line-web.bat"
 ```
 
