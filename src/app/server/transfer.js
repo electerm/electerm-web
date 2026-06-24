@@ -8,6 +8,7 @@ import log from '../common/log.js'
 import * as tar from 'tar'
 import { Transfer as Ssh2ScpTransfer } from 'ssh2-scp/transfer'
 import { FolderTransfer } from 'ssh2-scp/folder-transfer'
+import iconv from 'iconv-lite'
 
 export class Transfer {
   constructor ({
@@ -20,7 +21,8 @@ export class Transfer {
     conn,
     sftpId,
     isDirectory = false,
-    ws
+    ws,
+    encode = 'utf8'
   }) {
     this.id = id
     const isd = type === 'download'
@@ -38,6 +40,7 @@ export class Transfer {
     this.concurrency = options.concurrency || 64
     this.chunkSize = options.chunkSize || 32768
     this.mode = options.mode
+    this.encode = encode
     this.onData = _.throttle((count) => {
       ws.s({
         id: 'transfer:data:' + id,
@@ -76,7 +79,7 @@ export class Transfer {
     try {
       const remotePath = type === 'download' ? this.srcPath : this.dstPath
       const localPath = type === 'download' ? this.dstPath : this.srcPath
-      this.scpTransfer = new FolderTransfer(this.conn, tar, {
+      const folderOpts = {
         type,
         remotePath,
         localPath,
@@ -87,7 +90,12 @@ export class Transfer {
             total
           })
         }
-      })
+      }
+      if (this.encode !== 'utf8') {
+        folderOpts.iconv = iconv
+        folderOpts.encoding = this.encode
+      }
+      this.scpTransfer = new FolderTransfer(this.conn, tar, folderOpts)
       await this.scpTransfer.startTransfer()
       const state = this.scpTransfer.getState
         ? this.scpTransfer.getState()

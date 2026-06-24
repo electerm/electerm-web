@@ -137,12 +137,14 @@ export function initWs (app) {
       if (action === 'transfer-new') {
         const { sftpId, id, isFtp } = msg
         const session = sftp(sftpId)
+        const encode = session.initOptions?.encode || 'utf8'
         const opts = Object.assign({}, msg, {
           sftp: session.sftp,
           conn: session.client,
           ftpSession: isFtp ? session : null,
           sftpId,
-          ws
+          ws,
+          encode
         })
         const Cls = isFtp ? FtpTransfer : Transfer
         transfer(id, sftpId, new Cls(opts))

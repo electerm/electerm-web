@@ -10,6 +10,7 @@ import { TerminalBase } from './session-base.js'
 import { getSizeCount, getSizeCountWin } from '../common/count-folder-data.js'
 import globalState from './global-state.js'
 import { SshFs } from 'ssh2-scp'
+import iconv from 'iconv-lite'
 
 class SftpBase extends TerminalBase {
   connect (initOptions) {
@@ -33,11 +34,18 @@ class SftpBase extends TerminalBase {
   }
 
   initSshFsFallback = (conn) => {
-    const sshFs = new SshFs(conn)
+    const opts = {}
+    const encode = this.initOptions?.encode || 'utf8'
+    if (encode !== 'utf8') {
+      opts.encoding = encode
+      opts.iconv = iconv
+    }
+    const sshFs = new SshFs(conn, opts)
     this.applySshFsOverride(sshFs)
   }
 
   async remoteInitSftp (initOptions) {
+    this.initOptions = initOptions
     this.transfers = {}
     const terminalInst = globalState.getSession(initOptions.terminalId)
     const {
@@ -72,6 +80,7 @@ class SftpBase extends TerminalBase {
     }
     this.sftp && this.sftp.end && this.sftp.end()
     delete this.sftp
+    delete this.initOptions
     this.onEndConn()
   }
 
