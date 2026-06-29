@@ -13,12 +13,19 @@ import { createProxyAgent } from './proxy-agent.js'
 const streamingSessions = new Map()
 
 // Initialize OpenAI with DeepSeek configuration
-const createAIClient = (baseURL, apiKey, proxy) => {
+const createAIClient = (baseURL, apiKey, proxy, authHeaderName) => {
+  const headerStr = authHeaderName || 'Authorization: Bearer'
+  const parts = headerStr.split(': ')
+  const headerKey = parts[0]
+  const headerPrefix = parts.length > 1 ? parts[1] : ''
+  const headerValue = headerPrefix
+    ? `${headerPrefix} ${apiKey}`
+    : apiKey
   const config = {
     baseURL,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`
+      [headerKey]: headerValue
     }
   }
 
@@ -32,9 +39,9 @@ const createAIClient = (baseURL, apiKey, proxy) => {
   return axios.create(config)
 }
 
-export const AIchatWithTools = async (messages, model, baseURL, path, apiKey, proxy, tools) => {
+export const AIchatWithTools = async (messages, model, baseURL, path, apiKey, proxy, tools, authHeaderName) => {
   try {
-    const client = createAIClient(baseURL, apiKey, proxy)
+    const client = createAIClient(baseURL, apiKey, proxy, authHeaderName)
     const requestData = {
       model,
       messages,
@@ -62,10 +69,11 @@ export const AIchat = async (
   path = defaultSettings.apiPathAI,
   apiKey,
   proxy = defaultSettings.proxyAI,
-  stream = true
+  stream = true,
+  authHeaderName = defaultSettings.authHeaderNameAI
 ) => {
   try {
-    const client = createAIClient(baseURL, apiKey, proxy)
+    const client = createAIClient(baseURL, apiKey, proxy, authHeaderName)
 
     // Determine if we should use streaming based on the prompt content
     // Command suggestions should not use streaming for quick response
