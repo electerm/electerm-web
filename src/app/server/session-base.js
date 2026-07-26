@@ -10,7 +10,7 @@ import path from 'path'
 import pkg from '@xterm/headless'
 const { Terminal } = pkg
 
-function createVtParser (cols = 220) {
+function createVtParser (cols = 4096) {
   const term = new Terminal({ cols, rows: 50, allowProposedApi: true })
   return term
 }
@@ -38,7 +38,7 @@ export class TerminalBase {
   cache = ''
   prevNewLine = true
   _initVtParser () {
-    this._vtTerm = createVtParser(this.initOptions.cols || 220)
+    this._vtTerm = createVtParser(this.initOptions.cols || 4096)
     this._vtLastRow = 0
     this._vtTerm.onLineFeed(() => {
       if (!this.sessionLogger) return
@@ -72,7 +72,18 @@ export class TerminalBase {
     if (!this.sessionLogger || !this._vtTerm) {
       return
     }
-    this._vtTerm.write(data)
+    // Normalize bare \r (carriage return, not part of \r\n) to \r\n.
+    // Embedded devices (UART/telnet) often use \r-only line endings which
+    // don't trigger xterm's onLineFeed, causing timestamps to be missing
+    // for every line except the first.
+    if (Buffer.isBuffer(data)) {
+      const str = data.toString('binary')
+      const normalized = str.replace(/\r(?!\n)/g, '\r\n')
+      this._vtTerm.write(normalized)
+    } else {
+      const normalized = String(data).replace(/\r(?!\n)/g, '\r\n')
+      this._vtTerm.write(normalized)
+    }
   }
 
   toggleTerminalLogTimestamp () {

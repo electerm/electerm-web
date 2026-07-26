@@ -5,13 +5,14 @@
 
 import { Sftp } from './session-sftp.js'
 import { Ftp } from './session-ftp.js'
+import { instSftpKeys } from '../common/constants.js'
 import {
   sftp,
   transfer,
   onDestroySftp,
   onDestroyTransfer
 } from './remote-common.js'
-import { Transfer } from './transfer.js'
+import { Transfer, transferKeys } from './transfer.js'
 import { FtpTransfer } from './ftp-transfer.js'
 import fs from './fs.js'
 import log from '../common/log.js'
@@ -95,6 +96,16 @@ export function initWs (app) {
         const { id, args, func, uid } = msg
         const inst = sftp(id)
         if (inst) {
+          if (!instSftpKeys.includes(func) || typeof inst[func] !== 'function') {
+            ws.s({
+              id: uid,
+              error: {
+                message: 'invalid sftp function: ' + func,
+                stack: ''
+              }
+            })
+            return
+          }
           inst[func](...args)
             .then(data => {
               ws.s({
@@ -153,7 +164,14 @@ export function initWs (app) {
         if (func === 'destroy') {
           return onDestroyTransfer(id, sftpId)
         }
-        transfer(id, sftpId)[func](...args)
+        if (!transferKeys.includes(func)) {
+          return
+        }
+        const tr = transfer(id, sftpId)
+        if (!tr || typeof tr[func] !== 'function') {
+          return
+        }
+        tr[func](...args)
       }
     })
     // end

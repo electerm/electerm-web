@@ -3,6 +3,16 @@
  */
 
 export const userConfigId = 'userConfig'
+export const serverManagedConfigKeys = [
+  'tokenElecterm',
+  'host',
+  'port',
+  'server',
+  'wsHost',
+  'wsPort',
+  'terminalTypes'
+]
+
 export const instSftpKeys = [
   'connect',
   'list',
