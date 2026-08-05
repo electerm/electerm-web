@@ -27,6 +27,7 @@ electerm is open-sourced terminal/ssh/sftp/telnet/serialport/RDP/VNC/Spice/ftp c
 - [electerm AI](https://ai.electerm.org): Free AI for electerm users
 - [electerm theme](https://theme.electerm.org): Create/share theme site with live preview and AI creation
 - [electerm Android](https://github.com/electerm/electerm-android): electerm for Android
+- [electerm Harmony](https://github.com/electerm/electerm-harmony): electerm for HarmonyOS (available on [Huawei AppGallery](https://appgallery.huawei.com/app/detail?id=org.electerm.electerm))
 - [electerm deb repo](https://repos.electerm.org/deb): Debian repo of electerm
 - [electerm rpm repo](https://repos.electerm.org/rpm): RPM repo of electerm
 
