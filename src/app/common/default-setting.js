@@ -69,5 +69,6 @@ export default {
   showCmdSuggestions: false,
   startDirectoryLocal: '',
   autoReconnectTerminal: false,
-  dragDropBehavior: 'ask'
+  dragDropBehavior: 'ask',
+  switchTabOnHover: false
 }

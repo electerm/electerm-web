@@ -19,6 +19,40 @@ export async function runCmd (ws, msg) {
   })
 }
 
+// Structured command execution: unlike runCmd, returns
+// { stdout, stderr, exitCode, timedOut } from a dedicated exec channel.
+// In electerm-web sessions live in-process (see remote-common.js), so the
+// session's execCommand(cmd, options) is called directly instead of going
+// through a child-process proxy.
+export async function execCmd (ws, msg) {
+  const { id, pid, cmd, timeoutMs } = msg
+  const term = terminals(pid)
+  if (!term || typeof term.execCommand !== 'function') {
+    ws.s({
+      id,
+      error: {
+        message: 'Exec channel not supported for this session type'
+      }
+    })
+    return
+  }
+  try {
+    const result = await term.execCommand(cmd, { timeoutMs })
+    ws.s({
+      id,
+      data: result
+    })
+  } catch (err) {
+    ws.s({
+      id,
+      error: {
+        message: err.message,
+        stack: err.stack
+      }
+    })
+  }
+}
+
 export function resize (ws, msg) {
   const { id, pid, cols, rows } = msg
   const term = terminals(pid)

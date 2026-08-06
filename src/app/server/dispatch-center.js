@@ -25,6 +25,7 @@ import {
   testTerm,
   resize,
   runCmd,
+  execCmd,
   toggleTerminalLog,
   toggleTerminalLogTimestamp,
   setTerminalLogPath,
@@ -219,6 +220,8 @@ export function initWs (app) {
           startTerminalLogFile(ws, msg)
         } else if (action === 'run-cmd') {
           runCmd(ws, msg)
+        } else if (action === 'exec-cmd') {
+          execCmd(ws, msg)
         } if (action === 'runSync') {
           runSync(ws, msg)
         }
