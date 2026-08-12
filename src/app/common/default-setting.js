@@ -70,5 +70,14 @@ export default {
   startDirectoryLocal: '',
   autoReconnectTerminal: false,
   dragDropBehavior: 'ask',
-  switchTabOnHover: false
+  switchTabOnHover: false,
+  leftSideBarIcons: [
+    'newBookmark',
+    'quickConnect',
+    'bookmarks',
+    'terminalThemes',
+    'setting',
+    'settingSync',
+    'widgets'
+  ]
 }
