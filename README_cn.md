@@ -4,7 +4,7 @@
     </a>
 </h1>
 
-[English](README_cn.md)
+[English](README.md) | [中文](README_cn.md)
 
 # electerm-web [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Open%20sourced%20terminal%2Fssh%2Fsftp%20client(linux%2C%20mac%2C%20win)&url=https%3A%2F%2Fgithub.com%2Felecterm%2Felecterm-web&hashtags=electerm,ssh,terminal,sftp)
 
@@ -15,25 +15,29 @@ Powered by [manate](https://github.com/tylerlong/manate)
 [![GitHub version](https://img.shields.io/github/release/electerm/electerm/all.svg)](https://github.com/electerm/electerm/releases)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/electerm/electerm-dev/blob/master/LICENSE)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
-[![Get it from the Snap Store](https://img.shields.io/badge/Snap-Store-green)](https://snapcraft.io/electerm)
-[![Get it from the Microsoft Store](https://img.shields.io/badge/Microsoft-Store-blue)](https://www.microsoft.com/store/apps/9NCN7272GTFF)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/electerm?label=Sponsors)](https://github.com/sponsors/electerm)
 
 开源终端/ssh/telnet/serialport/RDP/VNC/Spice/sftp/ftp客户端(Linux, Mac, Windows, Android, HarmonyOS)。
 
 除了主流的 Windows/macOS/Linux/Android，electerm 还支持鸿蒙(HarmonyOS)，以及老旧系统——如 Ubuntu 18、Windows 7、macOS 10+，以及国产特殊 Linux 发行版如 UOS、麒麟(Kylin)、龙芯(LoongArch，含旧世界与新世界)。
 
-- [electerm.org](https://electerm.org): 主页，下载，视频等
-- [electerm-web](https://github.com/electerm/electerm-web): 运行于浏览器(支持移动设备)的web app版本
-- [electerm-web-docker](https://github.com/electerm/electerm-web-docker): electerm-web的docker镜像
-- [electerm online](https://cloud.electerm.org): 公共免费在线electerm应用
-- [electerm demo](https://demo.electerm.org): 在线演示
-- [electerm AI](https://ai.electerm.org): 免费为 electerm 用户提供 AI
-- [electerm theme](https://theme.electerm.org): 创建/分享主题站点，支持实时预览与 AI 创建
-- [electerm Android](https://github.com/electerm/electerm-android): electerm for Android
-- [electerm Harmony](https://github.com/electerm/electerm-harmony): electerm for HarmonyOS (available on [Huawei AppGallery](https://appgallery.huawei.com/app/detail?id=org.electerm.electerm))
-- [electerm deb repo](https://repos.electerm.org/deb): Debian repo of electerm
-- [electerm rpm repo](https://repos.electerm.org/rpm): RPM repo of electerm
+<p align="center">
+  <a href="https://electerm.org">主页 / 下载</a> ·
+  <a href="https://theme.electerm.org">主题</a> ·
+  <a href="https://github.com/electerm/electerm-web-docker">Docker</a> ·
+  <a href="https://demo.electerm.org">在线演示</a> ·
+  <a href="https://github.com/electerm/electerm-android">Android</a> ·
+  <a href="https://github.com/electerm/electerm-harmony">鸿蒙</a> ·
+  <a href="https://appgallery.huawei.com/app/detail?id=org.electerm.electerm">华为应用市场</a> ·
+  <a href="https://www.microsoft.com/store/apps/9NCN7272GTFF">微软商店</a> ·
+  <a href="https://snapcraft.io/electerm">Snap 商店</a> ·
+  <a href="https://repos.electerm.org/deb">deb 仓库</a> ·
+  <a href="https://repos.electerm.org/rpm">rpm 仓库</a>
+</p>
+
+- 🌐 **[electerm 在线版](https://cloud.electerm.org)** — 公共免费在线 electerm 应用
+- 🤖 **[electerm AI](https://ai.electerm.org)** — 免费为 electerm 用户提供 AI
+- 💻 **[electerm-web](https://github.com/electerm/electerm-web)** — 运行于浏览器(支持移动设备)的 web app 版本
 
 <div align="center">
   <img src="https://github.com/electerm/electerm-resource/raw/master/static/images/electerm.gif", alt="" />

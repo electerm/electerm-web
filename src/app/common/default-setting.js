@@ -71,6 +71,7 @@ export default {
   autoReconnectTerminal: false,
   dragDropBehavior: 'ask',
   switchTabOnHover: false,
+  disableShortcutBar: false,
   leftSideBarIcons: [
     'newBookmark',
     'quickConnect',
