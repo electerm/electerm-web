@@ -18,12 +18,14 @@ function createClient (serverUrl, username, password, proxy, skipVerify = false)
   if (proxyAgent) {
     if (skipVerify) {
       // Apply skipVerify through the proxy tunnel as well.
-      conf = { httpsAgent: createProxyAgent(proxy, { rejectUnauthorized: false }) }
+      const agent = createProxyAgent(proxy, { rejectUnauthorized: false })
+      conf = { httpAgent: agent, httpsAgent: agent }
     } else {
-      conf = { httpsAgent: proxyAgent }
+      conf = { httpAgent: proxyAgent, httpsAgent: proxyAgent }
     }
   } else if (skipVerify) {
-    conf = { httpsAgent: new https.Agent({ rejectUnauthorized: false }) }
+    const agent = new https.Agent({ rejectUnauthorized: false })
+    conf = { httpAgent: agent, httpsAgent: agent }
   } else {
     conf = { proxy: false }
   }

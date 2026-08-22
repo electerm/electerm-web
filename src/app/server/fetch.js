@@ -23,6 +23,7 @@ export default async function wsFetchHandler (ws, msg) {
   const { id, options, proxy } = msg
   const agent = createProxyAgent(proxy)
   if (agent) {
+    options.httpAgent = agent
     options.httpsAgent = agent
   } else {
     options.proxy = false

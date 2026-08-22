@@ -22,6 +22,7 @@ import {
 } from '../common/runtime-constants.js'
 import { createHostVerifier } from './ssh-known-hosts.js'
 import iconv from 'iconv-lite'
+import { maybeProxyCommand } from './ssh-proxy-command.js'
 
 // Encodings that are equivalent to UTF-8 (no conversion needed)
 const utf8Aliases = new Set(['utf-8', 'utf8', 'utf-8-strict'])
@@ -571,16 +572,22 @@ class TerminalSshBase extends TerminalBase {
     }
     this.hostVerificationError = null
     const verifyTarget = this.getHostVerificationTarget(connectOptions)
-    connectOptions.hostVerifier = createHostVerifier({
-      ...verifyTarget,
-      confirm: async (options) => {
-        const results = await this.onKeyboardEvent(options)
-        return results && results[0] === (options.confirmResult || 'trust')
-      },
-      onError: (err) => {
-        this.hostVerificationError = err
-      }
-    })
+    if (this.skipHostVerification && connectOptions.sock) {
+      // proxied connection (netbird ssh proxy / proxyCommand):
+      // the child serves its own endpoint with an ephemeral host key
+      delete connectOptions.hostVerifier
+    } else {
+      connectOptions.hostVerifier = createHostVerifier({
+        ...verifyTarget,
+        confirm: async (options) => {
+          const results = await this.onKeyboardEvent(options)
+          return results && results[0] === (options.confirmResult || 'trust')
+        },
+        onError: (err) => {
+          this.hostVerificationError = err
+        }
+      })
+    }
     this.authPartiallySucceeded = false
     connectOptions.authHandler = this.createAuthHandler(connectOptions)
     return new Promise((resolve, reject) => {
@@ -666,6 +673,48 @@ class TerminalSshBase extends TerminalBase {
         })
         .connect(connectOptions)
     })
+  }
+
+  /**
+   * when connecting through a proxy command (netbird ssh proxy or
+   * user-defined proxyCommand option), surface the command's stderr
+   * (netbird prints the SSO login URL there) to the user
+   */
+  onProxyCommandMessage (text) {
+    log.log('ssh proxy command:', text.trim())
+    const url = text.match(/https?:\/\/\S+/)
+    if (url && this.ws && !this.proxyCommandUrlShown) {
+      this.proxyCommandUrlShown = true
+      this.ws.s({
+        action: 'ssh-proxy-command-message',
+        message: text.trim(),
+        url: url[0],
+        tabId: this.initOptions.srcTabId
+      })
+    }
+  }
+
+  /**
+   * if a proxy command applies (netbird auto-detect or explicit
+   * proxyCommand option), spawn it and return the bridged socket
+   */
+  async maybeProxyCommandSock () {
+    if (this.initOptions?.connectionHoppings?.length) {
+      return undefined
+    }
+    const info = await maybeProxyCommand(
+      this.initOptions,
+      this.connectOptions,
+      { onMessage: (text) => this.onProxyCommandMessage(text) }
+    )
+    if (!info) {
+      return undefined
+    }
+    this.proxyCommandDispose = info.dispose
+    // the proxy command serves its own ssh endpoint (random host key
+    // per run for netbird), known_hosts verification can not apply
+    this.skipHostVerification = true
+    return { socket: info.socket }
   }
 
   getShareOptions () {
@@ -786,6 +835,11 @@ class TerminalSshBase extends TerminalBase {
     }
     this.shellWindow = this.shellWindow || this.getShellWindow()
     this.shellOpts = this.shellOpts || this.buildShellOpts()
+    // dispose proxy command child from a previous attempt (retries re-enter here)
+    if (this.proxyCommandDispose) {
+      this.proxyCommandDispose()
+      this.proxyCommandDispose = null
+    }
     const info = initOptions.proxy
       ? await proxySock({
         readyTimeout: initOptions.readyTimeout,
@@ -793,7 +847,7 @@ class TerminalSshBase extends TerminalBase {
         port: initOptions.port,
         proxy: initOptions.proxy
       })
-      : undefined
+      : await this.maybeProxyCommandSock()
     const skipX11 = !!initOptions.connectionHoppings?.length
     const result = await this.doSshConnect(
       info,
@@ -928,6 +982,9 @@ class TerminalSshBase extends TerminalBase {
   kill () {
     this.initOptions = null
     this.connectOptions = null
+    this.proxyCommandDispose = null
+    this.skipHostVerification = null
+    this.proxyCommandUrlShown = null
     this.alg = null
     this.shellWindow = null
     this.shellOpts = null
@@ -946,6 +1003,10 @@ class TerminalSshBase extends TerminalBase {
   }
 
   doKill () {
+    if (this.proxyCommandDispose) {
+      this.proxyCommandDispose()
+      this.proxyCommandDispose = null
+    }
     if (this.sessionLogger) {
       this.sessionLogger.destroy()
     }
