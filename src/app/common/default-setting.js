@@ -85,6 +85,7 @@ export default {
   dragDropBehavior: 'ask',
   switchTabOnHover: false,
   disableShortcutBar: false,
+  disableConfirmForLargeClipboardContent: false,
   leftSideBarIcons: [
     'newBookmark',
     'quickConnect',

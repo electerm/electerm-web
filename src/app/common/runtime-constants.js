@@ -27,7 +27,7 @@ export const extIconPath = isDev
   ? '/node_modules/electerm-icons/icons/'
   : '/icons/'
 export const defaultUserName = 'default_user'
-export const minWindowWidth = 590
+export const minWindowWidth = 320
 export const minWindowHeight = 400
 export const defaultLang = 'en_us'
 export const tempDir = os.tmpdir()
