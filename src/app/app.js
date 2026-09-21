@@ -23,4 +23,12 @@ async function main () {
   })
 }
 
-main()
+// main() is async, so anything thrown inside it (a failed import, an
+// unreadable config, a bad platform integration) used to surface only as an
+// UnhandledPromiseRejection while the server silently never listened.
+// Fail loudly instead, so the next one of these is diagnosable from the
+// message and a process supervisor can restart it.
+main().catch((err) => {
+  log.error('Failed to start electerm-web:', err)
+  process.exit(1)
+})

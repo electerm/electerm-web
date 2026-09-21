@@ -2,6 +2,12 @@
  * database default should init
  */
 
+import { getDefaultLocalBookmarks } from './default-local-bookmarks.js'
+import {
+  getDefaultQuickCommands,
+  getDefaultCmdHistory
+} from './default-quick-commands.js'
+
 function parsor (themeTxt) {
   return themeTxt.split('\n').reduce((prev, line) => {
     let [key = '', value = ''] = line.split('=')
@@ -91,6 +97,9 @@ const defaultThemeTerminal = {
   brightWhite: '#E6E6E6'
 }
 
+const defaultBookmarks = getDefaultLocalBookmarks()
+
+// order matters: terminalThemes stays first, new dbs are only appended
 export default [
   {
     db: 'terminalThemes',
@@ -115,10 +124,24 @@ export default [
       {
         _id: 'default',
         title: 'default',
-        bookmarkIds: [],
+        bookmarkIds: defaultBookmarks.map(d => d._id),
         bookmarkGroupIds: [],
         color: '#0088cc'
       }
     ]
+  },
+  {
+    db: 'bookmarks',
+    data: defaultBookmarks
+  },
+  {
+    db: 'quickCommands',
+    data: getDefaultQuickCommands()
+  },
+  {
+    // same commands as above, so they are also discoverable (and runnable)
+    // from the terminal command history popover
+    db: 'terminalCommandHistory',
+    data: getDefaultCmdHistory()
   }
 ]
