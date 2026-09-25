@@ -36,6 +36,17 @@ const utf8Aliases = new Set(['utf-8', 'utf8', 'utf-8-strict'])
 
 const failMsg = 'All configured authentication methods failed'
 const csFailMsg = 'no matching C->S cipher'
+// ssh2 handshake failures that mean "no algorithm in common". algAlt() is a
+// strict superset of algDefault(), so retrying with it can only add options,
+// never remove them. Old devices/routers often need it for the cipher, MAC or
+// host key (not just the C->S cipher), so any of them triggers the retry.
+const algFailMsgs = [
+  csFailMsg,
+  'no matching S->C cipher',
+  'no matching C->S MAC',
+  'no matching S->C MAC',
+  'no matching host key format'
+]
 
 class TerminalSshBase extends TerminalBase {
   async remoteInitProcess () {
@@ -906,7 +917,7 @@ class TerminalSshBase extends TerminalBase {
     const err = result
     log.error('error when do sshConnect', err, this.privateKeyPath)
     if (
-      err.message.includes(csFailMsg) &&
+      algFailMsgs.some(msg => err.message.includes(msg)) &&
       !this.altAlg
     ) {
       return this.reTryAltAlg()
@@ -1034,27 +1045,27 @@ class TerminalSshBase extends TerminalBase {
   }
 
   kill () {
+    // close the transports first, then drop the references: doKill() can only
+    // close what it can still see, and this used to null conn/conns before
+    // calling it, so the ssh connection (plus jump-host hops, and any ssh
+    // tunnel riding on the connection) stayed open on the remote side
+    this.doKill()
     this.initOptions = null
     this.connectOptions = null
-    this.proxyCommandDispose = null
     this.skipHostVerification = null
     this.proxyCommandUrlShown = null
     this.alg = null
     this.shellWindow = null
     this.shellOpts = null
-    this.conn = null
     this.sshKeys = null
     this.privateKeyPath = null
     this.display = null
     this.x11Cookie = null
     this.x11Notified = false
-    this.conns = null
     this.jumpSshKeys = null
     this.jumpPrivateKeyPathFrom = null
     this.hoppingOptions = null
     this.initHoppingOptions = null
-    this.nextConn = null
-    this.doKill()
   }
 
   doKill () {
@@ -1068,11 +1079,13 @@ class TerminalSshBase extends TerminalBase {
     this.channel && this.channel.end()
     delete this.channel
     this.onEndConn()
-    // Clean up any remaining connection
-    if (this.conn) {
-      this.conn.end()
-      this.conn = null
-    }
+    // clean up every ssh transport we own: the active connection, the
+    // jump-host hops, and a jump client that never finished connecting
+    this.endConns()
+    this.nextConn && this.nextConn.end && this.nextConn.end()
+    this.conn = null
+    this.conns = null
+    this.nextConn = null
   }
 
   getLocalEnv () {

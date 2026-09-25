@@ -67,6 +67,9 @@ const globs = {
   stopWidget,
   runWidgetFunc,
   getPendingDeepLink: () => Promise.resolve(null),
+  // the renderer asks for a .vv file handed to the OS during startup; only the
+  // desktop app can receive one, so there is never anything pending here
+  getPendingVvFile: () => Promise.resolve(null),
   getEnv: () => Promise.resolve(getEnv())
 }
 
