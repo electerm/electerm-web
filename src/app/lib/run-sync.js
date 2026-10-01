@@ -19,7 +19,8 @@ import {
   AIchatWithTools,
   AIlistModels,
   getStreamContent,
-  stopStream
+  stopStream,
+  abortAIRequest
 } from './ai.js'
 import {
   listWidgets,
@@ -36,6 +37,7 @@ const globs = {
   AIlistModels,
   getStreamContent,
   stopStream,
+  abortAIRequest,
   encryptAsync,
   decryptAsync,
   showItemInFolder,

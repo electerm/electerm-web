@@ -17,6 +17,7 @@ import fsFunctions from '../common/fs-functions.js'
 import copy from 'json-deep-copy'
 import { createToken } from './jwt.js'
 import { logDir } from '../server/session-log.js'
+import { getLogDir } from '../widgets/instance-log.js'
 import { resolve } from 'path'
 import fs from 'fs'
 
@@ -98,6 +99,10 @@ export async function index (req, res) {
     extIconPath: cdn + extIconPath,
     cdn,
     sessionLogPath: logDir,
+    // where running widgets write their logs; the widget manager reads them
+    // straight off disk (see widgets/instance-log.js).
+    // Exposed as window.et.widgetLogPath, mirroring sessionLogPath above.
+    widgetLogPath: getLogDir(),
     query: req.query,
     server,
     hasNodePty,

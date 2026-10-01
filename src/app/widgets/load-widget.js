@@ -3,6 +3,7 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import * as widgetLog from './instance-log.js'
 // import log from '../common/log.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -34,6 +35,13 @@ async function listWidgetsFromFolder (widgetDirectory = __dirname) {
     try {
       const widgetPath = path.join(widgetDirectory, file)
       const widgetModule = await import(`file://${widgetPath}`)
+      // a file matching widget-*.js is a widget by convention; anything else
+      // living in this folder (a helper module) must not reach the renderer,
+      // where an undefined `info` crashes the whole widget list
+      if (!widgetModule.widgetInfo) {
+        console.error(`Skipping ${file}: no widgetInfo export`)
+        continue
+      }
       res.push({
         id: file.slice(7, -3),
         info: widgetModule.widgetInfo
@@ -98,12 +106,20 @@ async function runWidget (widgetId, config) {
     return Promise.reject(new Error(`Widget ${widgetId} already has a running instance. Only one instance is allowed.`))
   }
 
-  const instance = widget.widgetRun(config)
+  // The widget reports through this context; it is handed the instance log
+  // before it knows its own instanceId (see instance-log.js createContext).
+  const ctx = widgetLog.createContext()
+  const instance = widget.widgetRun(config, ctx)
   instance.widgetId = widgetId
   runningInstances.set(instance.instanceId, instance)
+  ctx.bind(instance.instanceId)
+
+  const logger = widgetLog.loggerFor(instance.instanceId)
+  logger.log('info', `Starting ${widget.widgetInfo.name} (${widgetId})`)
 
   return instance.start()
     .then((result) => {
+      logger.log('info', result && result.msg ? result.msg : 'Started')
       return {
         instanceId: instance.instanceId,
         widgetId,
@@ -112,6 +128,9 @@ async function runWidget (widgetId, config) {
       }
     })
     .catch((err) => {
+      // kept in the log file on purpose: this is what the user opens the panel
+      // to read when the widget refuses to start
+      logger.log('error', `Failed to start: ${err && err.message ? err.message : err}`)
       runningInstances.delete(instance.instanceId)
       return instance.stop().catch(() => {}).then(() => { throw err })
     })
@@ -124,10 +143,18 @@ function stopWidget (instanceId) {
     return
   }
 
+  const logger = widgetLog.loggerFor(instanceId)
+  logger.log('info', 'Stopping...')
+
   return instance.stop()
     .then(() => {
+      logger.log('info', 'Stopped')
       runningInstances.delete(instanceId)
       return { instanceId, status: 'stopped' }
+    })
+    .catch((err) => {
+      logger.log('error', `Failed to stop: ${err && err.message ? err.message : err}`)
+      throw err
     })
 }
 
@@ -146,6 +173,7 @@ async function runWidgetFunc (instanceId, funcName, ...args) {
     return result
   } catch (error) {
     console.error(`Error executing ${funcName} on widget instance ${instanceId}:`, error)
+    widgetLog.loggerFor(instanceId).log('error', `${funcName} failed: ${error.message}`)
     throw error
   }
 }
