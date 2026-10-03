@@ -18,7 +18,6 @@ function getType (initOptions) {
 
 export const terminal = async function (initOptions, ws) {
   const type = getType(initOptions)
-  console.log('type', type)
   const modulePath = getModulePath(type)
   const { terminal } = await import(modulePath)
   return terminal(initOptions, ws)

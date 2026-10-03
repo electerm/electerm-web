@@ -5,24 +5,30 @@
  */
 
 import { packInfo } from '../common/runtime-constants.js'
-import { resolve, dirname } from 'path'
-import fs from 'fs'
 import log from '../common/log.js'
 import compare from '../common/version-compare.js'
 import { dbAction } from '../lib/db.js'
 import _ from 'lodash'
 import initData from './init-nedb.js'
 import { updateDBVersion } from './version-upgrade.js'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 
 const { version: packVersion } = packInfo
 const emptyVersion = '0.0.0'
 const versionQuery = {
   _id: 'version'
 }
+
+// Registry of versioned upgrade scripts.
+//
+// This used to scan this directory with readdirSync and import each `v*.js`
+// by a path computed at runtime. That works unbundled, but a computed import
+// is invisible to bundlers, so packaged deployments silently ran no migrations
+// at all. Register each script here instead; the import path is a static
+// string literal, so bundlers can see it.
+//
+//   { version: '4.1.0', run: () => import('./v4.1.0.js').then(d => d.default) }
+const versionUpgradeScripts = [
+]
 
 async function getDBVersion () {
   const version = await dbAction('data', 'findOne', versionQuery)
@@ -39,26 +45,11 @@ async function getDBVersion () {
 /**
  * get upgrade versions should be run as version upgrade
  */
-export function parseUpgradeFile (f) {
-  const m = /^v(\d+\.\d+\.\d+)\.js$/.exec(f)
-  return m ? m[1] : null
-}
-
-export async function getUpgradeVersionList () {
+async function getUpgradeVersionList () {
   const version = await getDBVersion()
-  let list = []
-  try {
-    list = fs.readdirSync(__dirname)
-  } catch (e) {
-    log.error('read upgrade dir fails', e)
-    return []
-  }
-  return list.filter(f => {
-    const vv = parseUpgradeFile(f)
-    return vv && compare(vv, version) > 0 && compare(vv, packVersion) <= 0
-  }).sort((a, b) => {
-    return compare(parseUpgradeFile(a), parseUpgradeFile(b))
-  })
+  return versionUpgradeScripts.filter(({ version: vv }) => {
+    return compare(vv, version) > 0 && compare(vv, packVersion) <= 0
+  }).sort((a, b) => compare(a.version, b.version))
 }
 
 async function versionShouldUpgrade () {
@@ -93,17 +84,14 @@ export async function checkDbUpgrade () {
 export async function doUpgrade () {
   const list = await getUpgradeVersionList()
   log.info('Upgrading...')
-  for (const v of list) {
-    const p = resolve(__dirname, v)
+  for (const { version: vv, run } of list) {
     try {
-      const mod = await import(p)
-      const run = mod.default
-      await run()
+      const runFn = await run()
+      await runFn()
     } catch (e) {
       // A single broken migration script must never brick app startup:
       // log it, stamp its version so it is not retried forever, continue
-      log.error(`Upgrade script ${v} fails, skip it`, e)
-      const vv = parseUpgradeFile(v)
+      log.error(`Upgrade script ${vv} fails, skip it`, e)
       if (vv) {
         await updateDBVersion(vv)
       }

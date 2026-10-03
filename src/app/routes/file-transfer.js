@@ -15,6 +15,22 @@ const uploadDir = resolve(process.env.DB_PATH || resolve(process.cwd(), 'data'),
 fs.mkdirSync(uploadDir, { recursive: true })
 const upload = multer({ dest: uploadDir })
 
+/**
+ * Build an RFC 6266 Content-Disposition value.
+ *
+ * The RFC splits the filename into a printable-ASCII `filename` for naive
+ * clients and a `filename*=UTF-8''…` extended form for everyone else. Sending
+ * only the extended form (or percent-encoding inside the plain one) makes
+ * clients that read `filename` literally save a non-ASCII name as garbage
+ * percent-escapes, e.g. `报告.txt` -> `%E6%8A%A5%E5%91%8A.txt`.
+ */
+function dispositionHeader (name) {
+  const ascii = name
+    .replace(/[^\x20-\x7e]/g, '_')
+    .replace(/["\\]/g, '_')
+  return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`
+}
+
 export function fileTransferRoutes (app) {
   app.get('/api/download', jwtAuth, errHandler, (req, res) => {
     const filePath = req.query.path
@@ -24,14 +40,13 @@ export function fileTransferRoutes (app) {
     try {
       const stat = fs.statSync(filePath)
       if (stat.isFile()) {
-        const fileName = path.basename(filePath)
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`)
+        res.setHeader('Content-Disposition', dispositionHeader(path.basename(filePath)))
         res.setHeader('Content-Type', 'application/octet-stream')
         fs.createReadStream(filePath).pipe(res)
       } else if (stat.isDirectory()) {
         const dirName = path.basename(filePath)
         const parentDir = path.dirname(filePath)
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(dirName)}.tar.gz"`)
+        res.setHeader('Content-Disposition', dispositionHeader(dirName + '.tar.gz'))
         res.setHeader('Content-Type', 'application/gzip')
         const tar = spawn('tar', ['czf', '-', '-C', parentDir, dirName])
         tar.stdout.pipe(res)

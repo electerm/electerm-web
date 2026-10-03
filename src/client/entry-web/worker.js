@@ -23,6 +23,20 @@ function createWs (
     ws.send(JSON.stringify(msg))
   }
   ws.id = id
+  // Buffer incoming messages until at least one `message` listener is
+  // registered. Nothing else listens on this socket before the client sends
+  // an `addEventListener` action, so anything the server sends in that window
+  // is otherwise dropped on the floor — e.g. the `session-interactive` prompt
+  // sent during SSH host-key verification on a first connect, which leaves the
+  // connection hanging forever waiting for an answer that never arrives.
+  ws._messageBuffer = []
+  ws._bufferActive = true
+  ws._bufferHandler = (evt) => {
+    if (ws._bufferActive) {
+      ws._messageBuffer.push(evt.data)
+    }
+  }
+  ws.addEventListener('message', ws._bufferHandler)
   ws.once = (callack, id) => {
     const func = (evt) => {
       const arg = JSON.parse(evt.data)
@@ -139,6 +153,31 @@ async function onMsg (e) {
       }
       ws.listeners.set(id, { type, cb })
       ws.addEventListener(type, cb)
+      // Flush the backlog to the newly registered listener, then stop
+      // buffering: from here on messages go straight to the callback above.
+      // The array is kept for a few seconds so a second addEventListener call
+      // (e.g. the MCP handler) can also see the backlog.
+      if (type === 'message' && ws._messageBuffer && ws._messageBuffer.length > 0) {
+        for (const bufData of ws._messageBuffer) {
+          send({
+            wsId,
+            id,
+            data: {
+              data: bufData
+            }
+          })
+        }
+      }
+      if (type === 'message' && ws._bufferActive) {
+        ws._bufferActive = false
+        if (ws._bufferHandler) {
+          ws.removeEventListener('message', ws._bufferHandler)
+          ws._bufferHandler = null
+        }
+        setTimeout(() => {
+          ws._messageBuffer = null
+        }, 5000)
+      }
     }
   } else if (action === 'removeEventListener') {
     const ws = self.insts[wsId]

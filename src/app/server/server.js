@@ -1,4 +1,5 @@
 import express from 'express'
+import pug from 'pug'
 import { wsRoutes } from '../routes/ws.js'
 import { httpRoutes } from '../routes/http.js'
 import { applyExtensions } from '../lib/extensions.js'
@@ -28,6 +29,10 @@ export async function createApp () {
     ':method :url :status :res[content-length] - :response-time ms'
   ))
   app.set('view engine', 'pug')
+  // Register the engine explicitly. Without this Express lazily `require('pug')`
+  // at render time, which a bundler cannot see — the string is only produced at
+  // runtime, so "pug" is missing from the bundle and GET / hangs forever.
+  app.engine('pug', pug.__express)
   app.set(
     'views',
     process.env.VIEW_FOLDER ||

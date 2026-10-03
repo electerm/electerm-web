@@ -4,6 +4,7 @@
 
 import log from './common/log.js'
 import { createApp } from './server/server.js'
+import { packInfo } from './common/runtime-constants.js'
 
 process.on('uncaughtException', (err) => {
   log.error('uncaughtException', err)
@@ -29,6 +30,6 @@ async function main () {
 // Fail loudly instead, so the next one of these is diagnosable from the
 // message and a process supervisor can restart it.
 main().catch((err) => {
-  log.error('Failed to start electerm-web:', err)
+  log.error(`Failed to start ${packInfo.name}:`, err)
   process.exit(1)
 })

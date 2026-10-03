@@ -21,15 +21,19 @@ export async function showItemInFolder (filePath) {
     command = `xdg-open "${folderPath}"`
   }
 
-  return new Promise((resolve, reject) => {
-    exec(command, (error, stdout, stderr) => {
+  return new Promise((resolve) => {
+    // Best-effort: the file manager may simply not be there — a headless Linux
+    // server (the usual way electerm-web is self-hosted) has no xdg-open, and a
+    // container may have no handler at all. "Show in folder" is purely
+    // cosmetic, so never reject: a missing handler used to surface as an
+    // unhandled rejection on every call.
+    exec(command, (error, _stdout, stderr) => {
       if (error) {
-        reject(new Error(`Failed to show item in folder: ${error.message}`))
+        resolve('no file manager available')
         return
       }
       if (stderr) {
-        reject(new Error(`Error: ${stderr}`))
-        return
+        console.warn('showItemInFolder stderr:', stderr.toString())
       }
       resolve('Item shown in folder successfully.')
     })

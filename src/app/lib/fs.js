@@ -3,7 +3,6 @@ import log from '../common/log.js'
 import { isWin, isMac } from '../common/runtime-constants.js'
 import path from 'path'
 import { promisify } from 'util'
-import { Bash } from 'node-bash'
 import { getSizeCount, getSizeCountWin } from '../common/count-folder-data.js'
 import { exec, spawn } from 'child_process'
 const execAsync = promisify(exec)
@@ -70,10 +69,33 @@ const isWinDrive = function (path) {
 }
 
 /**
+ * `node-bash` spawns a login shell, which is a pointless cost to pay at import
+ * time for every process that merely touches this module. Load it on demand and
+ * tolerate its absence, so a platform without a usable shell degrades the
+ * shell-backed helpers instead of preventing the server from starting.
+ */
+let bashPromise = null
+function loadBash () {
+  if (!bashPromise) {
+    bashPromise = import('node-bash')
+      .then(m => m.Bash)
+      .catch(err => {
+        log.warn('node-bash is not available, local shell features will be limited:', err.message)
+        return null
+      })
+  }
+  return bashPromise
+}
+
+/**
  * run cmd
  * @param {string} cmd
  */
-const run = (cmd) => {
+const run = async (cmd) => {
+  const Bash = await loadBash()
+  if (!Bash) {
+    throw new Error('Local shell (node-bash) is not available on this platform')
+  }
   const ps = new Bash({
     executableOptions: {
       '--login': true
