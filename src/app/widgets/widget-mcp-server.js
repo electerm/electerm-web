@@ -11,6 +11,7 @@ import { TaskManager } from '../mcp/server/tasks.js'
 import { z } from '../lib/zod.js'
 import express from 'express'
 import uid from '../common/uid.js'
+import dangerousTabProps from '../common/dangerous-session-fields.js'
 import globalState from '../server/global-state.js'
 import {
   sshBookmarkSchema,
@@ -21,18 +22,8 @@ import {
 
 // Dangerous tab props that allow arbitrary command execution.
 // Must be stripped from any MCP tool args before forwarding to the renderer.
-// Mirrors src/client/store/tab.js dangerousTabProps.
-const dangerousTabProps = [
-  'execLinux',
-  'execMac',
-  'execWindows',
-  'execWindowsArgs',
-  'execMacArgs',
-  'execLinuxArgs',
-  'setEnv',
-  'runScripts',
-  'interactiveValues'
-]
+// Shared with src/client/store/tab.js and the quick connect parser so the
+// copies cannot drift apart.
 
 function stripDangerousTabProps (obj) {
   return Object.fromEntries(

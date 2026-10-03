@@ -8,8 +8,29 @@
  */
 
 import uid from '../common/uid.js'
+import DANGEROUS_SESSION_FIELDS from '../common/dangerous-session-fields.js'
 import { terminalSsh } from './session-ssh.js'
 import findFreePort from 'find-free-port'
+
+/**
+ * A hop entry is spread into its sub-session's initOptions and used to be
+ * passed through wholesale with `...hop`, which let a crafted
+ * `connectionHoppings` entry smuggle `proxyCommand` into the hop session and
+ * spawn it: the guard in session-ssh.js `maybeProxyCommandSock()` only skips
+ * the proxy command while `connectionHoppings` is non-empty, and the pop below
+ * leaves the innermost hop with an empty list.
+ *
+ * Strip the shared dangerous fields here as well as at the parse boundary -
+ * this path is also reached from CLI `--opts` and MCP tool calls, which never
+ * go through the quick connect parser.
+ */
+function withoutDangerousFields (hop) {
+  const out = { ...(hop || {}) }
+  DANGEROUS_SESSION_FIELDS.forEach(key => {
+    delete out[key]
+  })
+  return out
+}
 
 function getPort (fromPort = 12023) {
   return new Promise((resolve, reject) => {
@@ -48,7 +69,7 @@ async function createHopProxy (initOptions) {
 
   const initOpts = {
     connectionHoppings,
-    ...hop,
+    ...withoutDangerousFields(hop),
     hasHopping: true,
     cols: 80,
     rows: 24,

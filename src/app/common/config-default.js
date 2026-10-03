@@ -3,6 +3,9 @@ import defaultSettings from './default-setting.js'
 export default {
   keepaliveInterval: 10000,
   rightClickSelectsWord: false,
+  // Pass mouse reports to the app only while Alt/Option is held. Lets wheel
+  // keep scrolling tmux/vim history while plain drags stay local selections.
+  mouseEventsRequireAlt: false,
   pasteWhenContextMenu: false,
   ctrlOrMetaOpenTerminalLink: false,
   ...defaultSettings,
