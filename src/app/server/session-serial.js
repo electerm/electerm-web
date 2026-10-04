@@ -3,8 +3,22 @@
  */
 import { TerminalBase } from './session-base.js'
 import log from '../common/log.js'
-import { SerialPort } from 'serialport'
 import globalState from './global-state.js'
+
+// `serialport` is a native module that is not built for Android yet. Load it
+// lazily and tolerate its absence so the server can still start.
+let serialPortPromise = null
+function loadSerialPort () {
+  if (!serialPortPromise) {
+    serialPortPromise = import('serialport')
+      .then(m => m.SerialPort)
+      .catch(err => {
+        log.warn('serialport is not available, serial terminals disabled:', err.message)
+        return null
+      })
+  }
+  return serialPortPromise
+}
 // const { MockBinding } = require('@serialport/binding-mock')
 // MockBinding.createPort('/dev/ROBOT', { echo: true, record: true })
 
@@ -26,6 +40,10 @@ class TerminalSerial extends TerminalBase {
       rxLineEnding = 'none',
       path
     } = this.initOptions
+    const SerialPort = await loadSerialPort()
+    if (!SerialPort) {
+      return Promise.reject(new Error('Serial port support is not available on this platform'))
+    }
     this.txLineEnding = txLineEnding
     this.rxLineEnding = rxLineEnding
     await new Promise((resolve, reject) => {

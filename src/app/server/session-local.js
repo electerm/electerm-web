@@ -1,16 +1,36 @@
 /**
  * terminal/sftp/serial class
  */
-import pty from 'node-pty'
 import { resolve as pathResolve } from 'path'
 import globalState from './global-state.js'
 import { TerminalBase } from './session-base.js'
+import log from '../common/log.js'
+
+// `node-pty` is a native module that is not built for Android yet. Load it
+// lazily and tolerate its absence so the server can still start; the local
+// terminal is also disabled via DISABLE_LOCAL_TERMINAL.
+let nodePtyPromise = null
+function loadNodePty () {
+  if (!nodePtyPromise) {
+    nodePtyPromise = import('node-pty')
+      .then(m => m.default)
+      .catch(err => {
+        log.warn('node-pty is not available, local terminal disabled:', err.message)
+        return null
+      })
+  }
+  return nodePtyPromise
+}
 
 // const { MockBinding } = require('@serialport/binding-mock')
 // MockBinding.createPort('/dev/ROBOT', { echo: true, record: true })
 
 class TerminalLocal extends TerminalBase {
-  init () {
+  async init () {
+    const pty = await loadNodePty()
+    if (!pty) {
+      return Promise.reject(new Error('Local terminal is not available on this platform'))
+    }
     const {
       cols,
       rows,
