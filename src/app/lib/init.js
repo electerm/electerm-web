@@ -6,6 +6,7 @@ import defaultSetting from '../common/config-default.js'
 import { userConfigId } from '../common/constants.js'
 import { isDev } from '../common/runtime-constants.js'
 import { dbAction } from './db.js'
+import installSrc from './install-src.js'
 import { getLogDir } from '../widgets/instance-log.js'
 import * as langMap from '@electerm/electerm-locales'
 
@@ -35,6 +36,7 @@ export async function init () {
   return {
     config,
     isPortable: true,
+    installSrc,
     // where running widgets write their logs; the widget manager
     // (store.widgetLogPath) reads them straight off disk
     // (see widgets/instance-log.js, mirrors desktop ipc.js init globs)
