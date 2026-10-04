@@ -82,9 +82,34 @@ export default class FileSelectDialog extends Component {
     e.target.value = ''
   }
 
-  handleBrowserDownload = () => {
+  handleBrowserDownload = async () => {
     const { opts } = this.state
     const { filename, content } = opts
+    // In the Android WebView blob-anchor downloads are a silent no-op, save
+    // via the native MediaStore/Downloads path when available (see
+    // web-components/native-file-save.js).
+    try {
+      if (window.et && window.et.canSaveNative && await window.et.canSaveNative()) {
+        await window.et.saveTextNative(filename, content)
+        notification.success({ message: 'Saved to Downloads: ' + filename })
+        this.handleClose()
+        return
+      }
+    } catch (e) {
+      console.log('[electerm-android] native save failed:', e)
+      notification.error({ message: 'Save failed: ' + (e && e.message) })
+      return
+    }
+    // No native saver. The anchor fallback works on desktop browsers but is
+    // a silent no-op in Android WebView — report instead of fake success.
+    if (window.et && window.et.downloadDiag) {
+      const diag = await window.et.downloadDiag()
+      const inWebView = diag.isAndroidWebView || diag.isNativePlatform
+      if (inWebView) {
+        notification.error({ message: 'Download failed: native file saver unavailable' })
+        return
+      }
+    }
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -412,12 +437,11 @@ export default class FileSelectDialog extends Component {
     const showBrowserUpload = !noBrowserTransfer && !isSaveDialog && properties.includes('openFile')
     const showBrowserDownload = !noBrowserTransfer && !isSaveDialog && opts?.content
     return (
-      <div className='fix'>
-        <div className='fleft'>
+      <div className='file-select-dialog-footer'>
+        <div className='file-select-dialog-footer-actions'>
           {this.renderPager()}
           {showBrowserUpload && (
             <Button
-              className='iblock mg1r'
               onClick={this.handleBrowserUpload}
             >
               <UploadOutlined /> {e('uploadFromBrowser')}
@@ -425,24 +449,21 @@ export default class FileSelectDialog extends Component {
           )}
           {showBrowserDownload && (
             <Button
-              className='iblock mg1r'
               onClick={this.handleBrowserDownload}
             >
               <DownloadOutlined /> {e('downloadFromBrowser')}
             </Button>
           )}
         </div>
-        <div className='fright'>
+        <div className='file-select-dialog-footer-submit'>
           <Button
             type='primary'
-            className='iblock mg1r'
             onClick={this.handleClose}
           >
             {s('cancel')}
           </Button>
           <Button
             type='primary'
-            className='iblock'
             onClick={this.handleSubmit}
             disabled={disabled}
           >
