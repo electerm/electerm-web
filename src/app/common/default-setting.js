@@ -84,6 +84,7 @@ export default {
   autoReconnectTerminal: false,
   dragDropBehavior: 'ask',
   switchTabOnHover: false,
+  autoDistributeTabsWhenLayoutChange: false,
   disableShortcutBar: false,
   onlyShowTitleInTab: false,
   disableConfirmForLargeClipboardContent: false,
