@@ -19,6 +19,7 @@ export default {
   disableSshHistory: false,
   disableTransferHistory: false,
   terminalBackgroundImagePath: '',
+  terminalBackgroundCoverMode: false,
   terminalBackgroundFilterOpacity: 1,
   terminalBackgroundFilterBlur: 0,
   terminalBackgroundFilterBrightness: 1,

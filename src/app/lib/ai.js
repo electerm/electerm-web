@@ -1,7 +1,6 @@
 /**
  * AI integration with DeepSeek API
  */
-import axios from 'axios'
 import {
   StringDecoder
 } from 'string_decoder'
@@ -31,8 +30,17 @@ const streamingSessions = new Map()
 // request id the renderer generated for that single HTTP call.
 const pendingToolRequests = new Map()
 
+// Lazy: axios is only needed once the user actually talks to an AI provider,
+// and this module is pulled in by run-sync.js on the server startup path.
+// Loading it here keeps it off that path (~20ms of in-app module load;
+// importing axios standalone reports ~250ms, but most of that is first-import
+// warm-up in a fresh process and does not happen in the app).
+let axiosPromise
+const loadAxios = () => (axiosPromise || (axiosPromise = import('axios').then(d => d.default || d)))
+
 // Initialize OpenAI with DeepSeek configuration
-const createAIClient = (baseURL, apiKey, proxy, authHeaderName, extraHeaders) => {
+const createAIClient = async (baseURL, apiKey, proxy, authHeaderName, extraHeaders) => {
+  const axios = await loadAxios()
   const headerStr = authHeaderName || 'Authorization: Bearer'
   const parts = headerStr.split(': ')
   const headerKey = parts[0]
@@ -90,7 +98,7 @@ export const AIlistModels = async (baseURL, apiKey, authHeaderName, proxy) => {
     const extraHeaders = /x-api-key/i.test(authHeaderName || '')
       ? { 'anthropic-version': '2023-06-01' }
       : null
-    const client = createAIClient(baseURL, apiKey, proxy, authHeaderName, extraHeaders)
+    const client = await createAIClient(baseURL, apiKey, proxy, authHeaderName, extraHeaders)
     const url = baseURL.replace(/\/+$/, '') + '/models'
     const response = await client.get(url)
     const models = extractModelList(response.data)
@@ -113,7 +121,7 @@ export const AIchatWithTools = async (messages, model, baseURL, path, apiKey, pr
   }
   try {
     const fmt = detectFormat(path, format)
-    const client = createAIClient(baseURL, apiKey, proxy, authHeaderName, headersForFormat(fmt))
+    const client = await createAIClient(baseURL, apiKey, proxy, authHeaderName, headersForFormat(fmt))
     const requestData = buildRequest(fmt, {
       model,
       messages,
@@ -163,7 +171,7 @@ export const AIchat = async (
 ) => {
   try {
     const fmt = detectFormat(path, format)
-    const client = createAIClient(baseURL, apiKey, proxy, authHeaderName, headersForFormat(fmt))
+    const client = await createAIClient(baseURL, apiKey, proxy, authHeaderName, headersForFormat(fmt))
 
     // Determine if we should use streaming based on the prompt content
     // Command suggestions should not use streaming for quick response

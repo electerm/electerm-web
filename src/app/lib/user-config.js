@@ -4,6 +4,7 @@
 
 import { dbAction } from './db.js'
 import { userConfigId } from '../common/constants.js'
+import log from '../common/log.js'
 
 export async function saveUserConfig (userConfig) {
   const q = {
@@ -17,6 +18,13 @@ export async function saveUserConfig (userConfig) {
   delete userConfig.wsPort
   delete userConfig.wsHost
   delete userConfig.useSystemTitleBar
+  // `debug` is the one setting that changes the log level itself, and the app
+  // is already running when it is flipped -- apply it here so the trace shows
+  // up without a restart (the server process picks it up per session, see
+  // ../server/session-ssh.js)
+  if ('debug' in userConfig) {
+    log.setDebugMode(!!userConfig.debug)
+  }
   await dbAction('data', 'update', q, {
     ...q,
     ...userConfig
