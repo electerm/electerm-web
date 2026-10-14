@@ -1,0 +1,40 @@
+// The login/auth-check screens rendered by simple-auth/web-login.jsx.
+// They live outside Main's layout (no sidebar/footer), so they need their
+// own centered, viewport-height column. Sizes follow the vendored
+// logo.styl defaults (80px/28px) and shrink on small viewports, since the
+// `is-mobile` class from Main never reaches this subtree.
+.login-wrap
+  box-sizing border-box
+  width 100%
+  max-width 480px
+  min-height 100vh
+  min-height 100dvh
+  margin 0 auto
+  padding 24px 16px
+  display flex
+  flex-direction column
+  justify-content center
+  text-align center
+  // body is overflow:hidden (basic.styl), so let the column scroll on its
+  // own if a very short viewport clips the logo + input
+  overflow-y auto
+
+// flex centering + overflow can make the top of the content unreachable on
+// very short (landscape phone) viewports - fall back to top alignment there
+@media screen and (max-height 480px)
+  .login-wrap
+    justify-content flex-start
+
+@media screen and (max-width 768px)
+  .login-wrap
+    max-width 100%
+    padding 16px 12px
+    .logo-elem
+      margin-top 8px
+      margin-bottom 8px
+    .morph-shape
+      padding 6px
+    .logo-img
+      height 40px
+    .logo-img-small
+      height 20px
