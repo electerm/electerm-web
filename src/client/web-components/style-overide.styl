@@ -1,3 +1,11 @@
 @-moz-document url-prefix()
   .tabs-inner
     overflow-x hidden !important
+
+// The logout icon is fixed to the bottom-left corner (43px wide), and the
+// footer's show-sidebar control — which only renders when the left icon bar
+// is hidden, i.e. only in the same state as the logout icon — would otherwise
+// sit right on top of it. Shift it clear of the icon: 43px of icon + the
+// footer's usual 10px gap between units.
+.main-footer .terminal-footer-show-sidebar
+  margin-left 53px
