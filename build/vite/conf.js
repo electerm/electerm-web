@@ -20,6 +20,9 @@ export default defineConfig({
   ],
   define: def,
   publicDir: false,
+  // the login page's 3D logo model (simple-auth/login-logo-3d.js) is imported
+  // as a URL and emitted next to the other assets
+  assetsInclude: ['**/*.glb'],
   legacy: {
     inconsistentCjsInterop: true
   },

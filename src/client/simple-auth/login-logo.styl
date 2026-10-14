@@ -1,0 +1,32 @@
+// Login page brand block (simple-auth/login-logo.jsx).
+// The image defines the box, the canvas is painted exactly on top of it, so
+// both are always the same rectangle and the model is fitted to it in JS.
+.login-logo
+  position relative
+  // the wordmark is deliberately allowed to be wider than the form column -
+  // that is what makes it read as the brand mark instead of another input row.
+  // (a plain max-width, not a css min(): Stylus would evaluate min() itself)
+  width 520px
+  max-width 88vw
+  // the logo asset's own canvas aspect (766x266). Its ink only fills the
+  // middle of that canvas, so a fixed height was mostly transparent padding -
+  // deriving the height from the width is what lets the wordmark get big.
+  // Keeping it here also means the lazy placeholder reserves the exact box.
+  aspect-ratio 766 / 266
+  margin 0 auto
+  line-height 0
+
+.login-logo-img
+  display block
+  width 100%
+  height 100%
+
+.login-logo-canvas
+  position absolute
+  inset 0
+  display block
+  width 100%
+  height 100%
+  // hidden until the model has rendered; login-logo-3d.js fades it in and
+  // fades the image out as they are swapped
+  opacity 0

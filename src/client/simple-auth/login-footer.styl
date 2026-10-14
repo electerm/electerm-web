@@ -1,0 +1,119 @@
+// Footer of the pre-login screens, ported from electerm.org
+// (src/css/parts/footer.styl). Layout, type scale and spacing are electerm.org's;
+// the palette is not - that site puts a near-black slab at the bottom, which
+// reads as a hole under this white starfield page. Here it is a light grey band
+// using the app's own light surface (--main) and text tokens, so it separates
+// from the page without darkening it.
+.site-footer
+  position relative
+  // flex none for the same reason as .login-hero - a 4-column footer is the
+  // first thing that would get squashed by the fixed-height page column
+  flex none
+  z-index 0
+  padding 48px 0 24px
+
+.site-footer-inner
+  position relative
+  z-index 1
+  max-width 1200px
+  margin 0 auto
+  padding 0 20px
+
+// The wordmark, in its own band under the bottom bar. electerm.org only shows
+// it when an ad fills the space above it; here it is simply always on.
+.site-footer-watermark
+  height 72px
+  margin-top 10px
+  background-position center
+  background-size 150px auto
+  background-repeat no-repeat
+  // the wordmark is dark ink here, not white - it sits on a light band
+  opacity .07
+  pointer-events none
+  filter brightness(0)
+
+.footer-grid
+  display grid
+  grid-template-columns 1fr
+  gap 32px
+  margin-bottom 40px
+
+@media (min-width 480px)
+  .footer-grid
+    grid-template-columns repeat(2, 1fr)
+
+@media (min-width 768px)
+  .footer-grid
+    grid-template-columns 2fr repeat(3, 1fr)
+
+.footer-brand
+  max-width 280px
+
+.footer-brand-name
+  color var(--text-dark)
+  font-weight 700
+  font-size 1.1rem
+  margin-bottom 12px
+
+.footer-brand p
+  font-size .85rem
+  line-height 1.6
+  margin 0
+
+.footer-col h4
+  color var(--text-dark)
+  font-size .85rem
+  font-weight 600
+  text-transform uppercase
+  letter-spacing .05em
+  margin 0 0 16px
+
+.footer-col ul
+  list-style none
+  margin 0
+  padding 0
+
+.footer-col li
+  margin-bottom 8px
+
+.footer-col a
+  color var(--text)
+  font-size .88rem
+  // antd's reset underlines links; electerm.org's footer does not
+  text-decoration none
+
+.footer-col a:hover
+  color var(--primary)
+  text-decoration none
+
+.footer-bottom
+  padding-top 24px
+  border-top 1px solid rgba(15, 23, 42, .08)
+  display flex
+  flex-direction column
+  gap 12px
+  align-items center
+
+@media (min-width 768px)
+  .footer-bottom
+    flex-direction row
+    justify-content space-between
+
+.footer-bottom p
+  font-size .82rem
+  margin 0
+
+.footer-bottom-links
+  display flex
+  flex-wrap wrap
+  justify-content center
+  gap 16px
+
+.footer-bottom-links a
+  color var(--text-light)
+  font-size .82rem
+  text-decoration none
+
+.footer-bottom-links a:hover
+  color var(--primary)
+  text-decoration none

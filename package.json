@@ -84,6 +84,7 @@
     "spice-client": "^1.2.0",
     "standard": "^17.1.2",
     "stylus": "^0.64.0",
+    "three": "^0.186.1",
     "vite": "^8.0.15"
   },
   "dependencies": {

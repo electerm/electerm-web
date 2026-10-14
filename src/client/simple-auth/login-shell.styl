@@ -1,0 +1,58 @@
+// Layout of the pre-login scene (simple-auth/login-shell.jsx). It lives in the
+// scene's own chunk, together with the scene's components, so an instance that
+// does not ask for a password never ships any of this.
+//
+// The scene is built like a small landing page: hero on top, the form under it,
+// the project footer at the bottom. Their own styles are in login-hero.styl /
+// login-footer.styl / login-bg.styl / login-lang-switch.styl.
+.login-page
+  box-sizing border-box
+  position relative
+  // own stacking context, so .login-bg (z-index -1) can hide behind the content
+  // without escaping behind the page/body
+  z-index 0
+  width 100%
+  // body is overflow:hidden (basic.styl), so this element is the page's scroll
+  // container - hence a real height, not min-height
+  height 100vh
+  height 100dvh
+  overflow-y auto
+  overflow-x hidden
+  display flex
+  flex-direction column
+
+// absorbs the height left over between hero and footer, so the footer sits at
+// the bottom of the viewport on a tall screen and the form stays centered in
+// the gap (never shrinking below its content, which is what keeps it scrollable)
+.login-main
+  flex 1 0 auto
+  width 100%
+  max-width 480px
+  margin 0 auto
+  padding 4px 16px 40px
+  display flex
+  flex-direction column
+  justify-content center
+  text-align center
+
+// Names what the visitor is logging into, right above the password field. The
+// hero's wordmark is the brand statement; this is the label on the form.
+.login-form-title
+  margin 0 0 18px
+  font-size 1.4rem
+  font-weight 600
+  letter-spacing -.01em
+  line-height 1.2
+  color var(--text)
+
+@media screen and (max-height 560px)
+  .login-main
+    justify-content flex-start
+
+@media screen and (max-width 768px)
+  .login-main
+    max-width 100%
+    padding 2px 12px 28px
+  .login-form-title
+    font-size 1.25rem
+    margin-bottom 14px

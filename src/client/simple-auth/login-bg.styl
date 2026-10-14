@@ -1,0 +1,15 @@
+// Animated background of the pre-login screens (simple-auth/login-bg.jsx).
+// Fixed to the viewport rather than the form column, and the white comes from
+// here so the page still looks right if the canvas never gets a frame.
+.login-bg
+  position fixed
+  inset 0
+  z-index -1
+  overflow hidden
+  pointer-events none
+  background #fff
+
+.login-bg-canvas
+  display block
+  width 100%
+  height 100%
