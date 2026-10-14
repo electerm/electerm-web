@@ -20,7 +20,7 @@
     "test": "npm run test1 && npm run test2",
     "test1": "./node_modules/.bin/playwright test test/e2e/00*.js --config test/playwright.conf.js",
     "test2": "./node_modules/.bin/playwright test test/e2e/01*.js --config test/playwright.conf.js",
-    "test3": "./node_modules/.bin/playwright test test/unit/*.js"
+    "test3": "node --test test/unit/*.js"
   },
   "license": "MIT",
   "languageRepo": "https://github.com/electerm/electerm-locales",

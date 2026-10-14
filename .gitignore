@@ -124,3 +124,5 @@ dist
 .codeartsdoer
 .kilo
 .workbuddy-ai
+# user config, created from config.sample.js
+/config.js

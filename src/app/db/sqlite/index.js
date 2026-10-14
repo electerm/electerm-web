@@ -1,12 +1,13 @@
 /**
- * sqlite api wrapper
+ * sqlite db implementation
  * Updated to use two database files: one for 'data' table, one for others
+ * conf is ignored, sqlite only needs the DB_PATH env
  */
 
-import { cwd } from '../common/runtime-constants.js'
+import { cwd } from '../../common/runtime-constants.js'
 import { resolve } from 'path'
 import fs from 'fs'
-import uid from '../common/uid.js'
+import { tables, checkTable, toDoc, toRow } from '../common.js'
 import { DatabaseSync } from 'node:sqlite'
 
 // Define database folder and paths for two database files
@@ -23,24 +24,7 @@ if (!fs.existsSync(baseFolder)) {
 const mainDb = new DatabaseSync(mainDbPath)
 const dataDb = new DatabaseSync(dataDbPath)
 
-export const tables = [
-  'bookmarks',
-  'bookmarkGroups',
-  'addressBookmarks',
-  'terminalThemes',
-  'lastStates',
-  'data',
-  'quickCommands',
-  'log',
-  'dbUpgradeLog',
-  'profiles',
-  'workspaces',
-  'triggers',
-  'history',
-  'terminalCommandHistory',
-  'aiChatHistory',
-  'autoRunWidgets'
-]
+export { tables }
 
 // Create tables in appropriate databases
 for (const table of tables) {
@@ -56,37 +40,12 @@ function getDatabase (dbName) {
   return dbName === 'data' ? dataDb : mainDb
 }
 
-function toDoc (row) {
-  if (!row) return null
-  let r = {}
-  try {
-    r = JSON.parse(row.data || '{}')
-  } catch (e) {
-    log.error(e)
-  }
-  return {
-    ...r,
-    _id: row._id
-  }
-}
-
-function toRow (doc) {
-  const _id = doc._id || doc.id || uid()
-  const copy = { ...doc }
-  delete copy._id
-  delete copy.id
-  return {
-    _id,
-    data: JSON.stringify(copy)
-  }
-}
-
 export async function dbAction (dbName, op, ...args) {
   if (op === 'compactDatafile') {
     return
   }
-  if (!tables.includes(dbName)) {
-    return console.error(`Table ${dbName} does not exist`)
+  if (!checkTable(dbName)) {
+    return
   }
 
   // Get the appropriate database for this table
@@ -142,5 +101,12 @@ export async function dbAction (dbName, op, ...args) {
       res = stmt.run(data, qid)
     }
     return res.changes
+  }
+}
+
+export function createDb () {
+  return {
+    tables,
+    dbAction
   }
 }

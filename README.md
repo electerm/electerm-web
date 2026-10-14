@@ -155,6 +155,8 @@ cp .sample.env .env
 # for Mac OS DB_PATH="/Users/<your-user-name>/Library/Application Support/electerm"
 # for Linux OS DB_PATH="/home/<your-user-name>/.config/electerm"
 # for Windows OS DB_PATH="C:\\Users\\<your-user-name>\\AppData\\Roaming\\electerm"
+# edit DB_TYPE to choose db implementation, default sqlite
+# DB_TYPE=custom uses your own db from config.js, see config.sample.js
 npm config set legacy-peer-deps true
 npm i
 

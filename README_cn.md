@@ -156,6 +156,8 @@ cp .sample.env .env
 # 对于 Mac OS，DB_PATH="/Users/<your-user-name>/Library/Application Support/electerm"
 # 对于 Linux OS，DB_PATH="/home/<your-user-name>/.config/electerm"
 # 对于 Windows OS，DB_PATH="C:\\Users\\<your-user-name>\\AppData\\Roaming\\electerm"
+# 编辑 DB_TYPE 选择数据库实现，默认 sqlite
+# DB_TYPE=custom 使用 config.js 中自定义的数据库，参见 config.sample.js
 
 npm install
 
