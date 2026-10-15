@@ -7,6 +7,7 @@ import proxySock from './socks.js'
 import _ from 'lodash'
 import generate from '../common/uid.js'
 import { resolve as pathResolve } from 'path'
+import os from 'os'
 import net from 'net'
 import { exec } from 'child_process'
 import log from '../common/log.js'
@@ -50,6 +51,47 @@ const algFailMsgs = [
   'no matching S->C MAC',
   'no matching host key format'
 ]
+
+// A key/certificate can be stored two ways: as content (pasted, or imported
+// from a file by the bookmark form), or as the path of the file to read it
+// from ("select file path" in the bookmark form, `-i/--private-key-path` on
+// the command line). Content wins: when both are filled in, the path is
+// ignored, which is also the order the form shows them in.
+const keyFilePairs = [
+  ['privateKeyPath', 'privateKey'],
+  ['certificatePath', 'certificate']
+]
+
+// fs does not expand `~`, and this is a path people type by hand
+function expandHome (p) {
+  if (p === '~' || p.startsWith('~/') || p.startsWith('~\\')) {
+    return pathResolve(os.homedir(), p.slice(2))
+  }
+  return p
+}
+
+/**
+ * Fill `privateKey` / `certificate` from their `...Path` counterpart when only
+ * a path was given. Mutates and returns `options`.
+ * @param {object} options ssh2 connect options
+ */
+function resolveKeyFiles (options) {
+  for (const [pathKey, contentKey] of keyFilePairs) {
+    const filePath = options[pathKey]
+    if (!filePath || options[contentKey]) {
+      continue
+    }
+    try {
+      options[contentKey] = fs.readFileSync(expandHome(filePath), 'utf8')
+    } catch (err) {
+      log.error(`cannot read ${contentKey} file`, filePath, err)
+      // failing the connection with the real reason beats a bare
+      // "All configured authentication methods failed"
+      throw new Error(`cannot read ${contentKey} file ${filePath}: ${err.message}`)
+    }
+  }
+  return options
+}
 
 class TerminalSshBase extends TerminalBase {
   async remoteInitProcess () {
@@ -205,12 +247,16 @@ class TerminalSshBase extends TerminalBase {
       username: initOptions.username,
       password: initOptions.password,
       privateKey: initOptions.privateKey,
-      passphrase: initOptions.passphrase
+      privateKeyPath: initOptions.privateKeyPath,
+      passphrase: initOptions.passphrase,
+      certificate: initOptions.certificate,
+      certificatePath: initOptions.certificatePath
     }
 
     const [firstHopping, ...restHoppings] = initOptions.connectionHoppings
     const pickProps = _.pick(firstHopping, [
-      'host', 'port', 'username', 'password', 'privateKey', 'passphrase', 'certificate'
+      'host', 'port', 'username', 'password', 'privateKey', 'privateKeyPath',
+      'passphrase', 'certificate', 'certificatePath'
     ])
     Object.assign(initOptions, pickProps)
     initOptions.connectionHoppings = [...restHoppings, currentHostHopping]
@@ -247,6 +293,62 @@ class TerminalSshBase extends TerminalBase {
     })
   }
 
+  /**
+   * True when this keyboard-interactive round asks for the password itself.
+   * That is the flow the 2FA retry in doSshConnect exists for: the server wants
+   * the password re-entered through keyboard-interactive ("handles both"), so it
+   * pays off to reconnect without the `password` auth method.
+   * A round that only asks for the 2FA code means the password factor is already
+   * settled on this connection, so answering it here is correct.
+   */
+  kiRoundHasPasswordPrompt (prompts) {
+    return (prompts || []).some(p => {
+      return !p.echo && (p.prompt || '').toLowerCase().includes('password')
+    })
+  }
+
+  /**
+   * Some gateways leave the prompt label empty and put the question in the
+   * keyboard-interactive name/instructions instead ("Two-Step Verification
+   * required" + "Please Input Mfa Code (SMS)"), and that question is often the
+   * SMS code. The auto-fill below must not treat such a round as a password
+   * prompt: filling the saved password in burns the only answer the server
+   * accepts, and the login dies with a confusing
+   * "All configured authentication methods failed".
+   */
+  isLikely2FAHint (options) {
+    const { name, instructions } = options || {}
+    const texts = Array.isArray(instructions)
+      ? instructions
+      : (instructions ? [instructions] : [])
+    return this.isLikely2FAPrompts(
+      [name, ...texts]
+        .filter(Boolean)
+        .map(t => ({ prompt: String(t), echo: false }))
+    )
+  }
+
+  /**
+   * The dialog renders `prompts[].prompt` as the label and `instructions[i]` as
+   * the note, so a round that only fills the name/instructions pops up a blank
+   * input box. Copy that text onto the label; `instructions` arrives as a plain
+   * string, which the per-prompt indexing in the dialog cannot use, so reset it.
+   */
+  labelBarePrompts (options) {
+    const { prompts, name, instructions } = options
+    if (!prompts || !prompts.some(p => !p.prompt)) {
+      return options
+    }
+    const hint = (Array.isArray(instructions)
+      ? instructions.join(' ')
+      : String(instructions || '')).trim() || String(name || '')
+    return {
+      ...options,
+      instructions: Array.isArray(instructions) ? instructions : [],
+      prompts: prompts.map(p => p.prompt ? p : { ...p, prompt: hint })
+    }
+  }
+
   onKeyboardEvent (options, passwordOverride) {
     if (options?.mode !== 'confirm' && this.initOptions?.interactiveValues) {
       return Promise.resolve(this.initOptions.interactiveValues.split('\n'))
@@ -263,9 +365,15 @@ class TerminalSshBase extends TerminalBase {
       : this.initOptions?.password
     if (prompts && prompts.length === 1 && savedPassword) {
       const prompt = prompts[0]
-      const promptText = (prompt.prompt || '').toLowerCase()
+      const promptText = (prompt.prompt || '').toLowerCase().trim()
       // Check if this is a password prompt (hidden input, contains "password" or is empty)
-      if (!prompt.echo && (promptText.includes('password') || promptText === '')) {
+      if (
+        !prompt.echo &&
+        (
+          promptText.includes('password') ||
+          (promptText === '' && !this.isLikely2FAHint(options))
+        )
+      ) {
         return Promise.resolve([savedPassword])
       }
     }
@@ -278,7 +386,7 @@ class TerminalSshBase extends TerminalBase {
         'interactiveValues',
         'tabId'
       ]),
-      options
+      options: this.labelBarePrompts(options)
     })
     return new Promise((resolve, reject) => {
       this.ws?.once((arg) => {
@@ -465,6 +573,9 @@ class TerminalSshBase extends TerminalBase {
       sock,
       ...hopping
     }
+    // hop connections never go through buildConnectOptions(), so their key
+    // path has to be read here - and before hasExplicitAuth is worked out
+    resolveKeyFiles(this.hoppingOptions)
     this.nextConn = new Client()
     // If we have an agent and no explicit privateKey/password, try agent first
     // by skipping reading private keys from jump server
@@ -698,12 +809,17 @@ class TerminalSshBase extends TerminalBase {
           )
         }
         // Detect 2FA: if we connected with password and prompts look like 2FA,
-        // disconnect and retry without password so keyboard-interactive handles both
+        // disconnect and retry without password so keyboard-interactive handles both.
+        // Only do it when the round also asks for the password: a round that only
+        // asks for the 2FA code is the connection the server issued the challenge
+        // on, and dropping it strands the answer (bastion gateways bind the code
+        // to the connection that requested it, so the login just hangs).
         if (
           !this.retry2FA &&
           !this.authPartiallySucceeded &&
           connectOptions.password &&
-          this.isLikely2FAPrompts(prompts)
+          this.isLikely2FAPrompts(prompts) &&
+          this.kiRoundHasPasswordPrompt(prompts)
         ) {
           this.retry2FA = true
           conn.end()
@@ -853,11 +969,14 @@ class TerminalSshBase extends TerminalBase {
         'username',
         'password',
         'privateKey',
+        'privateKeyPath',
         'passphrase',
         'certificate',
+        'certificatePath',
         'encode'
       ])
     )
+    resolveKeyFiles(connectOptions)
     if (initOptions.isMFA) {
       this.retry2FA = true
       delete connectOptions.password
