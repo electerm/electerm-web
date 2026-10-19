@@ -20,7 +20,7 @@ async function main () {
   const { HOST, PORT } = process.env
 
   app.listen(PORT, HOST, () => {
-    log.info(`server runs on http://${HOST}:${PORT}`)
+    console.log(`server runs on http://${HOST}:${PORT}`)
   })
 }
 
