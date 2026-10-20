@@ -14,6 +14,11 @@ export default {
   zoom: 1,
   debug: false,
   theme: 'default',
+  // `en_us` is a real locale id from @electerm/electerm-locales. It has to be
+  // here rather than in the init db defaults: the client loads the config
+  // before checkDbUpgrade seeds the db, then writes that config straight back
+  // with saveUserConfig, which would overwrite a seed-only value.
+  language: 'en_us',
   syncSetting: {
     lastUpdateTime: Date.now(),
     autoSync: false,
