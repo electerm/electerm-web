@@ -37,17 +37,50 @@ function createWs (
     }
   }
   ws.addEventListener('message', ws._bufferHandler)
+  // Pending one-shot listeners by message id. A prompt (MFA code, host key
+  // trust) can be taken back before it is ever answered -- the server then
+  // sends `session-interactive-close` for that id -- and a retried prompt
+  // re-registers, so without a way to drop the old listener every abandoned
+  // prompt would leave one behind on this long-lived socket.
+  ws.onceDisposers = new Map()
+  // Returns a disposer, same contract as the server-side ws.once.
   ws.once = (callack, id) => {
-    const func = (evt) => {
-      const arg = JSON.parse(evt.data)
-      if (id === arg.id) {
-        callack(arg)
-        ws.removeEventListener('message', func)
+    // Re-registering the same id replaces the old listener instead of stacking
+    // a second one on top of it.
+    const previous = ws.onceDisposers.get(id)
+    if (previous) {
+      previous()
+    }
+    let func
+    const dispose = () => {
+      if (!func) {
+        return
+      }
+      ws.removeEventListener('message', func)
+      func = null
+      if (ws.onceDisposers.get(id) === dispose) {
+        ws.onceDisposers.delete(id)
       }
     }
+    func = (evt) => {
+      const arg = JSON.parse(evt.data)
+      if (id !== arg.id) {
+        return
+      }
+      dispose()
+      callack(arg)
+    }
+    ws.onceDisposers.set(id, dispose)
     ws.addEventListener('message', func)
+    return dispose
   }
   ws.onclose = () => {
+    if (ws.onceDisposers) {
+      for (const dispose of [...ws.onceDisposers.values()]) {
+        dispose()
+      }
+      ws.onceDisposers.clear()
+    }
     if (ws.dup) {
       return
     }
@@ -119,6 +152,8 @@ async function onMsg (e) {
           data
         })
       }
+      // the disposer lives on ws.onceDisposers, so a later removeEventListener
+      // with this id can drop a prompt the caller no longer wants an answer to
       ws.once(cb, id)
     }
   } else if (action === 'close') {
@@ -181,6 +216,10 @@ async function onMsg (e) {
     }
   } else if (action === 'removeEventListener') {
     const ws = self.insts[wsId]
+    // a pending one-shot (a prompt that was taken back) is not in ws.listeners
+    if (ws && ws.onceDisposers && ws.onceDisposers.has(id)) {
+      ws.onceDisposers.get(id)()
+    }
     if (ws && ws.listeners && ws.listeners.has(id)) {
       const listener = ws.listeners.get(id)
       ws.removeEventListener(listener.type, listener.cb)

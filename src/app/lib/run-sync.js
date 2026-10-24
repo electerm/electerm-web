@@ -26,7 +26,10 @@ import {
   listWidgets,
   runWidget,
   stopWidget,
-  runWidgetFunc
+  runWidgetFunc,
+  callWidgetFunc,
+  importWidget,
+  deleteWidget
 } from '../widgets/load-widget.js'
 import globalState from './global-state.js'
 import { getEnv } from './get-constants.js'
@@ -68,6 +71,17 @@ const globs = {
   runWidget,
   stopWidget,
   runWidgetFunc,
+  // user widgets: main-process functions their own UI calls, install and
+  // uninstall of a widget folder
+  callWidgetFunc,
+  importWidget,
+  deleteWidget,
+  // macOS RDP with Control/Command swapped: on the desktop app a registered
+  // app-menu accelerator would swallow Cmd+C/V/A/Z/X before the page sees the
+  // keydown. A browser has no app menu, so there is nothing to disable here;
+  // the stub exists so the renderer's call is not rejected as an unknown
+  // function.
+  setRdpSwapCtrlCmd: () => Promise.resolve(1),
   getPendingDeepLink: () => Promise.resolve(null),
   // the renderer asks for a .vv file handed to the OS during startup; only the
   // desktop app can receive one, so there is never anything pending here
@@ -97,7 +111,13 @@ export function runSync (ws, msg) {
     })
     return
   }
-  globs[func](...args)
+  // Not every entry is async: importWidget/stopWidget return their result (or
+  // throw) synchronously, the same way the desktop app's sync ipc channel does.
+  // Going through a resolved promise first normalises both shapes, and keeps a
+  // synchronous throw inside this handler instead of letting it escape into the
+  // dispatcher and leave the renderer's promise unsettled forever.
+  Promise.resolve()
+    .then(() => globs[func](...args))
     .then(data => {
       ws.s({
         data,
@@ -106,8 +126,14 @@ export function runSync (ws, msg) {
     })
     .catch(err => {
       log.error(id, func, args, err)
+      // An Error instance does not survive JSON: it serialises to {} and the
+      // renderer then rejects with "Error: undefined". Send the fields the
+      // client actually reads, like the invalid-function reply above.
       ws.s({
-        error: err,
+        error: {
+          message: err && err.message ? err.message : String(err),
+          stack: err && err.stack ? err.stack : ''
+        },
         id
       })
     })

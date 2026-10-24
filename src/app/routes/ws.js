@@ -49,11 +49,16 @@ function hasIncompleteTrailingUtf8 (bufs) {
 }
 
 export function wsRoutes (app) {
-  expressWs(app, undefined, {
+  const wsInstance = expressWs(app, undefined, {
     wsOptions: {
       perMessageDeflate: false
     }
   })
+  // `ws` re-emits the http server's listen errors on its WebSocketServer, and an
+  // unhandled 'error' event there throws before the http server's own 'error'
+  // listener gets a chance to run. Keep the instance reachable so a failed
+  // listen can be handled instead of turning into an uncaughtException.
+  app.getWss = wsInstance.getWss
   app.ws('/spice/:pid', function (ws, req) {
     const { query } = req
     verifyWs(req)

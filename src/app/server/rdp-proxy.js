@@ -302,6 +302,20 @@ function parseDestination (destination) {
 
 // Network: TCP + X.224 + TLS + Cert Extraction
 
+// TLS is terminated with Node's built-in `tls` module, and only that: this
+// proxy runs on plain Node.js (OpenSSL), not on Electron's BoringSSL, so the
+// KEY_USAGE_BIT_INCORRECT handshake rejection that forces the desktop app into
+// a node-forge fallback (and a static-RSA retry before it) cannot happen here.
+const HANDSHAKE_TIMEOUT = 15000
+
+// Stop reading from the server when this much data is queued for the renderer,
+// resume once it drains below the low-water mark. Without this a busy remote
+// desktop makes the proxy buffer without bound, and the renderer (which is
+// decoding those frames one by one) falls further and further behind.
+const MAX_WS_BUFFER = 16 * 1024 * 1024
+const WS_BUFFER_LOW = 4 * 1024 * 1024
+const DRAIN_POLL_INTERVAL = 50
+
 /**
  * Create a TCP connection (direct or through proxy)
  * @param {string} host
@@ -317,7 +331,7 @@ async function createTcpConnection (host, port, options, x224Request, logPrefix)
   if (options.proxy) {
     log.debug(`${logPrefix} Connecting through proxy: ${options.proxy}`)
     const proxyResult = await proxySock({
-      readyTimeout: options.readyTimeout || 15000,
+      readyTimeout: options.readyTimeout || HANDSHAKE_TIMEOUT,
       host,
       port,
       proxy: options.proxy
@@ -349,6 +363,147 @@ async function createTcpConnection (host, port, options, x224Request, logPrefix)
 }
 
 /**
+ * Read exactly one TPKT-framed PDU (the X.224 Connection Confirm) from the
+ * socket. Any bytes received past it are handed back so they can be pushed
+ * into the TLS layer instead of being dropped.
+ *
+ * A single `once('data')` is not enough: a slow server (or a slow proxy) can
+ * deliver the confirm in two segments, and the old code then passed a partial
+ * PDU to tls.connect(). Uses a one-shot timer rather than
+ * `socket.setTimeout()`, which would leave an idle-inactivity timer armed on
+ * the socket that ends up carrying the whole session.
+ *
+ * @param {net.Socket} tcpSocket
+ * @param {string} logPrefix
+ * @returns {Promise<{ x224Response: Buffer, rest: Buffer }>}
+ */
+function readX224Confirm (tcpSocket, logPrefix) {
+  return new Promise((resolve, reject) => {
+    let pending = Buffer.alloc(0)
+    let expectedLength = -1
+    let settled = false
+
+    const cleanup = () => {
+      clearTimeout(timer)
+      tcpSocket.removeListener('data', onData)
+      tcpSocket.removeListener('error', onError)
+      tcpSocket.removeListener('end', onEnd)
+      tcpSocket.removeListener('close', onClose)
+    }
+
+    const settle = (err, result) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      if (err) reject(err)
+      else resolve(result)
+    }
+
+    function onError (err) {
+      settle(new Error(`TCP error while waiting for X.224 confirm: ${err.message}`))
+    }
+
+    function onEnd () {
+      settle(new Error('RDP server closed connection without X.224 response'))
+    }
+
+    function onClose () {
+      settle(new Error('RDP connection closed before X.224 confirm'))
+    }
+
+    function onData (chunk) {
+      pending = Buffer.concat([pending, chunk])
+
+      if (expectedLength < 0) {
+        if (pending.length < 4) return
+        // TPKT header: version (1 byte, must be 3), reserved (1), length (2, BE)
+        if (pending[0] !== 3) {
+          settle(new Error(`Invalid TPKT version ${pending[0]} in X.224 confirm`))
+          return
+        }
+        expectedLength = pending.readUInt16BE(2)
+      }
+
+      if (pending.length < expectedLength) return
+
+      // Stop the stream from emitting further chunks synchronously: anything
+      // still buffered belongs to the TLS layer.
+      tcpSocket.pause()
+
+      log.debug(`${logPrefix} Received X.224 Connection Confirm (${expectedLength} bytes)`)
+
+      settle(null, {
+        x224Response: pending.subarray(0, expectedLength),
+        rest: pending.subarray(expectedLength)
+      })
+    }
+
+    const timer = setTimeout(() => {
+      settle(new Error('Connection timed out'))
+    }, HANDSHAKE_TIMEOUT)
+
+    tcpSocket.on('data', onData)
+    tcpSocket.on('error', onError)
+    tcpSocket.on('end', onEnd)
+    tcpSocket.on('close', onClose)
+  })
+}
+
+/**
+ * Upgrade a socket that just carried the X.224 handshake to TLS.
+ *
+ * @param {net.Socket} tcpSocket
+ * @param {string} host
+ * @param {Buffer} rest - bytes read past the X.224 confirm
+ * @param {string} logPrefix
+ * @returns {Promise<{ certChain: Buffer[], tlsSocket: tls.TLSSocket }>}
+ */
+function tlsUpgrade (tcpSocket, host, rest, logPrefix) {
+  return new Promise((resolve, reject) => {
+    // Hand the socket over paused: the TLS layer reads from its internal
+    // buffer, and leftover plaintext bytes must not be emitted as `data`.
+    tcpSocket.pause()
+    if (rest.length) tcpSocket.unshift(rest)
+
+    let settled = false
+    const settle = (err, result) => {
+      if (settled) return
+      settled = true
+      tcpSocket.removeListener('close', onClose)
+      if (err) reject(err)
+      else resolve(result)
+    }
+
+    function onClose () {
+      settle(new Error('RDP connection closed during TLS handshake'))
+    }
+
+    const servername = net.isIP(host) ? undefined : host
+    const tlsSocket = tls.connect({
+      socket: tcpSocket,
+      servername,
+      // RDP servers use self-signed certificates, and the client shows the
+      // certificate details instead of trusting them.
+      rejectUnauthorized: false
+    }, () => {
+      log.debug(`${logPrefix} TLS handshake completed (${tlsSocket.getProtocol()}, ${tlsSocket.getCipher()?.name})`)
+      tcpSocket.setNoDelay(true)
+      tcpSocket.setKeepAlive(true, 10000)
+      settle(null, {
+        certChain: extractCertChain(tlsSocket),
+        tlsSocket
+      })
+    })
+
+    tcpSocket.once('close', onClose)
+    tlsSocket.once('error', (err) => {
+      log.error(`${logPrefix} TLS error: ${err.message}`)
+      settle(new Error(`${err.code || 'TLS error'}: ${err.message}`))
+    })
+  })
+}
+
+/**
  * Perform the RDP proxy handshake:
  * 1. TCP connect to RDP server (optionally through proxy)
  * 2. Send X.224 Connection Request (raw TCP)
@@ -375,114 +530,53 @@ async function performRDPHandshake (host, port, x224Request, options = {}) {
     throw new Error(`Connection failed: ${err.message}`)
   }
 
-  return new Promise((resolve, reject) => {
-    let settled = false
+  // Step 2-3: read the X.224 Connection Confirm
+  let x224Response
+  let rest
+  try {
+    ({ x224Response, rest } = await readX224Confirm(tcpSocket, logPrefix))
+  } catch (err) {
+    tcpSocket.destroy()
+    throw err
+  }
 
-    function settle (err, result) {
-      if (settled) return
-      settled = true
-      if (err) reject(err)
-      else resolve(result)
-    }
-
-    tcpSocket.once('error', (err) => {
-      settle(new Error(`TCP connection failed: ${err.message}`))
-    })
-
-    // Step 3: Read X.224 Connection Confirm
-    tcpSocket.once('data', (x224Response) => {
-      log.debug(`${logPrefix} Received X.224 Connection Confirm (${x224Response.length} bytes)`)
-
-      if (x224Response.length === 0) {
-        tcpSocket.destroy()
-        settle(new Error('RDP server closed connection without X.224 response'))
-        return
-      }
-
-      // Remove all listeners before upgrading to TLS
-      tcpSocket.removeAllListeners('error')
-      tcpSocket.removeAllListeners('data')
-
-      // Step 4: TLS handshake via Node.js tls module
-      log.debug(`${logPrefix} Starting TLS handshake`)
-
-      const tlsSocket = tls.connect({
-        socket: tcpSocket,
-        rejectUnauthorized: false // Accept self-signed RDP certificates
-      }, () => {
-        log.debug(`${logPrefix} TLS handshake completed`)
-
-        // The handshake-deadline timer set below (in the outer function)
-        // is a `net.Socket` idle-inactivity timer, not a one-shot deadline
-        // - it re-arms on every read/write and was never cleared once the
-        // handshake finished. Left alone, it destroys this same socket
-        // (reused for the whole session relay) after any 15s stretch with
-        // no bytes in either direction - e.g. a static remote desktop with
-        // no mouse/keyboard activity - killing otherwise-healthy sessions.
-        // Disable it now that the handshake is done; a real dead/half-open
-        // connection is instead caught by the TCP keepalive enabled below.
-        tcpSocket.setTimeout(0)
-        tcpSocket.setNoDelay(true)
-        tcpSocket.setKeepAlive(true, 10000)
-
-        // Step 5: Extract certificate chain
-        const certChain = extractCertChain(tlsSocket)
-        log.debug(`${logPrefix} Extracted ${certChain.length} certificate(s)`)
-
-        settle(null, {
-          x224Response: Buffer.from(x224Response),
-          certChain,
-          tlsSocket,
-          tcpSocket
-        })
-      })
-
-      tlsSocket.once('error', (err) => {
-        log.error(`${logPrefix} TLS error: ${err.message}`)
-        settle(new Error(`TLS handshake failed: ${err.message}`))
-      })
-
-      // Timeout for the TLS handshake
-      tlsSocket.setTimeout(15000, () => {
-        tlsSocket.destroy()
-        settle(new Error('TLS handshake timed out'))
-      })
-    })
-
-    // Timeout for the whole handshake
-    tcpSocket.setTimeout(15000, () => {
+  // Step 4-5: TLS handshake + certificate chain
+  const { certChain, tlsSocket } = await tlsUpgrade(tcpSocket, host, rest, logPrefix)
+    .catch((err) => {
       tcpSocket.destroy()
-      settle(new Error('Connection timed out'))
+      throw err
     })
-  })
+
+  log.debug(`${logPrefix} Extracted ${certChain.length} certificate(s)`)
+
+  return {
+    x224Response: Buffer.from(x224Response),
+    certChain,
+    tlsSocket,
+    tcpSocket
+  }
 }
 
 /**
- * Extract the certificate chain from a TLS socket.
- * Returns an array of DER-encoded certificates.
+ * Extract the full peer certificate chain (leaf first) as DER buffers.
+ * @param {tls.TLSSocket} tlsSocket
+ * @returns {Buffer[]}
  */
 function extractCertChain (tlsSocket) {
-  const result = []
+  const chain = []
   try {
-    const peerCert = tlsSocket.getPeerCertificate(true)
-    if (peerCert) {
-      // The 'raw' property contains the DER-encoded certificate
-      if (peerCert.raw) {
-        result.push(peerCert.raw)
-      }
-      // Check for issuer certificate in the chain
-      let cert = peerCert
-      while (cert.issuerCertificate && cert.issuerCertificate !== cert) {
-        if (cert.issuerCertificate.raw) {
-          result.push(cert.issuerCertificate.raw)
-        }
-        cert = cert.issuerCertificate
-      }
+    let cert = tlsSocket.getPeerCertificate(true)
+    while (cert && cert.raw) {
+      const der = Buffer.from(cert.raw)
+      // A self-signed certificate is its own issuer: stop instead of looping.
+      if (chain.some((existing) => existing.equals(der))) break
+      chain.push(der)
+      cert = cert.issuerCertificate
     }
   } catch (e) {
-    log.error(`${LOG_PREFIX} Error extracting cert chain: ${e.message}`)
+    log.error(`${LOG_PREFIX} Error extracting peer certificate chain: ${e.message}`)
   }
-  return result
+  return chain
 }
 
 // Bidirectional Relay: WebSocket <-> TLS Socket <-> TCP
@@ -500,18 +594,61 @@ function extractCertChain (tlsSocket) {
 function setupTlsRelay (ws, tlsSocket, tcpSocket) {
   let wsBytesForwarded = 0
   let tlsBytesForwarded = 0
+  let paused = false
+  let drainTimer = null
+  let done = false
 
   const logPrefix = `${LOG_PREFIX} [relay]`
+
+  const stopDrainPoll = () => {
+    if (drainTimer) {
+      clearInterval(drainTimer)
+      drainTimer = null
+    }
+  }
+
+  const cleanup = (source) => {
+    if (done) return
+    done = true
+    log.debug(`${logPrefix} ${source} closed - WS->TLS: ${wsBytesForwarded} bytes, TLS->WS: ${tlsBytesForwarded} bytes`)
+    stopDrainPoll()
+    if (!tlsSocket.destroyed) tlsSocket.destroy()
+    if (!tcpSocket.destroyed) tcpSocket.destroy()
+    if (ws.readyState === 1 /* OPEN */) {
+      try { ws.close() } catch (_) {}
+    }
+  }
 
   // TLS Socket -> WebSocket (RDP server -> browser)
   tlsSocket.on('data', (data) => {
     tlsBytesForwarded += data.length
+    if (ws.readyState !== 1 /* OPEN */) return
     try {
-      if (ws.readyState === 1 /* OPEN */) {
-        ws.send(data)
-      }
+      ws.send(data)
     } catch (err) {
       log.error(`${logPrefix} TLS->WS write error:`, err.message)
+      return
+    }
+
+    // The renderer decodes frames one by one, so a busy desktop can put more
+    // in the socket queue than it can drain. Stop reading from the server
+    // until the queue is back under the low-water mark instead of buffering
+    // without bound.
+    if (!paused && ws.bufferedAmount > MAX_WS_BUFFER) {
+      paused = true
+      tlsSocket.pause()
+      log.debug(`${logPrefix} renderer is behind (${ws.bufferedAmount} bytes queued), pausing server side`)
+      drainTimer = setInterval(() => {
+        if (ws.readyState !== 1) {
+          stopDrainPoll()
+          return
+        }
+        if (ws.bufferedAmount > WS_BUFFER_LOW) return
+        stopDrainPoll()
+        paused = false
+        log.debug(`${logPrefix} renderer caught up, resuming server side`)
+        tlsSocket.resume()
+      }, DRAIN_POLL_INTERVAL)
     }
   })
 
@@ -526,25 +663,10 @@ function setupTlsRelay (ws, tlsSocket, tcpSocket) {
     }
   })
 
-  // Cleanup on close
-  const cleanup = (source) => {
-    log.debug(`${logPrefix} ${source} closed - WS->TLS: ${wsBytesForwarded} bytes, TLS->WS: ${tlsBytesForwarded} bytes`)
-    if (!tcpSocket.destroyed) tcpSocket.destroy()
-    if (ws.readyState === 1) {
-      try { ws.close() } catch (_) {}
-    }
-  }
-
-  tlsSocket.on('end', () => cleanup('TLS'))
+  tlsSocket.on('close', () => cleanup('TLS'))
   tlsSocket.on('error', (err) => {
     log.error(`${logPrefix} TLS error:`, err.message)
     cleanup('TLS (error)')
-  })
-
-  tcpSocket.on('end', () => cleanup('TCP'))
-  tcpSocket.on('error', (err) => {
-    log.error(`${logPrefix} TCP error:`, err.message)
-    cleanup('TCP (error)')
   })
 
   ws.on('close', () => cleanup('WebSocket'))
@@ -643,6 +765,7 @@ export {
   buildRDCleanPathError,
   parseDestination,
   performRDPHandshake,
+  readX224Confirm,
   setupTlsRelay,
   setupForgeRelay // backward compatibility
 }

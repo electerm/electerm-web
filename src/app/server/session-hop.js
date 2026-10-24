@@ -10,7 +10,7 @@
 import uid from '../common/uid.js'
 import DANGEROUS_SESSION_FIELDS from '../common/dangerous-session-fields.js'
 import { terminalSsh } from './session-ssh.js'
-import findFreePort from 'find-free-port'
+import { getFreePort } from '../lib/free-port.js'
 
 /**
  * A hop entry is spread into its sub-session's initOptions and used to be
@@ -32,16 +32,10 @@ function withoutDangerousFields (hop) {
   return out
 }
 
+// bind probe, not connect probe: see ../lib/free-port.js -- a Windows
+// reserved port looks free to a connect and then refuses to bind
 function getPort (fromPort = 12023) {
-  return new Promise((resolve, reject) => {
-    findFreePort(fromPort, '127.0.0.1', function (err, freePort) {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(freePort)
-      }
-    })
-  })
+  return getFreePort({ from: fromPort, host: '127.0.0.1' })
 }
 
 /**

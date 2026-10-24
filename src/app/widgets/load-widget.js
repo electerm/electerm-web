@@ -4,19 +4,36 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import * as widgetLog from './instance-log.js'
+import {
+  listUserWidgets,
+  resolveUserWidgetEntry,
+  isUserWidget,
+  importWidget as importUserWidget,
+  removeUserWidget,
+  importUserWidgetModule,
+  getUserWidgetDir
+} from './user-widget.js'
+import { isValidWidgetId } from './paths.js'
 // import log from '../common/log.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const widgetIdPattern = /^[a-z0-9-]+$/
 
-function resolveWidgetPath (widgetId, widgetDirectory = __dirname) {
-  if (typeof widgetId !== 'string' || !widgetIdPattern.test(widgetId)) {
+async function loadModule (file) {
+  const widgetModule = await import(`file://${file}`)
+  // a CommonJS built-in (module.exports = {...}) lands on `default`
+  return widgetModule.widgetInfo
+    ? widgetModule
+    : (widgetModule.default || widgetModule)
+}
+
+function resolveBuiltinPath (widgetId) {
+  if (!isValidWidgetId(widgetId)) {
     throw new Error(`Invalid widget ID: ${widgetId}`)
   }
 
-  const widgetPath = path.resolve(widgetDirectory, `widget-${widgetId}.js`)
-  const relativePath = path.relative(widgetDirectory, widgetPath)
+  const widgetPath = path.resolve(__dirname, `widget-${widgetId}.js`)
+  const relativePath = path.relative(__dirname, widgetPath)
 
   if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
     throw new Error(`Invalid widget ID: ${widgetId}`)
@@ -34,7 +51,7 @@ async function listWidgetsFromFolder (widgetDirectory = __dirname) {
   for (const file of widgetFiles) {
     try {
       const widgetPath = path.join(widgetDirectory, file)
-      const widgetModule = await import(`file://${widgetPath}`)
+      const widgetModule = await loadModule(widgetPath)
       // a file matching widget-*.js is a widget by convention; anything else
       // living in this folder (a helper module) must not reach the renderer,
       // where an undefined `info` crashes the whole widget list
@@ -43,8 +60,13 @@ async function listWidgetsFromFolder (widgetDirectory = __dirname) {
         continue
       }
       res.push({
-        id: file.slice(7, -3),
-        info: widgetModule.widgetInfo
+        id: file.slice(7, -3), // "widget-".length = 7, ".js" = 3
+        builtin: true,
+        state: 'ok',
+        info: {
+          ...widgetModule.widgetInfo,
+          builtin: true
+        }
       })
     } catch (error) {
       console.error(`Error loading widget from file ${file}:`, error)
@@ -54,33 +76,72 @@ async function listWidgetsFromFolder (widgetDirectory = __dirname) {
   return res
 }
 
+/**
+ * Built-ins ship with the app; user widgets live in <data dir>/widgets/<id>/.
+ *
+ * One namespace, no shadowing: a user folder that reuses a built-in id is
+ * ignored, and the built-in carries a warning the list can show. Silently
+ * letting a user widget replace mcp-server or ssh-server would break features
+ * that have nothing to do with the widget panel.
+ */
 async function listWidgets () {
-  const widgets1 = await listWidgetsFromFolder()
-  return widgets1
-  // if (process.versions.electron === undefined) {
-  //   return widgets1
-  // }
-  // const {
-  //   appPath
-  // } = require('../common/app-props')
-  // const userWidgetsDir = path.resolve(
-  //   appPath, 'widgets'
-  // )
-  // // Ensure user widgets directory exists when app starts
-  // try {
-  //   if (!fs.existsSync(userWidgetsDir)) {
-  //     fs.mkdirSync(userWidgetsDir, { recursive: true })
-  //   }
-  // } catch (err) {
-  //   log.error(`Failed to create user widgets directory ${userWidgetsDir}:`, err)
-  // }
-  // const widgets2 = listWidgetsFromFolder(
-  //   userWidgetsDir
-  // )
-  // return [
-  //   ...widgets1,
-  //   ...widgets2
-  // ]
+  const widgets = await listWidgetsFromFolder()
+  const builtinIds = new Set(widgets.map(w => w.id))
+  const userWidgets = listUserWidgets()
+  for (const widget of userWidgets) {
+    if (builtinIds.has(widget.id)) {
+      const builtin = widgets.find(w => w.id === widget.id)
+      builtin.warning = `User widget "${widget.id}" in ${getUserWidgetDir()} is ignored: the id belongs to a built-in widget`
+      continue
+    }
+    widgets.push(widget)
+  }
+  return widgets
+}
+
+// Where the entry of one widget lives, whichever root it came from.
+function resolveWidgetModule (widgetId) {
+  if (!isValidWidgetId(widgetId)) {
+    throw new Error(`Invalid widget ID: ${widgetId}`)
+  }
+  const builtinPath = resolveBuiltinPath(widgetId)
+  if (fs.existsSync(builtinPath)) {
+    return { entry: builtinPath, builtin: true }
+  }
+  if (isUserWidget(widgetId)) {
+    return { entry: resolveUserWidgetEntry(widgetId), builtin: false }
+  }
+  throw new Error(`Widget not found: ${widgetId}`)
+}
+
+// Load a widget's main module, whichever root it came from. A user widget keeps
+// one module instance per folder (its own exports share state); see
+// user-widget.js importUserWidgetModule.
+function loadWidgetModule (widgetId) {
+  const { entry, builtin } = resolveWidgetModule(widgetId)
+  return builtin
+    ? loadModule(entry)
+    : importUserWidgetModule(entry)
+}
+
+// Metadata for one widget: the manifest for a user widget (the package.json is
+// the source of truth), the widgetInfo export for a built-in.
+async function getWidgetInfo (widgetId) {
+  const { builtin } = resolveWidgetModule(widgetId)
+  if (builtin) {
+    const widgetModule = await loadWidgetModule(widgetId)
+    if (!widgetModule.widgetInfo) {
+      throw new Error(`Widget ${widgetId} has no widgetInfo export`)
+    }
+    return widgetModule.widgetInfo
+  }
+  const entryInfo = listUserWidgets().find(w => w.id === widgetId)
+  if (!entryInfo || entryInfo.state !== 'ok') {
+    throw new Error(entryInfo && entryInfo.error
+      ? `Widget ${widgetId} is not usable: ${entryInfo.error}`
+      : `Widget ${widgetId} not found`)
+  }
+  return entryInfo.info
 }
 
 function hasRunningInstance (widgetId) {
@@ -93,12 +154,21 @@ function hasRunningInstance (widgetId) {
 }
 
 async function runWidget (widgetId, config) {
-  const widgetPath = resolveWidgetPath(widgetId)
-  const widget = await import(`file://${widgetPath}`)
+  const widget = await loadWidgetModule(widgetId)
+  const info = await getWidgetInfo(widgetId)
+  const { type, singleInstance } = info
 
-  const { type, singleInstance } = widget.widgetInfo
   if (type !== 'instance') {
+    // A UI-only widget (frontend) has nothing to start: the panel is its
+    // renderer. No widgetRun is not an error there.
+    if (typeof widget.widgetRun !== 'function') {
+      return { success: true }
+    }
     return widget.widgetRun(config)
+  }
+
+  if (typeof widget.widgetRun !== 'function') {
+    throw new Error(`Widget ${widgetId} has no widgetRun export`)
   }
 
   // Check if singleInstance widget already has a running instance
@@ -115,7 +185,7 @@ async function runWidget (widgetId, config) {
   ctx.bind(instance.instanceId)
 
   const logger = widgetLog.loggerFor(instance.instanceId)
-  logger.log('info', `Starting ${widget.widgetInfo.name} (${widgetId})`)
+  logger.log('info', `Starting ${info.name} (${widgetId})`)
 
   return instance.start()
     .then((result) => {
@@ -178,6 +248,43 @@ async function runWidgetFunc (instanceId, funcName, ...args) {
   }
 }
 
+/**
+ * Call an exported function on a widget's main-process module.
+ *
+ * This is what a custom widget UI talks to: for `frontend` widgets there is no
+ * instance to call methods on (runWidgetFunc needs one), and the panel is an
+ * iframe the module never gets a handle to. Only own properties are reachable,
+ * the same rule the runSync bridge itself follows.
+ */
+async function callWidgetFunc (widgetId, funcName, ...args) {
+  const widget = await loadWidgetModule(widgetId)
+  if (
+    typeof funcName !== 'string' ||
+    !Object.prototype.hasOwnProperty.call(widget, funcName) ||
+    typeof widget[funcName] !== 'function'
+  ) {
+    throw new Error(`Widget ${widgetId} does not export the function ${funcName}`)
+  }
+  return widget[funcName](...args)
+}
+
+// Install: copy a whole widget folder into <data dir>/widgets/<id>/
+function importWidget (srcDir, overwrite) {
+  return importUserWidget(srcDir, overwrite)
+}
+
+// Uninstall: stop whatever it is running, then delete the folder.
+async function deleteWidget (widgetId) {
+  const stops = []
+  for (const [instanceId, instance] of runningInstances) {
+    if (instance.widgetId === widgetId) {
+      stops.push(stopWidget(instanceId).catch(() => {}))
+    }
+  }
+  await Promise.allSettled(stops)
+  return removeUserWidget(widgetId)
+}
+
 async function cleanup () {
   if (runningInstances.size === 0) {
     return
@@ -225,5 +332,9 @@ export {
   listWidgets,
   runWidget,
   stopWidget,
-  runWidgetFunc
+  runWidgetFunc,
+  callWidgetFunc,
+  importWidget,
+  deleteWidget,
+  resolveWidgetModule
 }

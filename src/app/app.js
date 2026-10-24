@@ -19,9 +19,25 @@ async function main () {
 
   const { HOST, PORT } = process.env
 
-  app.listen(PORT, HOST, () => {
+  const onError = (err) => {
+    log.error('server', 'failed to listen on', `${HOST}:${PORT}`, err.message)
+    // let the log land before the process goes away, then fail loudly: a
+    // server that is up but not listening is worse than one that is down,
+    // because a supervisor can not see the difference
+    setTimeout(() => process.exit(1), 100)
+  }
+  const server = app.listen(PORT, HOST, () => {
     console.log(`server runs on http://${HOST}:${PORT}`)
   })
+  // Without this a port failure only surfaced as an uncaughtException (logged
+  // and swallowed below) while the process kept running with nothing listening.
+  // express-ws re-emits the http server's errors on its WebSocketServer, and an
+  // unhandled 'error' there throws before this listener runs, so both get one.
+  server.on('error', onError)
+  const wss = app.getWss && app.getWss()
+  if (wss) {
+    wss.on('error', onError)
+  }
 }
 
 // main() is async, so anything thrown inside it (a failed import, an

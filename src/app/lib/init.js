@@ -10,6 +10,20 @@ import installSrc from './install-src.js'
 import { getLogDir } from '../widgets/instance-log.js'
 import * as langMap from '@electerm/electerm-locales'
 
+// `pasteWhenContextMenu` (boolean) was replaced by `rightClickBehavior`
+// ('context' | 'paste' | 'passthrough'). Configs saved by an older version
+// still carry the boolean, so translate it once here — where the stored
+// config first meets the defaults — and drop the dead key so the next save
+// does not write it back.
+function migrateRightClickBehavior (userConfig) {
+  if (userConfig.rightClickBehavior === undefined) {
+    userConfig.rightClickBehavior = userConfig.pasteWhenContextMenu
+      ? 'paste'
+      : defaultSetting.rightClickBehavior
+  }
+  delete userConfig.pasteWhenContextMenu
+}
+
 export async function getConfig () {
   const userConfig = await dbAction('data', 'findOne', {
     _id: userConfigId
@@ -18,6 +32,7 @@ export async function getConfig () {
   delete userConfig.host
   delete userConfig.terminalTypes
   delete userConfig.tokenElecterm
+  migrateRightClickBehavior(userConfig)
   const config = {
     ...defaultSetting,
     ...userConfig,
