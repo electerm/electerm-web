@@ -2,6 +2,7 @@
  * terminal/sftp/serial class
  */
 import { TerminalBase } from './session-base.js'
+import { createRxConverter, convertTx } from './line-ending.js'
 import log from '../common/log.js'
 import globalState from './global-state.js'
 
@@ -45,7 +46,7 @@ class TerminalSerial extends TerminalBase {
       return Promise.reject(new Error('Serial port support is not available on this platform'))
     }
     this.txLineEnding = txLineEnding
-    this.rxLineEnding = rxLineEnding
+    this.rxConverter = createRxConverter(rxLineEnding)
     await new Promise((resolve, reject) => {
       this.port = new SerialPort({
         // binding: MockBinding,
@@ -80,18 +81,12 @@ class TerminalSerial extends TerminalBase {
   }
 
   on (event, cb) {
-    if (event === 'data' && this.rxLineEnding && this.rxLineEnding !== 'none') {
+    if (event === 'data' && this.rxConverter) {
       const wrapper = (data) => {
-        const str = Buffer.isBuffer(data) ? data.toString('latin1') : String(data)
-        let processed
-        if (this.rxLineEnding === 'lf_to_crlf') {
-          processed = str.replace(/\r?\n/g, '\r\n')
-        } else if (this.rxLineEnding === 'cr_to_crlf') {
-          processed = str.replace(/\r(?!\n)/g, '\r\n')
-        } else {
-          processed = str
-        }
-        cb(Buffer.isBuffer(data) ? Buffer.from(processed, 'latin1') : processed)
+        const isBuffer = Buffer.isBuffer(data)
+        const str = isBuffer ? data.toString('latin1') : String(data)
+        const converted = this.rxConverter(str)
+        cb(isBuffer ? Buffer.from(converted, 'latin1') : converted)
       }
       if (!this._onWrappers) {
         this._onWrappers = new Map()
@@ -138,12 +133,12 @@ class TerminalSerial extends TerminalBase {
 
   write (data) {
     try {
-      const str = Buffer.isBuffer(data) ? data.toString('latin1') : String(data)
-      let out = str
-      if (this.txLineEnding && this.txLineEnding !== '\r') {
-        out = str.replace(/\r\n|\r|\n/g, this.txLineEnding)
-      }
-      this.port.write(Buffer.isBuffer(data) ? Buffer.from(out, 'latin1') : out)
+      const isBuffer = Buffer.isBuffer(data)
+      const str = convertTx(
+        isBuffer ? data.toString('latin1') : String(data),
+        this.txLineEnding
+      )
+      this.port.write(isBuffer ? Buffer.from(str, 'latin1') : str)
       if (this.sessionLogger) {
         this.sessionLogger.write(data)
       }
