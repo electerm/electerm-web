@@ -4,6 +4,7 @@ import { isWin, isMac } from '../common/runtime-constants.js'
 import path from 'path'
 import { promisify } from 'util'
 import { getSizeCount, getSizeCountWin } from '../common/count-folder-data.js'
+import { readdirStat, normalizeDirPath } from '../common/readdir-stat.js'
 import { exec, spawn } from 'child_process'
 const execAsync = promisify(exec)
 
@@ -62,10 +63,6 @@ function encodeUint8Array (uint8Arr) {
 // Decoding function
 function decodeBase64String (base64String) {
   return new Uint8Array(Buffer.from(base64String, 'base64'))
-}
-
-const isWinDrive = function (path) {
-  return /^\w+:$/.test(path)
 }
 
 /**
@@ -324,6 +321,21 @@ const statCustom = async (...args) => {
   return st
 }
 
+/**
+ * Directory listing with per-entry info in a single round trip, see
+ * src/app/common/readdir-stat.js
+ */
+async function readdirStatAsync (_path) {
+  return readdirStat(_path, await readdirNames(_path))
+}
+
+async function readdirNames (_path) {
+  if (_path === ROOT_PATH && isWin) {
+    return listWindowsRootPath()
+  }
+  return fss.readdir(normalizeDirPath(_path))
+}
+
 const readdirOnly = async (path) => {
   const r = await fss.readdir(path, { withFileTypes: true })
   return r.filter(dirent => dirent.isDirectory())
@@ -363,19 +375,11 @@ export const fsExport = Object.assign(
     closeCustom,
     writeCustom,
     readdirOnly,
-    readdirAndFiles
+    readdirAndFiles,
+    readdirStatAsync
   },
   {
-    readdirAsync: (_path) => {
-      if (_path === ROOT_PATH && isWin) {
-        return listWindowsRootPath()
-      }
-      let path = _path
-      if (isWin && isWinDrive(path)) {
-        path = path + '\\'
-      }
-      return fss.readdir(path)
-    },
+    readdirAsync: readdirNames,
     statAsync: (...args) => {
       return fss.stat(...args)
         .then(res => {

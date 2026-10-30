@@ -29,6 +29,7 @@ import {
   runWidgetFunc,
   callWidgetFunc,
   importWidget,
+  importWidgetFromSource,
   deleteWidget
 } from '../widgets/load-widget.js'
 import globalState from './global-state.js'
@@ -75,6 +76,7 @@ const globs = {
   // uninstall of a widget folder
   callWidgetFunc,
   importWidget,
+  importWidgetFromSource,
   deleteWidget,
   // macOS RDP with Control/Command swapped: on the desktop app a registered
   // app-menu accelerator would swallow Cmd+C/V/A/Z/X before the page sees the

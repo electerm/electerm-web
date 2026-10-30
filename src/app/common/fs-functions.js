@@ -15,6 +15,7 @@ export default [
   'unlink',
   'rmrf',
   'readdirAsync',
+  'readdirStatAsync',
   'readFile',
   'readFileAsBase64',
   'writeFile',

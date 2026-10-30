@@ -1,8 +1,6 @@
 import log from '../common/log.js'
 import expressWs from 'express-ws'
-import {
-  isWin
-} from '../common/runtime-constants.js'
+import { normalizeExitStatus } from '../common/exit-status.js'
 import { verifyWs, initWs } from '../server/dispatch-center.js'
 import {
   terminals
@@ -290,11 +288,38 @@ export function wsRoutes (app) {
     }
 
     let onCloseCalled = false
+    // How the pty / ssh channel ended. `null` until the backend reports it, and
+    // it stays null when the connection dies without an exit status, which is
+    // the renderer's cue that this was not a clean exit (#4629).
+    let exitStatus = null
+    function onTermExit (code, signal) {
+      exitStatus = normalizeExitStatus(code, signal)
+    }
+    if (typeof term.on === 'function') {
+      try {
+        term.on('exit', onTermExit)
+      } catch (_) {}
+    }
+
     function onClose () {
       if (onCloseCalled) return
       onCloseCalled = true
+      // Report the exit status while the socket can still carry it. The
+      // tab decides between "the user ended this session" and "the
+      // connection dropped" from this, not from the keystrokes it saw.
+      if (typeof ws.s === 'function' && ws.readyState === 1) {
+        try {
+          ws.s(Object.assign({ action: 'session-exit' },
+            exitStatus || normalizeExitStatus(null, null)))
+        } catch (_) {}
+      }
       // Detach this connection's listeners so a reconnect does not stack
       // duplicates on the reused term instance.
+      if (typeof term.off === 'function') {
+        try {
+          term.off('exit', onTermExit)
+        } catch (_) {}
+      }
       if (term._wsDataHandler && typeof term.off === 'function') {
         try {
           term.off('data', term._wsDataHandler)
@@ -343,9 +368,15 @@ export function wsRoutes (app) {
     }
 
     term._wsCloseHandler = onClose
-    term.on('close', onClose)
-    if (term.isLocal && isWin) {
+    // node-pty on unix emits 'close' *before* 'exit', so a local session that
+    // also listened to 'close' would report "no exit status" for a clean
+    // `exit` and fall back to guessing. The pty's own 'exit' is the
+    // authoritative end for a local session - node-pty guarantees it, with a
+    // destroy timeout, even when the socket never closes.
+    if (term.isLocal) {
       term.on('exit', onClose)
+    } else {
+      term.on('close', onClose)
     }
 
     ws.on('message', function (msg) {

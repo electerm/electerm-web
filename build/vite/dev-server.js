@@ -127,10 +127,7 @@ async function createServer () {
     ...conf,
     server: {
       middlewareMode: true,
-      hmr: {
-        overlay: true,
-        port: env.DEV_HMR_PORT || 23589
-      }
+      hmr: false
     },
     appType: 'custom'
   })
@@ -189,6 +186,18 @@ async function createServer () {
     proxy(tar, {
       proxyReqPathResolver: function (req) {
         return '/api/upload'
+      }
+    })
+  )
+  // A custom widget's own <iframe> document: the ui html, its assets and the
+  // injected bridge (src/app/routes/widget-ui.js). It is the one api path whose
+  // sub-paths matter and that no client code fetches with a token, so a widget
+  // panel in dev is a 404 unless the whole subtree is forwarded.
+  app.use(
+    '/api/widget-ui',
+    proxy(tar, {
+      proxyReqPathResolver: function (req) {
+        return req.originalUrl
       }
     })
   )

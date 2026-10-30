@@ -12,11 +12,21 @@
  * A widget without `ui` is a config-mode widget: electerm renders the form
  * from `electerm.configs`, calls `electerm.action` (default "run") in the main
  * process on submit, and draws the returned result (message/details/table/
- * buttons/openTab) with its own components. No HTML, no CSS, no bridge.
+ * buttons/openTab/aiConfig) with its own components. No HTML, no CSS, no
+ * bridge.
+ *
+ * `aiConfig` in a result (a run result, or an action result) is an offer, not a
+ * write: the widget panel lists the values and the user presses "Use these
+ * settings" to put them into Settings -> AI. Only the fields in
+ * ./ai-config.js are accepted, and the system prompt is not one of them.
  *
  * Metadata is read from package.json only: listing a widget must never execute
  * its code, so a broken widget still shows up (as an error) instead of taking
  * the whole list down.
+ *
+ * A widget folder can come from the user's disk or from a git repository
+ * (github.com / atomgit.com, see ./widget-source.js); both are installed by
+ * `importWidget`, so the rules below hold for either.
  */
 
 import fs from 'fs'
@@ -421,6 +431,30 @@ export function importWidget (srcDir, overwrite = false) {
   copyInto(source, target)
   purgeUserWidgetCache(target)
   return { id, success: true }
+}
+
+/**
+ * Install a widget straight from a git host (github.com / atomgit.com).
+ *
+ * The repo is downloaded into a temp folder, the widget folder inside it is
+ * resolved from its package.json, and the copy is then the same `importWidget`
+ * call a local folder goes through — one install path, one set of rules.
+ * `needOverwrite` comes back as-is, so the caller can ask and call again with
+ * `overwrite: true` (which re-downloads: the user is likely re-importing to pick
+ * up a newer version anyway).
+ */
+export async function importWidgetFromSource (input, overwrite = false) {
+  // loaded here, not at the top: it is the only user of axios/tar in this file
+  const { fetchWidgetSource } = await import('./widget-source.js')
+  const { dir, source, cleanup } = await fetchWidgetSource(input)
+  try {
+    return {
+      ...importWidget(dir, overwrite),
+      source: source.label
+    }
+  } finally {
+    cleanup()
+  }
 }
 
 export function removeUserWidget (id) {
