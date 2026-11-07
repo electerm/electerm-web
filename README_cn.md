@@ -28,7 +28,7 @@ Powered by [manate](https://github.com/tylerlong/manate)
   <a href="https://demo.electerm.org">在线演示</a> ·
   <a href="https://github.com/electerm/electerm-android">Android</a> ·
   <a href="https://github.com/electerm/electerm-harmony">鸿蒙</a> ·
-  <a href="https://apps.apple.com/cn/app/electerm/id6792971552">苹果应用商店</a> ·
+  <a href="https://apps.apple.com/us/app/electerm/id6792971552">苹果应用商店</a> ·
   <a href="https://appgallery.huawei.com/app/detail?id=org.electerm.electerm">华为应用市场</a> ·
   <a href="https://www.microsoft.com/store/apps/9NCN7272GTFF">微软商店</a> ·
   <a href="https://snapcraft.io/electerm">Snap 商店</a> ·
