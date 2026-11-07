@@ -18,6 +18,7 @@ import copy from 'json-deep-copy'
 import { createToken } from './jwt.js'
 import { logDir } from '../server/session-log.js'
 import { getLogDir } from '../widgets/instance-log.js'
+import { getIconDir } from './icon-download.js'
 import { resolve } from 'path'
 import fs from 'fs'
 
@@ -97,6 +98,16 @@ export async function index (req, res) {
     isWebApp: true,
     disableUpgradeCheck: true,
     extIconPath: cdn + extIconPath,
+    // where a bookmark icon downloaded into <data dir>/icons is served from
+    // (routes/icon.js). The client holds an absolute path, and appends the file
+    // name to this instead of reading the file and inlining it: a url is
+    // cached by the browser and does not wait for the ws to connect.
+    iconServePath: '/api/icon/',
+    // the folder those urls address. The client needs both to decide whether a
+    // stored path has a url: the route takes a bare file name, so a path from
+    // somewhere else (picked in the desktop app, synced in) has to keep going
+    // through the fs bridge instead of turning into a 404.
+    iconDir: getIconDir(),
     cdn,
     sessionLogPath: logDir,
     // where running widgets write their logs; the widget manager reads them

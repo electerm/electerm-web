@@ -49,6 +49,12 @@ window.pre = {
   ],
   osInfo: () => { return window.pre.osInfoData },
   extIconPath: window.et.extIconPath,
+  // where a bookmark icon stored in <data dir>/icons is served from
+  // (src/app/routes/icon.js); a browser cannot read the path itself
+  iconServePath: window.et.iconServePath || '/api/icon/',
+  // and the folder behind it, so the client can tell a downloaded icon from a
+  // path that has no url and still needs the fs bridge
+  iconDir: window.et.iconDir || '',
   readClipboard: () => {
     return window.et.clipboard || ''
   },

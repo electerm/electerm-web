@@ -2,14 +2,32 @@
  * log ssh output to file
  */
 
-import { resolve, dirname } from 'path'
-import { createWriteStream, existsSync, mkdirSync } from 'fs'
+import { resolve } from 'path'
+import { existsSync, mkdirSync, createWriteStream } from 'fs'
 import { cwd } from '../common/runtime-constants.js'
 
-function mkdirP (resolvedPath) {
-  if (!existsSync(resolvedPath)) {
-    mkdirP(dirname(resolvedPath))
-    mkdirSync(resolvedPath)
+/**
+ * Create the log dir, parents included.
+ *
+ * `mkdirSync` without `recursive` fails when the parent is missing, and the
+ * error used to be swallowed here -- the failed write stream then threw on the
+ * next tick (ENOENT on open), and the session server turns an uncaught
+ * exception into `cleanup()`: one unusable log path killed the session a second
+ * after it connected, while the bookmark itself was fine (#4688). A log path
+ * carried over from another computer (different user profile, a
+ * OneDrive-redirected Documents folder) is exactly that case.
+ *
+ * @param {string} logDir
+ * @returns {string|null} why it could not be created, or null
+ */
+function mkLogDir (logDir) {
+  try {
+    if (logDir && !existsSync(logDir)) {
+      mkdirSync(logDir, { recursive: true })
+    }
+    return null
+  } catch (e) {
+    return e.message
   }
 }
 
@@ -20,17 +38,55 @@ export const logDir = resolve(dataPath, 'electerm_session_logs')
 
 export class SessionLog {
   constructor (options) {
+    this.options = options
     const { logDir } = options
-    const logPath = resolve(logDir, options.fileName)
-    mkdirP(logDir)
-    this.stream = createWriteStream(logPath, { flags: 'a' })
+    // resolve('', name) would be the cwd
+    const logPath = resolve(logDir || '.', options.fileName)
+    this.ready = false
+    this.error = null
+    const dirError = mkLogDir(logDir)
+    if (dirError) {
+      this.error = dirError
+      return
+    }
+    let stream
+    try {
+      stream = createWriteStream(logPath, { flags: 'a' })
+    } catch (e) {
+      // a synchronous throw here is fatal to the session as well
+      this.error = e.message
+      return
+    }
+    // A write stream with no 'error' listener re-throws on the next tick, which
+    // the session server can only see as a fatal uncaught exception. Losing the
+    // log must never cost the session, so the failure stays in here (#4688).
+    stream.on('error', (e) => {
+      this.error = e.message
+      this.ready = false
+      this.stream = null
+    })
+    this.stream = stream
+    this.ready = true
   }
 
   write (text) {
-    this.stream.write(text)
+    if (!this.stream || !this.ready) {
+      return
+    }
+    try {
+      this.stream.write(text)
+    } catch (e) {
+      this.error = e.message
+      this.ready = false
+    }
   }
 
   destroy () {
-    this.stream.destroy()
+    const stream = this.stream
+    this.stream = null
+    this.ready = false
+    if (stream) {
+      stream.destroy()
+    }
   }
 }

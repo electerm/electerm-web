@@ -29,5 +29,9 @@ export default [
   'openCustom',
   'closeCustom',
   'writeCustom',
-  'getFolderSize'
+  'getFolderSize',
+  // generate an ssh key pair on the machine the server runs on
+  'generateSshKeyPair',
+  // fetch a bookmark icon into <data dir>/icons
+  'saveIconFromUrl'
 ]

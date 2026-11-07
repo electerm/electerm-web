@@ -13,12 +13,16 @@ import {
 } from '../lib/jwt.js'
 import { fileTransferRoutes } from './file-transfer.js'
 import { widgetUIRoutes } from './widget-ui.js'
+import { iconRoutes } from './icon.js'
 
 export function httpRoutes (app) {
   app.get('/', index)
   app.post('/api/login', login)
   app.get('/api/get-constants', jwtAuth, errHandler, getConstants)
   fileTransferRoutes(app)
+  // downloaded bookmark icons, `<data dir>/icons`; an <img> is the client, so
+  // no token — see the notes in the file
+  iconRoutes(app)
   // a widget's own <iframe> document and its assets; no token, see the file
   widgetUIRoutes(app)
   if (isDev) {

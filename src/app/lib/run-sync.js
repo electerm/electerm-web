@@ -34,6 +34,7 @@ import {
 } from '../widgets/load-widget.js'
 import globalState from './global-state.js'
 import { getEnv } from './get-constants.js'
+import { checkHost } from './check-host.js'
 
 const globs = {
   AIchat,
@@ -88,6 +89,8 @@ const globs = {
   // the renderer asks for a .vv file handed to the OS during startup; only the
   // desktop app can receive one, so there is never anything pending here
   getPendingVvFile: () => Promise.resolve(null),
+  // is a host reachable, asked before an rdp/vnc connect
+  checkHost,
   getEnv: () => Promise.resolve(getEnv())
 }
 
