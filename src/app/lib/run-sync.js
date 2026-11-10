@@ -30,6 +30,7 @@ import {
   callWidgetFunc,
   importWidget,
   importWidgetFromSource,
+  importWidgetFromRegistry,
   deleteWidget
 } from '../widgets/load-widget.js'
 import globalState from './global-state.js'
@@ -78,6 +79,7 @@ const globs = {
   callWidgetFunc,
   importWidget,
   importWidgetFromSource,
+  importWidgetFromRegistry,
   deleteWidget,
   // macOS RDP with Control/Command swapped: on the desktop app a registered
   // app-menu accelerator would swallow Cmd+C/V/A/Z/X before the page sees the

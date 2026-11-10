@@ -14,6 +14,7 @@ import {
   importUserWidgetModule,
   getUserWidgetDir
 } from './user-widget.js'
+import { importWidgetFromRegistry } from './widget-registry.js'
 import { isValidWidgetId } from './paths.js'
 import { sanitizeAIConfig } from './ai-config.js'
 // import log from '../common/log.js'
@@ -358,6 +359,7 @@ export {
   callWidgetFunc,
   importWidget,
   importWidgetFromUrl as importWidgetFromSource,
+  importWidgetFromRegistry,
   deleteWidget,
   resolveWidgetModule
 }
