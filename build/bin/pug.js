@@ -38,6 +38,8 @@ const data = {
   siteName: pack.name,
   isDev: false,
   cdn: '',
+  // the template interpolates this; a static build always sits at the root
+  basePath: '',
   tokenElecterm: '',
   defaultAIPreset
 }

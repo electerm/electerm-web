@@ -13,6 +13,7 @@ import {
   cwd,
   basePath
 } from '../common/runtime-constants.js'
+import { bp } from '../server/base-path.js'
 import { migrationNotice } from './fancy-console.js'
 import fsFunctions from '../common/fs-functions.js'
 import copy from 'json-deep-copy'
@@ -70,11 +71,11 @@ async function checkNodePty () {
 }
 
 export async function index (req, res) {
-  const serverBase = process.env.SERVER || (isDev ? buildServer() : '')
-  // `server` is the client's websocket *origin* (no sub-path); `cdn` (assets)
-  // and the explicit `basePath` field carry the sub-path separately.
-  const server = serverBase
-  const cdn = (process.env.CDN || serverBase) + basePath
+  const server = process.env.SERVER || (isDev ? buildServer() : '')
+  // `SERVER`/`CDN` may point at another origin (a separate asset host), so the
+  // sub-path only gets appended to the same-origin fallback: a CDN url already
+  // names its own paths, and prefixing it would 404 every asset on it.
+  const cdn = process.env.CDN || server + basePath
   const hasNodePty = await checkNodePty()
   const needMigrate = checkNeedMigrate()
   if (needMigrate) {
@@ -107,7 +108,7 @@ export async function index (req, res) {
     // (routes/icon.js). The client holds an absolute path, and appends the file
     // name to this instead of reading the file and inlining it: a url is
     // cached by the browser and does not wait for the ws to connect.
-    iconServePath: basePath + '/api/icon/',
+    iconServePath: bp('/api/icon/'),
     // the folder those urls address. The client needs both to decide whether a
     // stored path has a url: the route takes a bare file name, so a path from
     // somewhere else (picked in the desktop app, synced in) has to keep going

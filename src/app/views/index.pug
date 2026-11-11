@@ -33,7 +33,7 @@ html
         z-index: 5;
       }
     - if (!isDev)
-      link(rel='stylesheet', href=cdn + '/css/style-' + version + '.css')
+      link(rel='stylesheet', href=basePath + '/css/style-' + version + '.css')
       style(id='theme-css').
       style(id='custom-css').
   body
@@ -43,7 +43,7 @@ html
     #container
     #content-loading
       .morph-shape.iblock.pd3
-        img.iblock.logo-filter(src=cdn + '/images/electerm.png', alt='', height=80)
+        img.iblock.logo-filter(src=basePath + '/images/electerm.png', alt='', height=80)
     script.
       window.et = !{JSON.stringify(_global)}
     - if (tokenElecterm)
@@ -64,5 +64,5 @@ html
     - else
       //- script(src='/external/react.production.min.js?' + version)
       //- script(src='/external/react-dom.production.min.js?' + version)
-      - var url = src=cdn + '/js/basic-' + version + '.js'
+      - var url = cdn + '/js/basic-' + version + '.js'
       script(src=url, type='module')

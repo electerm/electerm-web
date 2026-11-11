@@ -4,6 +4,32 @@
 
 self.insts = {}
 
+// Where the ws has to connect: origin, scheme and path prefix, from the page url
+// the main thread handed over (or an explicit `server`). That url also carries
+// the sub-path the app is served under (BASE_PATH), and its query string/hash
+// must not leak into the socket url, so it is parsed here, not string-patched.
+function wsTarget (config) {
+  const { host, port, server = '', basePath = '' } = config
+  const raw = self.currentUrl || server
+  if (!raw) {
+    return { origin: `${host}:${port}`, path: basePath, secure: false }
+  }
+  try {
+    const u = new URL(raw)
+    return {
+      origin: u.host,
+      path: u.pathname.replace(/\/+$/, '') || basePath,
+      secure: u.protocol === 'https:'
+    }
+  } catch (e) {
+    return {
+      origin: raw.replace(/^https?:\/\//, '').replace(/\/+$/, ''),
+      path: basePath,
+      secure: raw.startsWith('https')
+    }
+  }
+}
+
 function createWs (
   type,
   id,
@@ -11,18 +37,10 @@ function createWs (
   config
 ) {
   // init gloabl ws
-  const { host, port, tokenElecterm, server = '', basePath = '' } = config
-  const ss = self.currentUrl || server
-  let s = ss
-    ? ss.replace(/https?:\/\//, '').replace(/\/$/, '')
-    : `${host}:${port}`
-  // The base path is already part of `self.currentUrl`/`server` when the app
-  // sits under a sub-path; strip it once so it is never duplicated.
-  if (basePath && s.endsWith(basePath)) {
-    s = s.slice(0, -basePath.length)
-  }
-  const pre = ss.startsWith('https') ? 'wss' : 'ws'
-  const wsUrl = `${pre}://${s}${basePath}/${type}/${id}?sftpId=${sftpId}&token=${tokenElecterm}`
+  const { tokenElecterm } = config
+  const { origin, path, secure } = wsTarget(config)
+  const pre = secure ? 'wss' : 'ws'
+  const wsUrl = `${pre}://${origin}${path}/${type}/${id}?sftpId=${sftpId}&token=${tokenElecterm}`
   const ws = new WebSocket(wsUrl)
   ws.s = msg => {
     ws.send(JSON.stringify(msg))

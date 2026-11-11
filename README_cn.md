@@ -197,11 +197,14 @@ ENABLE_AUTH=1 # 如果未启用，每个人都可以无需登录使用它。
 DISABLE_LOCAL_TERMINAL=1 # 禁用本地终端以提高安全性
 SERVER_SECRET=some-server-secret
 SERVER_PASS=some-login-pass-word
+# 让整个应用运行在子路径下，例如 https://host/electerm/
+# BASE_PATH=electerm
 
 # 运行生产应用程序服务器脚本文件。
 ./run-electerm-web.sh
 
 # 查看 examples/nginx.conf 和 examples/nginx-ssl.conf 以获取域名绑定的 nginx 配置示例。
+# 上面 BASE_PATH 的配置参考 examples/nginx-subpath.conf。
 ```
 
 ## 许可证

@@ -9,6 +9,7 @@ import '../web-components/web-pre.js'
 import { get as _get } from 'lodash-es'
 
 const { isDev, version, cdn } = window.et
+const basePath = window.et.basePath || ''
 
 window.et.buildWsUrl = (
   host,
@@ -18,18 +19,18 @@ window.et.buildWsUrl = (
   type = 'terminals',
   extra = ''
 ) => {
-  const basePath = window.et.basePath || ''
-  const ss = isDev ? window.et.server : window.location.href
-  let s = ss
-    ? ss.replace(/https?:\/\//, '').replace(/\/$/, '')
-    : `${host}:${port}`
-  // The base path may already be part of the derived origin if the app is
-  // served under the sub-path; strip it once so it is never duplicated.
-  if (basePath && s.endsWith(basePath)) {
-    s = s.slice(0, -basePath.length)
-  }
-  const pre = ss.startsWith('https') ? 'wss' : 'ws'
-  return `${pre}://${s}${basePath}/${type}/${id}?token=${tokenElecterm}${extra}`
+  // The ws has to hit the origin (and sub-path) the page was served from, never
+  // the page's full href: that one still carries the query string and the hash.
+  const raw = (isDev && window.et.server) || window.location.href
+  let origin = `${host}:${port}`
+  let secure = window.location.protocol === 'https:'
+  try {
+    const u = new URL(raw, window.location.href)
+    origin = u.host || origin
+    secure = u.protocol === 'https:'
+  } catch (e) {}
+  const pre = secure ? 'wss' : 'ws'
+  return `${pre}://${origin}${basePath}/${type}/${id}?token=${tokenElecterm}${extra}`
 }
 
 async function loadWorker () {
