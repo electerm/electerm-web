@@ -11,13 +11,18 @@ function createWs (
   config
 ) {
   // init gloabl ws
-  const { host, port, tokenElecterm, server = '' } = config
+  const { host, port, tokenElecterm, server = '', basePath = '' } = config
   const ss = self.currentUrl || server
-  const s = ss
+  let s = ss
     ? ss.replace(/https?:\/\//, '').replace(/\/$/, '')
     : `${host}:${port}`
+  // The base path is already part of `self.currentUrl`/`server` when the app
+  // sits under a sub-path; strip it once so it is never duplicated.
+  if (basePath && s.endsWith(basePath)) {
+    s = s.slice(0, -basePath.length)
+  }
   const pre = ss.startsWith('https') ? 'wss' : 'ws'
-  const wsUrl = `${pre}://${s}/${type}/${id}?sftpId=${sftpId}&token=${tokenElecterm}`
+  const wsUrl = `${pre}://${s}${basePath}/${type}/${id}?sftpId=${sftpId}&token=${tokenElecterm}`
   const ws = new WebSocket(wsUrl)
   ws.s = msg => {
     ws.send(JSON.stringify(msg))

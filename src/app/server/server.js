@@ -6,7 +6,8 @@ import { applyExtensions } from '../lib/extensions.js'
 import morgan from 'morgan'
 import {
   isDev,
-  cwd
+  cwd,
+  basePath
 } from '../common/runtime-constants.js'
 import { resolve } from 'path'
 import log from '../common/log.js'
@@ -19,6 +20,17 @@ export async function createApp () {
   }
 
   const app = express()
+  // A configured `BASE_PATH` lets the whole app sit under a sub-path behind a
+  // reverse proxy (https://host/electerm/). All routes/static/ws below are
+  // registered at their root paths; stripping the prefix here means they work
+  // unchanged whether the proxy forwards the sub-path verbatim or strips it
+  // first. Direct root access (no prefix) also keeps working.
+  app.use((req, res, next) => {
+    if (basePath && (req.url === basePath || req.url.startsWith(basePath + '/'))) {
+      req.url = req.url.slice(basePath.length) || '/'
+    }
+    next()
+  })
   // parse application/x-www-form-urlencoded
   app.use(express.urlencoded({ extended: true }))
 

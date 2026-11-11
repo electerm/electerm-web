@@ -17,6 +17,21 @@ export const isMac = platform === 'darwin'
 export const isLinux = platform === 'linux'
 export const isArm = arch.includes('arm')
 export const isDev = NODE_ENV === 'development'
+
+// Optional sub-path the web app is served under behind a reverse proxy
+// (e.g. `BASE_PATH=electerm` -> https://host/electerm/). Normalized to "" when
+// unset/root, otherwise "/electerm" style (leading slash, no trailing slash).
+export const basePath = (() => {
+  let p = (process.env.BASE_PATH || '').trim()
+  if (!p) {
+    return ''
+  }
+  p = '/' + p.replace(/^\/+|\/+$/g, '')
+  return p === '/' ? '' : p
+})()
+
+// Prefix a path with the configured base path ("" when none).
+export const bp = (path = '') => basePath + path
 export const iconPath = resolve(
   cwd,
   isDev

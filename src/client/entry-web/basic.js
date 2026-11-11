@@ -18,12 +18,18 @@ window.et.buildWsUrl = (
   type = 'terminals',
   extra = ''
 ) => {
+  const basePath = window.et.basePath || ''
   const ss = isDev ? window.et.server : window.location.href
-  const s = ss
+  let s = ss
     ? ss.replace(/https?:\/\//, '').replace(/\/$/, '')
     : `${host}:${port}`
+  // The base path may already be part of the derived origin if the app is
+  // served under the sub-path; strip it once so it is never duplicated.
+  if (basePath && s.endsWith(basePath)) {
+    s = s.slice(0, -basePath.length)
+  }
   const pre = ss.startsWith('https') ? 'wss' : 'ws'
-  return `${pre}://${s}/${type}/${id}?token=${tokenElecterm}${extra}`
+  return `${pre}://${s}${basePath}/${type}/${id}?token=${tokenElecterm}${extra}`
 }
 
 async function loadWorker () {

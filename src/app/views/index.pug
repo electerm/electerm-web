@@ -23,7 +23,7 @@ html
         align-items: center;
       }
       .electerm-logo-bg {
-        background: transparent 50% 50% no-repeat url("./images/electerm-watermark.png");
+        background: transparent 50% 50% no-repeat url("#{basePath}/images/electerm-watermark.png");
       }
       .morph-shape {
         background: linear-gradient(45deg, #08c 0%, #09c 100%);
@@ -33,7 +33,7 @@ html
         z-index: 5;
       }
     - if (!isDev)
-      link(rel='stylesheet', href='css/style-' + version + '.css')
+      link(rel='stylesheet', href=cdn + '/css/style-' + version + '.css')
       style(id='theme-css').
       style(id='custom-css').
   body
@@ -43,27 +43,26 @@ html
     #container
     #content-loading
       .morph-shape.iblock.pd3
-        img.iblock.logo-filter(src='images/electerm.png', alt='', height=80)
+        img.iblock.logo-filter(src=cdn + '/images/electerm.png', alt='', height=80)
     script.
       window.et = !{JSON.stringify(_global)}
     - if (tokenElecterm)
       script.
         window.localStorage.setItem('tokenElecterm', window.et.tokenElecterm)
-    - var url = '/src/client/entry-web/basic.js'
+    - var url = basePath + '/src/client/entry-web/basic.js'
     - if (isDev)
-      //- script(src='/external/react.development.js?' + version)
-      //- script(src='/external/react-dom.development.js?' + version)
+      //- script(src=basePath + '/external/react.development.js?' + version)
+      //- script(src=basePath + '/external/react-dom.development.js?' + version)
       script(type='module').
-        import RefreshRuntime from '/@react-refresh'
+        import RefreshRuntime from '#{basePath}/@react-refresh'
         RefreshRuntime.injectIntoGlobalHook(window)
         window.$RefreshReg$ = () => {}
         window.$RefreshSig$ = () => (type) => type
         window.__vite_plugin_react_preamble_installed__ = true
-      script(src='/@vite/client', type='module')
+      script(src=basePath + '/@vite/client', type='module')
       script(src=url, type='module')
     - else
       //- script(src='/external/react.production.min.js?' + version)
       //- script(src='/external/react-dom.production.min.js?' + version)
       - var url = src=cdn + '/js/basic-' + version + '.js'
       script(src=url, type='module')
-

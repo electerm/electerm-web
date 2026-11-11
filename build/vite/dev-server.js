@@ -21,7 +21,7 @@ import { logDir } from '../../src/app/server/session-log.js'
 import { getIconDir } from '../../src/app/lib/icon-download.js'
 import { resolve } from 'path'
 import fs from 'fs'
-import { defaultUserName } from '../../src/app/common/runtime-constants.js'
+import { defaultUserName, basePath } from '../../src/app/common/runtime-constants.js'
 import { migrationNotice } from '../../src/app/lib/fancy-console.js'
 
 const devPort = env.DEV_PORT || 5570
@@ -49,11 +49,12 @@ const base = {
   packInfo: pack,
   home: os.homedir(),
   server: h,
-  cdn: h,
+  cdn: h + basePath,
+  basePath,
   isWebApp: true,
   // same as src/app/lib/view.js: the browser reads a downloaded bookmark icon
   // over http instead of inlining the file
-  iconServePath: '/api/icon/',
+  iconServePath: basePath + '/api/icon/',
   iconDir: getIconDir(),
   sessionLogPath: logDir,
   tokenElecterm: process.env.ENABLE_AUTH ? '' : createToken()
