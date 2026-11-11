@@ -50,6 +50,10 @@ const base = {
   packInfo: pack,
   home: os.homedir(),
   server: h,
+  // The app server this dev server proxies /api to. The browser cannot derive
+  // it from the page url (different port), and it has to open sockets against
+  // the app directly — vite proxies http only.
+  serverPort: port,
   cdn: h + basePath,
   basePath,
   isWebApp: true,
