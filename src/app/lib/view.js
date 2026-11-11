@@ -13,6 +13,7 @@ import {
   cwd,
   basePath
 } from '../common/runtime-constants.js'
+import { bp } from '../server/base-path.js'
 import { migrationNotice } from './fancy-console.js'
 import fsFunctions from '../common/fs-functions.js'
 import copy from 'json-deep-copy'
@@ -107,7 +108,7 @@ export async function index (req, res) {
     // (routes/icon.js). The client holds an absolute path, and appends the file
     // name to this instead of reading the file and inlining it: a url is
     // cached by the browser and does not wait for the ws to connect.
-    iconServePath: basePath + '/api/icon/',
+    iconServePath: bp('/api/icon/'),
     // the folder those urls address. The client needs both to decide whether a
     // stored path has a url: the route takes a bare file name, so a path from
     // somewhere else (picked in the desktop app, synced in) has to keep going

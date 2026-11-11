@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { normalizeBasePath } from '../../src/app/common/runtime-constants.js'
-import { stripBasePath } from '../../src/app/server/base-path.js'
+import { normalizeBasePath, basePath } from '../../src/app/common/runtime-constants.js'
+import { stripBasePath, bp } from '../../src/app/server/base-path.js'
 
 test('normalizeBasePath: unset and root collapse to empty', () => {
   for (const p of ['', ' ', '/', '//', undefined, null]) {
@@ -51,4 +51,9 @@ test('stripBasePath: lookalike paths and other sub-paths are untouched', () => {
   assert.equal(runStrip('/electerm', '/api/login'), '/api/login')
   // a nested base path must not be stripped by a shorter one
   assert.equal(runStrip('/a', '/a/b/c'), '/b/c')
+})
+
+test('bp: one prefix helper, same value the middleware strips', () => {
+  assert.equal(bp('/api/icon/'), basePath + '/api/icon/')
+  assert.equal(bp(''), basePath)
 })

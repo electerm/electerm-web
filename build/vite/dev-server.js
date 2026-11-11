@@ -22,7 +22,7 @@ import { getIconDir } from '../../src/app/lib/icon-download.js'
 import { resolve } from 'path'
 import fs from 'fs'
 import { defaultUserName, basePath } from '../../src/app/common/runtime-constants.js'
-import { stripBasePath } from '../../src/app/server/base-path.js'
+import { stripBasePath, bp } from '../../src/app/server/base-path.js'
 import { migrationNotice } from '../../src/app/lib/fancy-console.js'
 
 const devPort = env.DEV_PORT || 5570
@@ -55,7 +55,7 @@ const base = {
   isWebApp: true,
   // same as src/app/lib/view.js: the browser reads a downloaded bookmark icon
   // over http instead of inlining the file
-  iconServePath: basePath + '/api/icon/',
+  iconServePath: bp('/api/icon/'),
   iconDir: getIconDir(),
   sessionLogPath: logDir,
   tokenElecterm: process.env.ENABLE_AUTH ? '' : createToken()
