@@ -196,11 +196,14 @@ ENABLE_AUTH=1 # if not enabled, everyone can use it without login
 DISABLE_LOCAL_TERMINAL=1 # disable local terminal for safety
 SERVER_SECRET=some-server-secret
 SERVER_PASS=some-login-pass-word
+# serve the whole app under a sub-path, e.g. https://host/electerm/
+# BASE_PATH=electerm
 
 # run prod app
 ./run-electerm-web.sh
 
 # Check examples/nginx.conf examples/nginx-ssl.conf  for domain binding nginx conf example
+# examples/nginx-subpath.conf for the BASE_PATH setup above
 ```
 
 ## License

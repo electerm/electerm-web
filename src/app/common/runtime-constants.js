@@ -1,6 +1,14 @@
 import os from 'os'
 import { resolve } from 'path'
+import { config as loadEnv } from 'dotenv'
 import getJson from './get-json.js'
+
+// Load .env here instead of relying on another module having done it already:
+// BASE_PATH below is read at import time, and a plain `import` of this file can
+// be evaluated before the app's own `dotenv` call runs (src/app/common/log.js
+// imports this module, then calls config()). Without this, a BASE_PATH set in
+// .env was silently ignored in production.
+loadEnv()
 
 export const cwd = process.cwd()
 
@@ -21,17 +29,13 @@ export const isDev = NODE_ENV === 'development'
 // Optional sub-path the web app is served under behind a reverse proxy
 // (e.g. `BASE_PATH=electerm` -> https://host/electerm/). Normalized to "" when
 // unset/root, otherwise "/electerm" style (leading slash, no trailing slash).
-export const basePath = (() => {
-  let p = (process.env.BASE_PATH || '').trim()
-  if (!p) {
-    return ''
-  }
-  p = '/' + p.replace(/^\/+|\/+$/g, '')
-  return p === '/' ? '' : p
-})()
+export function normalizeBasePath (p) {
+  const s = String(p || '').trim().replace(/^\/+|\/+$/g, '')
+  return s ? '/' + s : ''
+}
 
-// Prefix a path with the configured base path ("" when none).
-export const bp = (path = '') => basePath + path
+export const basePath = normalizeBasePath(process.env.BASE_PATH)
+
 export const iconPath = resolve(
   cwd,
   isDev

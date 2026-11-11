@@ -1,13 +1,25 @@
 // window preload
 // import { message } from 'antd'
 
+// A same-origin server path has to carry the optional sub-path the app is
+// served under (BASE_PATH, e.g. /electerm). One helper, so a new absolute path
+// added anywhere in the client does not silently break sub-path deployments.
+// Absolute urls (another origin) are left alone.
+window.et.url = (url = '') => {
+  const base = window.et.basePath || ''
+  if (!base || !url.startsWith('/') || url.startsWith(base + '/')) {
+    return url
+  }
+  return base + url
+}
+
 window.api = {
   fetch: (url, options = {}) => {
     const headers = {
       token: window.store?.config.tokenElecterm,
       ...options.headers
     }
-    return window.fetch(url, { ...options, headers })
+    return window.fetch(window.et.url(url), { ...options, headers })
       .then(res => {
         if (res.status > 304) {
           return res.json()

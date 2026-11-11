@@ -22,6 +22,7 @@ import { getIconDir } from '../../src/app/lib/icon-download.js'
 import { resolve } from 'path'
 import fs from 'fs'
 import { defaultUserName, basePath } from '../../src/app/common/runtime-constants.js'
+import { stripBasePath } from '../../src/app/server/base-path.js'
 import { migrationNotice } from '../../src/app/lib/fancy-console.js'
 
 const devPort = env.DEV_PORT || 5570
@@ -137,6 +138,10 @@ async function createServer () {
     },
     appType: 'custom'
   })
+  // optional BASE_PATH sub-path: the page below emits prefixed asset urls, and
+  // vite itself only serves at the root, so the prefix has to come off before
+  // anything else looks at req.url (same middleware as src/app/server/server.js)
+  app.use(stripBasePath())
   app.use(
     logger('dev')
   )

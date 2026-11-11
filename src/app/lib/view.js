@@ -70,11 +70,11 @@ async function checkNodePty () {
 }
 
 export async function index (req, res) {
-  const serverBase = process.env.SERVER || (isDev ? buildServer() : '')
-  // `server` is the client's websocket *origin* (no sub-path); `cdn` (assets)
-  // and the explicit `basePath` field carry the sub-path separately.
-  const server = serverBase
-  const cdn = (process.env.CDN || serverBase) + basePath
+  const server = process.env.SERVER || (isDev ? buildServer() : '')
+  // `SERVER`/`CDN` may point at another origin (a separate asset host), so the
+  // sub-path only gets appended to the same-origin fallback: a CDN url already
+  // names its own paths, and prefixing it would 404 every asset on it.
+  const cdn = process.env.CDN || server + basePath
   const hasNodePty = await checkNodePty()
   const needMigrate = checkNeedMigrate()
   if (needMigrate) {
