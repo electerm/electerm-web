@@ -10,7 +10,8 @@ import {
   home,
   extIconPath,
   defaultUserName,
-  cwd
+  cwd,
+  basePath
 } from '../common/runtime-constants.js'
 import { migrationNotice } from './fancy-console.js'
 import fsFunctions from '../common/fs-functions.js'
@@ -69,8 +70,11 @@ async function checkNodePty () {
 }
 
 export async function index (req, res) {
-  const server = process.env.SERVER || (isDev ? buildServer() : '')
-  const cdn = process.env.CDN || server
+  const serverBase = process.env.SERVER || (isDev ? buildServer() : '')
+  // `server` is the client's websocket *origin* (no sub-path); `cdn` (assets)
+  // and the explicit `basePath` field carry the sub-path separately.
+  const server = serverBase
+  const cdn = (process.env.CDN || serverBase) + basePath
   const hasNodePty = await checkNodePty()
   const needMigrate = checkNeedMigrate()
   if (needMigrate) {
@@ -98,11 +102,12 @@ export async function index (req, res) {
     isWebApp: true,
     disableUpgradeCheck: true,
     extIconPath: cdn + extIconPath,
+    basePath,
     // where a bookmark icon downloaded into <data dir>/icons is served from
     // (routes/icon.js). The client holds an absolute path, and appends the file
     // name to this instead of reading the file and inlining it: a url is
     // cached by the browser and does not wait for the ws to connect.
-    iconServePath: '/api/icon/',
+    iconServePath: basePath + '/api/icon/',
     // the folder those urls address. The client needs both to decide whether a
     // stored path has a url: the route takes a bare file name, so a path from
     // somewhere else (picked in the desktop app, synced in) has to keep going
