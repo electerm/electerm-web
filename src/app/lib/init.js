@@ -56,12 +56,17 @@ export async function init () {
     // (store.widgetLogPath) reads them straight off disk
     // (see widgets/instance-log.js, mirrors desktop ipc.js init globs)
     widgetLogPath: getLogDir(),
-    langs: Object.keys(langMap).map(id => {
-      return {
-        id,
-        ...langMap[id]
-      }
-    }),
+    // the package namespace also exposes a `default` re-export (en_us itself);
+    // it is not a locale id, and letting it through shows English twice in the
+    // language dropdown and can win a browser-language match by that name
+    langs: Object.keys(langMap)
+      .filter(id => id !== 'default')
+      .map(id => {
+        return {
+          id,
+          ...langMap[id]
+        }
+      }),
     langMap
   }
 }

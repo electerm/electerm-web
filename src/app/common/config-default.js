@@ -16,11 +16,12 @@ export default {
   zoom: 1,
   debug: false,
   theme: 'default',
-  // `en_us` is a real locale id from @electerm/electerm-locales. It has to be
-  // here rather than in the init db defaults: the client loads the config
-  // before checkDbUpgrade seeds the db, then writes that config straight back
-  // with saveUserConfig, which would overwrite a seed-only value.
-  language: 'en_us',
+  // No `language` default on purpose. A missing `language` is the signal the
+  // client uses to ask the browser (navigator.languages) and write the answer
+  // back with the rest of the config -- see web-components/web-api.js. A
+  // default here -- in the config or in the init db -- would look like a
+  // deliberate user choice and silently win over the browser, which is exactly
+  // the bug this replaces.
   syncSetting: {
     lastUpdateTime: Date.now(),
     autoSync: false,

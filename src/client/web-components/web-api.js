@@ -1,5 +1,6 @@
 // window preload
 // import { message } from 'antd'
+import { detectLanguage } from './detect-language.js'
 
 // A same-origin server path has to carry the optional sub-path the app is
 // served under (BASE_PATH, e.g. /electerm). One helper, so a new absolute path
@@ -105,6 +106,18 @@ window.api = {
         func
       })
       d.config.tokenElecterm = window.localStorage.getItem('tokenElecterm') || ''
+      // No `language` in the stored config means nobody has picked one yet, so
+      // the browser answers for itself -- works the same whether the page was
+      // rendered by the server or is a prebuilt static index.html. The picked
+      // id is written back with the rest of the config right after load
+      // (store/watch.js), so this runs on the first open only and a later
+      // choice in the settings always wins.
+      if (!d.config.language) {
+        d.config.language = detectLanguage(
+          navigator.languages || navigator.language,
+          d.langs
+        )
+      }
       return d
     }
     return window.wsFetch({
