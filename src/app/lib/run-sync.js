@@ -5,11 +5,13 @@ import log from '../common/log.js'
 import { listItermThemes } from '../lib/iterm-theme.js'
 import { listSerialPorts } from '../lib/serial-port.js'
 import { dbAction } from './db.js'
+import { tables } from '../db/common.js'
+import { createLoadInitData } from './init-data.js'
 import { encryptAsync, decryptAsync } from '../lib/enc.js'
 import { loadFontList } from './font-list.js'
 import { loadSshConfig } from './ssh-config.js'
 import { saveUserConfig } from './user-config.js'
-import { checkDbUpgrade, doUpgrade } from '../upgrade/index.js'
+import { checkDbUpgrade, doUpgrade, ensureDbInit } from '../upgrade/index.js'
 import { watchFile, unwatchFile } from './watch-file.js'
 import lookup from './lookup.js'
 import { init } from './init.js'
@@ -24,6 +26,8 @@ import {
 } from './ai.js'
 import {
   listWidgets,
+  listWidgetInstances,
+  runningCss,
   runWidget,
   stopWidget,
   runWidgetFunc,
@@ -37,6 +41,11 @@ import globalState from './global-state.js'
 import { getEnv } from './get-constants.js'
 import { checkHost } from './check-host.js'
 
+// The startup read is the renderer's first db call: a brand new db has to be
+// seeded before the tables are read, or the store stays empty for the session
+// (the upgrade module owns that rule, see ./init-data.js).
+const loadInitData = createLoadInitData(dbAction, tables, ensureDbInit)
+
 const globs = {
   AIchat,
   AIchatWithTools,
@@ -48,6 +57,7 @@ const globs = {
   decryptAsync,
   showItemInFolder,
   dbAction,
+  loadInitData,
   lookup,
   watchFile,
   unwatchFile,
@@ -71,6 +81,12 @@ const globs = {
     return Promise.resolve(1)
   },
   listWidgets,
+  // the widgets panel mirrors this instead of remembering each run result, so a
+  // reloaded renderer still knows what is running
+  listWidgetInstances,
+  // what a renderer that just loaded has to re-apply
+  // (client/common/widget-style-host.js): the css of every running widget
+  getWidgetStyles: runningCss,
   runWidget,
   stopWidget,
   runWidgetFunc,

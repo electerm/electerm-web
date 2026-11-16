@@ -1,6 +1,6 @@
 {
   "name": "electerm-web",
-  "version": "5.10.0",
+  "version": "5.11.8",
   "description": "Running electerm in as web app",
   "main": "src/app/app.js",
   "type": "module",
@@ -20,7 +20,8 @@
     "test": "npm run test1 && npm run test2",
     "test1": "./node_modules/.bin/playwright test test/e2e/00*.js --config test/playwright.conf.js",
     "test2": "./node_modules/.bin/playwright test test/e2e/01*.js --config test/playwright.conf.js",
-    "test3": "node --test test/unit/*.js"
+    "test3": "node --test test/unit/*.js",
+    "test4": "node test/e2e/serial.e2e.js"
   },
   "license": "MIT",
   "languageRepo": "https://github.com/electerm/electerm-locales",
@@ -47,7 +48,7 @@
   "preferGlobal": true,
   "devDependencies": {
     "@ant-design/icons": "^6.2.5",
-    "@electerm/electerm-react": "5.10.2",
+    "@electerm/electerm-react": "5.11.8",
     "@electerm/electerm-resource": "2.2.1",
     "@fontsource/maple-mono": "^5.2.6",
     "@novnc/novnc": "^1.7.0",

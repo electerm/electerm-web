@@ -13,12 +13,24 @@
  * from `electerm.configs`, calls `electerm.action` (default "run") in the main
  * process on submit, and draws the returned result (message/details/table/
  * buttons/openTab/aiConfig/bookmarks) with its own components. No HTML, no CSS,
- * no bridge.
+ * no bridge. That form remembers the values it was last used with, so a second
+ * visit starts where the last one ended; `electerm.persist: false` opts out, and
+ * a password field or a generated secret is never stored either way (see
+ * client/common/widget-form-memory.js).
  *
  * `electerm.credentialProvider: { get, save }` names two main-process exports
  * that serve passwords for bookmarks that ask for it (`usePasswordManager` in
  * the bookmark form) and have none saved (a password manager widget), see
  * client/common/credential-provider.jsx.
+ *
+ * `electerm.styles: ["style.css"]` is the whole widget for a restyling one: the
+ * host reads those files and hands them to the renderer for as long as an
+ * instance runs, so there is no server script, and it works in the web app too
+ * (app/widgets/css-bus.js + client/common/widget-style-host.js). A widget that
+ * declares styles may omit `main` entirely; one that wants to change its css at
+ * runtime keeps a main and calls api.css.apply() from `@electerm/widget-api`
+ * (app/widgets/api.js) — the only module a widget's server script is allowed to
+ * use to reach the host.
  *
  * `aiConfig` in a result (a run result, or an action result) is an offer, not a
  * write: the widget panel lists the values and the user presses "Use these
@@ -153,6 +165,29 @@ function sanitizeConfigs (configs) {
     })
 }
 
+// Stylesheets a declarative widget ships (`electerm.styles`): the host reads
+// and applies them, so the widget needs no server script at all. Resolved and
+// checked here, at manifest time, so a typo reads as a broken widget instead of
+// a silently unstyled app.
+function sanitizeStyles (dir, value) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value
+    .filter(rel => typeof rel === 'string' && rel.trim())
+    .map(rel => rel.trim())
+    .map(rel => {
+      const file = path.resolve(dir, rel)
+      if (!isInside(dir, file)) {
+        throw new Error(`style file must stay inside the widget folder: ${rel}`)
+      }
+      if (!fs.existsSync(file)) {
+        throw new Error(`style file not found: ${rel}`)
+      }
+      return rel
+    })
+}
+
 // { get, save } export names of a password manager widget, `save` optional
 function sanitizeCredentialProvider (conf) {
   if (!conf || typeof conf !== 'object') {
@@ -178,8 +213,10 @@ function errorEntry (id, message) {
       type: 'frontend',
       builtin: false,
       singleInstance: false,
+      autoRun: false,
       configs: [],
       ui: '',
+      styles: [],
       action: DEFAULT_ACTION,
       submitLabel: '',
       persist: false
@@ -203,20 +240,28 @@ function readWidget (dir, folderName) {
   }
 
   const ui = typeof conf.ui === 'string' ? conf.ui.trim() : ''
+  const styles = sanitizeStyles(dir, conf.styles)
   const type = conf.type || (ui ? 'frontend' : 'instance')
   if (!WIDGET_TYPES.includes(type)) {
     throw new Error(`invalid widget type "${type}" (expected one of ${WIDGET_TYPES.join(', ')})`)
   }
 
-  const main = typeof pkg.main === 'string' && pkg.main ? pkg.main : WORKER_DEFAULT_ENTRY
-  const mainPath = path.resolve(dir, main)
-  if (!isInside(dir, mainPath)) {
-    throw new Error(`main entry must stay inside the widget folder: ${main}`)
+  // A widget with stylesheets and no script is complete: electerm applies the
+  // css itself (load-widget.js runDeclarativeWidget). `main` stays the default
+  // entry when it is declared, and when the folder has always relied on
+  // index.js, so nothing that worked before changes.
+  const main = typeof pkg.main === 'string' && pkg.main
+    ? pkg.main
+    : (styles.length || ui ? '' : WORKER_DEFAULT_ENTRY)
+  if (main) {
+    const mainPath = path.resolve(dir, main)
+    if (!isInside(dir, mainPath)) {
+      throw new Error(`main entry must stay inside the widget folder: ${main}`)
+    }
+    if (!fs.existsSync(mainPath)) {
+      throw new Error(`widget entry not found: ${main}`)
+    }
   }
-  if (!fs.existsSync(mainPath)) {
-    throw new Error(`widget entry not found: ${main}`)
-  }
-
   if (ui) {
     const uiPath = path.resolve(dir, ui)
     if (!isInside(dir, uiPath)) {
@@ -250,14 +295,25 @@ function readWidget (dir, folderName) {
       type,
       builtin: false,
       singleInstance: !!conf.singleInstance,
+      // A widget that ships its own UI has no generated run form to tick
+      // "Start with electerm" in. Declaring it in the manifest lets the panel
+      // start the instance on its own and register it for autorun (see
+      // client/components/widgets/custom-widget-panel.jsx).
+      autoRun: !!conf.autoRun,
       configs: sanitizeConfigs(conf.configs),
       // relative to the widget folder; the renderer builds the iframe url out
       // of it, see widgets/protocol.js
       ui,
+      // stylesheets the host applies to the app for as long as an instance
+      // runs — the no-script way to restyle electerm, on desktop and on web
+      styles,
       action,
       submitLabel: typeof conf.submitLabel === 'string' ? conf.submitLabel : '',
-      // remember non-password values in local storage between panel visits
-      persist: !!conf.persist,
+      // Remember the values this form was last used with, so a second visit
+      // does not have to be typed in again (client/common/widget-form-memory.js).
+      // On by default; `persist: false` opts out. Passwords and generated
+      // secrets are never stored either way.
+      persist: conf.persist !== false,
       credentialProvider: sanitizeCredentialProvider(conf.credentialProvider)
     }
   }
@@ -308,7 +364,14 @@ export function resolveUserWidgetEntry (id) {
     throw new Error(`Widget ${id} not found`)
   }
   const pkg = readJSON(pkgFile)
-  const main = typeof pkg.main === 'string' && pkg.main ? pkg.main : WORKER_DEFAULT_ENTRY
+  const conf = pkg.electerm && typeof pkg.electerm === 'object' ? pkg.electerm : {}
+  const declared = typeof pkg.main === 'string' && pkg.main
+  const hasStyles = Array.isArray(conf.styles) && conf.styles.length > 0
+  const hasOwnEntry = !!declared || (!hasStyles && !conf.ui)
+  if (!hasOwnEntry) {
+    return ''
+  }
+  const main = declared ? pkg.main : WORKER_DEFAULT_ENTRY
   const entry = path.resolve(dir, main)
   if (!isInside(dir, entry)) {
     throw new Error(`Invalid widget ID: ${id}`)

@@ -12,6 +12,8 @@ import { stripBasePath } from './base-path.js'
 import { resolve } from 'path'
 import log from '../common/log.js'
 import { applySystemCAsToGlobalAgent } from '../lib/system-ca.js'
+import globalState from './global-state.js'
+import { configure as configureCssBus } from '../widgets/css-bus.js'
 
 export async function createApp () {
   const loadedCount = applySystemCAsToGlobalAgent()
@@ -49,6 +51,21 @@ export async function createApp () {
 
   httpRoutes(app)
   wsRoutes(app)
+  // Widget stylesheets are applied in the renderer, so a widget's css has to
+  // reach the browser: this is the web app's counterpart of the desktop
+  // ipc broadcast (see ipc.js and client/common/widget-style-host.js). A tab
+  // that loads while widgets are running asks getWidgetStyles instead.
+  configureCssBus(payload => {
+    const ws = globalState.getCommonWs()
+    if (!ws || ws.readyState !== 1 || typeof ws.s !== 'function') {
+      return
+    }
+    try {
+      ws.s({ type: 'widget-css', ...payload })
+    } catch (e) {
+      log.error('widget css broadcast fails', e)
+    }
+  })
   await applyExtensions(app)
   return app
 }

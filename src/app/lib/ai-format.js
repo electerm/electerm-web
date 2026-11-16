@@ -13,7 +13,9 @@
 import {
   resolveAIResponse,
   errorMessageFromData,
-  stringifyData
+  stringifyData,
+  toolArgumentsComplete,
+  normalizeToolArguments
 } from './ai-response.js'
 
 export const FORMAT_OPENAI_CHAT = 'openai-chat'
@@ -429,14 +431,22 @@ function parseResponsesResponse (data) {
     role: 'assistant',
     content: text || null
   }
-  if (toolCalls.length) {
-    message.tool_calls = toolCalls
+  const calls = normalizeToolArguments(toolCalls)
+  if (calls.length) {
+    message.tool_calls = calls
   }
-  if (!text && !toolCalls.length) {
-    if (data.status === 'incomplete') {
-      const reason = data.incomplete_details && data.incomplete_details.reason
+  // An incomplete response may hold a function call whose arguments were cut
+  // off; the agent would run it with empty input.
+  if (data.status === 'incomplete') {
+    const reason = data.incomplete_details && data.incomplete_details.reason
+    if (calls.length || !text) {
       return { error: `AI response incomplete${reason ? `: ${reason}` : ''}` }
     }
+  }
+  if (calls.length && !toolArgumentsComplete(calls)) {
+    return { error: 'AI response truncated (incomplete tool call)' }
+  }
+  if (!text && !calls.length) {
     return {
       error: `Unexpected AI response(no message): ${stringifyData(data)}`
     }
@@ -473,6 +483,12 @@ function parseAnthropicResponse (data) {
         }))
       }
     }
+  }
+  // max_tokens means the model was cut off. A tool_use block in that reply
+  // can carry a partial input, and the agent would run it. A stop_reason of
+  // tool_use means the call finished; that one is returned below.
+  if (data.stop_reason === 'max_tokens' && toolCalls.length) {
+    return { error: 'AI response truncated (max_tokens)' }
   }
   const message = {
     role: 'assistant',
@@ -579,6 +595,11 @@ export function createStreamParser (format) {
     }
     if (choice.finish_reason) {
       state.completed = true
+      // Same cut-off as the non-streaming chat parser: 'length' means the
+      // provider stopped at the token limit, so a tool input may be partial.
+      if (choice.finish_reason === 'length' && toolCalls.size) {
+        setError('AI response truncated (length)')
+      }
     }
   }
 
@@ -607,6 +628,14 @@ export function createStreamParser (format) {
       ) {
         const call = getToolCall(`b:${data.index}`)
         call.function.arguments += delta.partial_json
+      }
+    } else if (type === 'message_delta') {
+      // Same cut-off as the non-streaming parser: a proxy that ignores
+      // stream:false still delivers the reply as SSE, and a partial tool
+      // argument must not be executed.
+      const reason = data.delta && data.delta.stop_reason
+      if (reason === 'max_tokens' && toolCalls.size) {
+        setError('AI response truncated (max_tokens)')
       }
     } else if (type === 'message_stop') {
       state.completed = true
@@ -638,6 +667,16 @@ export function createStreamParser (format) {
       }
     } else if (type === 'response.completed') {
       state.completed = true
+    } else if (type === 'response.incomplete') {
+      // Partial text is still worth showing, but a function call whose
+      // arguments were cut off must not be run.
+      state.completed = true
+      if (toolCalls.size || !state.content) {
+        const resp = data.response
+        const details = resp && resp.incomplete_details
+        const reason = details && details.reason
+        setError(`AI response incomplete${reason ? `: ${reason}` : ''}`)
+      }
     } else if (type === 'response.failed' || type === 'error') {
       const resp = data.response
       const msg = (resp && resp.error && resp.error.message) ||

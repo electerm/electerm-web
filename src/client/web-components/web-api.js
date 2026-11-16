@@ -14,6 +14,105 @@ window.et.url = (url = '') => {
   return base + url
 }
 
+// Server -> client events: the web counterpart of the desktop app's ipc
+// listeners. The desktop main process pushes on `ipcOnEvent(name, cb)`; here the
+// same name arrives as a {type: name, payload} message on the common socket.
+// Nothing else in the web app needs it yet, only the widget css push (see
+// common/widget-style-host.js), so only named messages are dispatched and
+// everything else on that socket is left to its own handler.
+const ipcHandlers = new Map()
+let commonWs = null
+
+function onCommonWsMessage (e) {
+  if (typeof e.data !== 'string' || e.data.charAt(0) !== '{') {
+    return
+  }
+  let msg
+  try {
+    msg = JSON.parse(e.data)
+  } catch (err) {
+    return
+  }
+  const list = msg && msg.type && ipcHandlers.get(msg.type)
+  if (!list || !list.size) {
+    return
+  }
+  const payload = Object.prototype.hasOwnProperty.call(msg, 'payload')
+    ? msg.payload
+    : msg
+  list.forEach(fn => {
+    try {
+      fn({}, payload)
+    } catch (err) {
+      console.error(`ipc event ${msg.type} handler fails:`, err)
+    }
+  })
+}
+
+function bindCommonWs (ws) {
+  if (!ws || ws === commonWs) {
+    return
+  }
+  if (commonWs) {
+    try {
+      commonWs.removeEventListener('message', onCommonWsMessage)
+    } catch (e) {}
+  }
+  commonWs = ws
+  keepEveryListener(ws)
+  ws.addEventListener('message', onCommonWsMessage)
+}
+
+// The shared client re-registers only its *last* listener when a persistent
+// socket reconnects (`addEventListener()` with no argument, see
+// electerm-react/common/ws.js): the worker builds a fresh listener map on the
+// new socket, so every earlier listener -- the MCP bridge among them -- was
+// silently dropped for good. Remember the ones we see and replay them all on
+// that no-argument call.
+function keepEveryListener (ws) {
+  if (typeof ws.addEventListener !== 'function' || ws.__electermKeepAll) {
+    return
+  }
+  ws.__electermKeepAll = true
+  const registered = []
+  if (typeof ws.cb === 'function') {
+    registered.push({ type: 'message', cb: ws.cb })
+  }
+  const add = ws.addEventListener
+  ws.addEventListener = function (...args) {
+    if (!args.length) {
+      // reconnect: restore every listener we know about, not just the last
+      registered.forEach(({ type, cb }) => {
+        try {
+          add.call(this, type, cb)
+        } catch (e) {
+          console.error('Failed to restore ws listener:', e)
+        }
+      })
+      return
+    }
+    const [type = 'message', cb = this.cb] = args
+    if (typeof cb === 'function' && !registered.some(e => e.cb === cb)) {
+      registered.push({ type, cb })
+    }
+    return add.call(this, type, cb)
+  }
+}
+
+// The shared client assigns `window.et.commonWs` once its socket is open
+// (electerm-react/common/fetch-from-server.js), which can be after a handler is
+// registered. Hook the assignment instead of polling for it.
+try {
+  Object.defineProperty(window.et, 'commonWs', {
+    configurable: true,
+    enumerable: true,
+    get: () => commonWs,
+    set: (ws) => bindCommonWs(ws)
+  })
+} catch (e) {
+  console.error('Failed to hook window.et.commonWs:', e)
+}
+
 window.api = {
   fetch: (url, options = {}) => {
     const headers = {
@@ -77,10 +176,23 @@ window.api = {
     })
   },
   ipcOnEvent: (event, cb) => {
-
+    if (typeof event !== 'string' || typeof cb !== 'function') {
+      return
+    }
+    const list = ipcHandlers.get(event) || new Set()
+    list.add(cb)
+    ipcHandlers.set(event, list)
+    bindCommonWs(commonWs)
   },
   ipcOffEvent: (event, cb) => {
-
+    const list = ipcHandlers.get(event)
+    if (!list) {
+      return
+    }
+    list.delete(cb)
+    if (!list.size) {
+      ipcHandlers.delete(event)
+    }
   },
   runGlobalAsync: async (func, ...args) => {
     if (func === 'initCommandLine') {

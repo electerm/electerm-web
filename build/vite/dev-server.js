@@ -27,6 +27,9 @@ import { migrationNotice } from '../../src/app/lib/fancy-console.js'
 
 const devPort = env.DEV_PORT || 5570
 const devHost = env.DEV_HOST || '127.0.0.1'
+// Absolute, unix-style path of the repo-root temp dir. chokidar matches ignored
+// entries against unix-normalized paths, so this stays correct on Windows too.
+const tempDir = resolve(cwd, 'temp').replace(/\\/g, '/')
 const port = env.PORT || 5572
 const host = env.HOST || '127.0.0.1'
 const h = ''
@@ -138,7 +141,13 @@ async function createServer () {
     ...conf,
     server: {
       middlewareMode: true,
-      hmr: false
+      hmr: false,
+      // Only <repo root>/temp: generated build/release scratch files, not
+      // modules. Anchored to the absolute path so temp dirs elsewhere stay
+      // watched. Vite appends these to its own ignored list.
+      watch: {
+        ignored: [tempDir, `${tempDir}/**`]
+      }
     },
     appType: 'custom'
   })
