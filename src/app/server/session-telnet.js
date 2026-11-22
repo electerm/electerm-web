@@ -94,6 +94,10 @@ class TerminalTelnet extends TerminalBase {
     this.channel.sendWindowSize()
   }
 
+  get outputStreams () {
+    return [this.port]
+  }
+
   on (event, cb) {
     if (event === 'data' && this.rxConverter) {
       const wrapper = (data) => {

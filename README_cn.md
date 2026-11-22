@@ -16,6 +16,7 @@ Powered by [manate](https://github.com/tylerlong/manate)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/electerm/electerm-dev/blob/master/LICENSE)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/electerm?label=Sponsors)](https://github.com/sponsors/electerm)
+[![X](https://img.shields.io/badge/X-@zxdong-black?logo=x)](https://x.com/zxdong)
 
 开源终端/ssh/telnet/serialport/RDP/VNC/Spice/sftp/ftp客户端(Linux, Mac, Windows, Android, HarmonyOS, iOS)。
 
