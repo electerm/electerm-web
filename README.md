@@ -53,6 +53,7 @@ Besides mainstream Windows/macOS/Linux/Android, electerm also supports HarmonyOS
 - Support Zmodem(rz, sz), and [Trzsz](https://github.com/trzsz/trzsz)(trz/tsz).
 - Support ssh related features: tunnel, connection hopping.
 - Customizable UI: themes, background image.
+- Client-side widgets can style the app, listen for tab opens and status changes, and close tabs.
 - Global/session proxy.
 - Quick commands/triggers to do predefined tasks and automattic operations
 - Sync data including bookmarks to github/gitee secret gist/webdav/custom server/electerm cloud

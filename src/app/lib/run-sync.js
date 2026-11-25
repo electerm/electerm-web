@@ -28,6 +28,7 @@ import {
   listWidgets,
   listWidgetInstances,
   runningCss,
+  widgetAssetInstances,
   runWidget,
   stopWidget,
   runWidgetFunc,
@@ -87,6 +88,7 @@ const globs = {
   // what a renderer that just loaded has to re-apply
   // (client/common/widget-style-host.js): the css of every running widget
   getWidgetStyles: runningCss,
+  getWidgetAssetInstances: widgetAssetInstances,
   runWidget,
   stopWidget,
   runWidgetFunc,

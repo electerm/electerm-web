@@ -3,6 +3,7 @@
  * run functions in seprate process, avoid using electron.remote directly
  */
 
+import { clientAssetEvents } from '../widgets/load-widget.js'
 import { Sftp } from './session-sftp.js'
 import { Ftp } from './session-ftp.js'
 import { instSftpKeys } from '../common/constants.js'
@@ -172,6 +173,9 @@ export function initWs (app) {
   app.ws('/common/s', (ws) => {
     wsDec(ws)
     globalState.setCommonWs(ws)
+    const sendAssets = payload => ws.s({ type: 'widget-assets', payload })
+    clientAssetEvents.on('change', sendAssets)
+    ws.on('close', () => clientAssetEvents.off('change', sendAssets))
     ws.on('message', async (message) => {
       try {
         const msg = JSON.parse(message)

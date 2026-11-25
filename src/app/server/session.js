@@ -9,7 +9,8 @@ function getType (initOptions) {
     'local',
     'rdp',
     'vnc',
-    'spice'
+    'spice',
+    'ftp'
   ].includes(type)
     ? type
     : 'ssh'

@@ -7,6 +7,7 @@ import {
   isDev
 } from '../common/runtime-constants.js'
 import { fileTransferRoutes } from './file-transfer.js'
+import { mountWidgetAssets } from '../widgets/client-assets.js'
 import { widgetUIRoutes } from './widget-ui.js'
 import { iconRoutes } from './icon.js'
 
@@ -21,6 +22,7 @@ export function httpRoutes (app, auth) {
   iconRoutes(app)
   // a widget's own <iframe> document and its assets; no token, see the file
   widgetUIRoutes(app)
+  mountWidgetAssets(app, auth.requireSession)
   if (isDev) {
     app.use(express.static(
       resolve(cwd, 'node_modules')

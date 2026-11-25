@@ -31,7 +31,12 @@ export class FtpSession extends TerminalBase {
     const client = new FtpClientWrapper()
     client.verbose = initOptions.debug
     client.setEncoding(initOptions.encode || 'utf-8')
-    await client.access(this.getClientAccessOptions(initOptions))
+    try {
+      await client.access(this.getClientAccessOptions(initOptions))
+    } catch (err) {
+      await client.close().catch(() => {})
+      throw err
+    }
     return client
   }
 
@@ -51,13 +56,18 @@ export class FtpSession extends TerminalBase {
     }
   }
 
+  async testConnection () {
+    const client = await this.createConnectedClient()
+    await client.close().catch(() => {})
+    return true
+  }
+
   async connect (initOptions) {
     this.initOptions = {
       ...this.initOptions,
       ...initOptions
     }
-    const client = await this.createConnectedClient(this.initOptions)
-    await client.close().catch(() => {})
+    await this.testConnection()
     globalState.setSession(this.pid, this)
     return 'ok'
   }
@@ -304,3 +314,11 @@ export class FtpSession extends TerminalBase {
 }
 
 export const Ftp = commonExtends(FtpSession)
+
+export const testConnection = options => new Ftp(options).testConnection()
+
+export async function terminal (options) {
+  const session = new Ftp(options)
+  await session.connect()
+  return session
+}

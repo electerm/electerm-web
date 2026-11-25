@@ -1,4 +1,5 @@
 import ftp from 'basic-ftp'
+import proxySock from './socks.js'
 import iconv from 'iconv-lite'
 
 export class FtpClientWrapper {
@@ -19,8 +20,6 @@ export class FtpClientWrapper {
   }
 
   async _accessViaProxy (options) {
-    const proxySock = require('./socks')
-    const { FTPError } = require('basic-ftp')
     const proxyResult = await proxySock({
       readyTimeout: options.readyTimeout || 10000,
       host: options.host,
@@ -37,7 +36,7 @@ export class FtpClientWrapper {
       } else if (res.code >= 200 && res.code < 300) {
         task.resolve(res)
       } else {
-        task.reject(new FTPError(res))
+        task.reject(new ftp.FTPError(res))
       }
     })
     if (options.secure === true) {

@@ -55,6 +55,7 @@ Powered by [manate](https://github.com/tylerlong/manate)
 - 支持 Zmodem（rz、sz），以及 [Trzsz](https://github.com/trzsz/trzsz)（trz/tsz）
 - 支持 ssh 相关特性: 隧道, 连接跳转
 - 可定制 UI: 主题, 背景图片
+- 客户端小组件可以自定义界面样式、监听标签页打开和状态变化，并关闭标签页。
 - 全局/会话级代理
 - 快捷命令/触发器执行预设任务与自动化操作
 - 同步数据(含书签)到 github/gitee 私人 gist, webdav/custom server/electerm cloud

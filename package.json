@@ -1,6 +1,6 @@
 {
   "name": "electerm-web",
-  "version": "5.12.6",
+  "version": "5.15.0",
   "description": "Running electerm in as web app",
   "main": "src/app/app.js",
   "type": "module",
@@ -8,7 +8,7 @@
     "dev": "NODE_ENV=development node ./src/app/app.js",
     "prod": "NODE_ENV=production node ./src/app/app.js",
     "build": "npm run compile",
-    "start": "NODE_ENV=development node ./build/vite/dev-server.js",
+    "start": "NODE_ENV=development node ./src/app/dev-server.js",
     "clean": "node build/bin/clean",
     "compile": "node build/bin/build",
     "vite-build": "cross-env NODE_ENV=production vite build --config ./build/vite/conf.js",
@@ -48,7 +48,7 @@
   "preferGlobal": true,
   "devDependencies": {
     "@ant-design/icons": "^6.2.5",
-    "@electerm/electerm-react": "5.12.6",
+    "@electerm/electerm-react": "5.15.0",
     "@electerm/electerm-resource": "2.2.1",
     "@fontsource/maple-mono": "^5.2.6",
     "@novnc/novnc": "^1.7.0",
@@ -63,7 +63,7 @@
     "@xterm/addon-unicode11": "0.10.0-beta.292",
     "@xterm/addon-web-links": "0.13.0-beta.292",
     "@xterm/addon-webgl": "0.20.0-beta.291",
-    "@xterm/xterm": "npm:@electerm/xterm@6.1.0-beta.292-electerm.4",
+    "@xterm/xterm": "npm:@electerm/xterm@6.1.0-beta.292-electerm.5",
     "antd": "^6.5.1",
     "classnames": "2.5.1",
     "cross-env": "7.0.3",
@@ -89,10 +89,10 @@
     "vite": "^8.3.5"
   },
   "dependencies": {
-    "@electerm/electerm-locales": "2.3.42",
+    "@electerm/electerm-locales": "2.3.43",
     "@electerm/electerm-themes": "1.0.2",
     "@electerm/ftp-srv": "^1.1.0",
-    "@electerm/ssh2": "1.23.0",
+    "@electerm/ssh2": "1.23.1",
     "@xterm/headless": "6.1.0-beta.292",
     "axios": "1.20.0",
     "basic-ftp": "6.2.6",
