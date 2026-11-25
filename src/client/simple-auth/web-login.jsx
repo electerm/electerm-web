@@ -1,8 +1,10 @@
 import { auto } from 'manate/react'
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import {
+  Button,
   ConfigProvider,
   Input,
+  Space,
   Spin,
   theme as antdTheme
 } from 'antd'
@@ -132,15 +134,6 @@ export default auto(function Login ({ store }) {
     </div>
   )
 
-  const renderAfter = () => {
-    return (
-      <ArrowRightOutlined
-        className='mg1x pointer'
-        onClick={handleSubmit}
-      />
-    )
-  }
-
   // The form itself, kept separate from the scene around it: if the scene chunk
   // fails to load, this is what the fallback renders, so a password can still
   // be typed and the visitor is never stuck on a blank page.
@@ -154,14 +147,21 @@ export default auto(function Login ({ store }) {
       <>
         <h2 className='login-form-title'>electerm-web</h2>
         <div className='pd2x aligncenter'>
-          <Input.Password
-            value={pass}
-            readOnly={logining || fetchingUser}
-            onChange={handlePassChange}
-            placeholder={t.password}
-            addonAfter={renderAfter()}
-            onPressEnter={handleSubmit}
-          />
+          <Space.Compact block>
+            <Input.Password
+              value={pass}
+              readOnly={logining || fetchingUser}
+              onChange={handlePassChange}
+              placeholder={t.password}
+              onPressEnter={handleSubmit}
+            />
+            <Button
+              aria-label={t.signIn}
+              icon={<ArrowRightOutlined />}
+              disabled={logining || fetchingUser}
+              onClick={handleSubmit}
+            />
+          </Space.Compact>
         </div>
 
         <div>

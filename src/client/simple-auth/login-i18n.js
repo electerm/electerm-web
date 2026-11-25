@@ -1,6 +1,6 @@
 /**
  * Copy for the pre-login screens (hero + footer ported from electerm.org, plus
- * the login form's own two strings).
+ * the login form's own strings).
  *
  * The login screen renders before the user's config - and therefore before
  * their language preference - is loaded, so window.translate() would resolve
@@ -16,6 +16,7 @@ const en = {
   heroSupports: 'Besides mainstream Windows/macOS/Linux/Android/HarmonyOS/iOS, electerm also supports older systems — Ubuntu 18, Windows 7, macOS 10+, and special Chinese Linux distributions such as UOS, Kylin, and LoongArch (both old-world and new-world), as well as RISC-V (riscv64) and PowerPC 64-bit little-endian (ppc64le) Linux.',
   darkMode: 'Dark mode',
   version: 'Version',
+  signIn: 'Sign in',
   password: 'Password',
   passwordRequired: 'password required',
 
@@ -47,6 +48,7 @@ const zh = {
   heroSupports: '除主流的 Windows/macOS/Linux/Android/HarmonyOS/iOS 外，electerm 还支持较旧的系统 —— Ubuntu 18、Windows 7、macOS 10+，以及统信 UOS、银河麒麟等国产 Linux 发行版和龙芯 LoongArch（新旧世界均支持），以及 RISC-V（riscv64）和 PowerPC 64 位小端（ppc64le）Linux。',
   darkMode: '深色模式',
   version: '版本',
+  signIn: '登录',
   password: '密码',
   passwordRequired: '请输入密码',
 
