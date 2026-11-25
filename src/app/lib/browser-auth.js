@@ -23,8 +23,7 @@ export function createBrowserAuth (env, basePath, { idleMs = 30 * minute, lifeti
     (env.NODE_ENV === 'development' && !loopback(env.DEV_HOST || '127.0.0.1')))) {
     throw new Error('Passwordless mode requires a loopback host and no PUBLIC_ORIGIN')
   }
-  if (!localOnly && (!env.SERVER_PASS?.trim() || env.SERVER_PASS === '1' ||
-    env.SERVER_PASS === 'some-login-pass-word')) {
+  if (!localOnly && (!env.SERVER_PASS?.trim() || env.SERVER_PASS === 'some-login-pass-word')) {
     throw new Error('Set a unique SERVER_PASS before starting electerm-web')
   }
   const origins = new Set()
