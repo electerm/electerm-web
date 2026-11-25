@@ -196,7 +196,7 @@ npm run prod
 ```sh
 # Set SERVER_PASS to a unique password in .env
 ENABLE_AUTH=1
-PUBLIC_ORIGIN=https://electerm.example.org
+# PUBLIC_ORIGIN=https://electerm.example.org
 DISABLE_LOCAL_TERMINAL=1
 # serve the whole app under a sub-path, e.g. https://host/electerm/
 # BASE_PATH=electerm
@@ -208,7 +208,7 @@ DISABLE_LOCAL_TERMINAL=1
 # examples/nginx-subpath.conf for the BASE_PATH setup above
 ```
 
-For remote access, terminate TLS at the proxy, set `PUBLIC_ORIGIN` to the browser-facing HTTPS origin (scheme, host, and optional port), and restrict access to the backend.
+For remote access, terminate TLS at the proxy and restrict access to the backend. By default the app checks the browser origin against the request Host. Configure the proxy to preserve the external host and port, or set `PUBLIC_ORIGIN` to pin the browser-facing HTTPS origin.
 
 Sessions live in the server process. They expire after 30 minutes of inactivity or 12 hours total. Logout ends the session and closes its WebSockets. Restarting the process signs everyone out. After upgrading, sign in again and remove the obsolete `SERVER_SECRET` and `TOKEN_EXPIRED_TIME` settings.
 

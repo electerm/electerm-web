@@ -217,6 +217,7 @@ async function createServer () {
   app.use(
     '/api/upload',
     proxy(tar, {
+      preserveHostHdr: true,
       proxyReqPathResolver: function (req) {
         return '/api/upload'
       }

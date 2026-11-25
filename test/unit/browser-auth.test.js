@@ -63,9 +63,29 @@ test('configuration defaults to password authentication and fails closed', () =>
     { ENABLE_AUTH: '0' },
     { ENABLE_AUTH: '0', PUBLIC_ORIGIN: '', HOST: '0.0.0.0' },
     { ENABLE_AUTH: '0', PUBLIC_ORIGIN: '', NODE_ENV: 'development', DEV_HOST: '0.0.0.0' },
-    { HOST: '0.0.0.0', PUBLIC_ORIGIN: '' },
     { PUBLIC_ORIGIN: 'http://terminal.example' }
   ]) assert.throws(() => createBrowserAuth({ ...env, ...overrides }))
+})
+
+test('remote login without a pinned origin checks host and port and sets Secure for HTTPS', async t => {
+  const f = await fixture(t, undefined, { HOST: '0.0.0.0', PUBLIC_ORIGIN: '' })
+  const body = { password: env.SERVER_PASS }
+  for (const origin of [f.origin, f.origin.replace('http:', 'https:')]) {
+    const res = await f.post('/login', body, { origin })
+    assert.equal(res.status, 200)
+    const header = res.headers.get('set-cookie')
+    assert.equal(header.includes('Secure'), origin.startsWith('https:'))
+    const cookie = header.split(';')[0]
+    const ws = await f.socket(cookie, origin)
+    ws.close()
+    const otherScheme = origin === f.origin ? origin.replace('http:', 'https:') : f.origin
+    await assert.rejects(f.socket(cookie, otherScheme), /403/)
+    await assert.rejects(f.socket(cookie, 'https://other.example'), /403/)
+    assert.equal((await f.post('/logout', {}, { cookie, origin })).status, 204)
+  }
+  for (const origin of ['null', 'https://other.example', f.origin + '0']) {
+    assert.equal((await f.post('/login', body, { origin })).status, 403)
+  }
 })
 
 test('passwordless login requires explicit local mode and a local origin and host', async t => {

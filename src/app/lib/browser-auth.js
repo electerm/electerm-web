@@ -33,8 +33,7 @@ export function createBrowserAuth (env, basePath, { idleMs = 30 * minute, lifeti
       throw new Error('PUBLIC_ORIGIN must be an HTTPS origin without a path or trailing slash')
     }
     origins.add(url.origin)
-  } else {
-    if (!loopback(host)) throw new Error('Set PUBLIC_ORIGIN to the external HTTPS origin')
+  } else if (localOnly) {
     const ports = [env.PORT]
     if (env.NODE_ENV === 'development') ports.push(env.DEV_PORT || 5570)
     for (const port of ports) {
@@ -44,8 +43,14 @@ export function createBrowserAuth (env, basePath, { idleMs = 30 * minute, lifeti
     }
   }
 
+  if (!localOnly && !env.PUBLIC_ORIGIN && !loopback(host)) {
+    console.warn('PUBLIC_ORIGIN is unset. Checking browser origins against the request Host.')
+  }
+
   const password = localOnly ? null : digest(env.SERVER_PASS)
-  const cookie = { httpOnly: true, sameSite: 'strict', secure: !!env.PUBLIC_ORIGIN, path: basePath || '/' }
+  function cookieOptions (req) {
+    return { httpOnly: true, sameSite: 'strict', secure: req.headers.origin.startsWith('https://'), path: basePath || '/' }
+  }
   const sessions = new Map()
   const failures = new Map()
 
@@ -86,7 +91,19 @@ export function createBrowserAuth (env, basePath, { idleMs = 30 * minute, lifeti
   }
 
   function validOrigin (req) {
-    return origins.has(req.headers.origin)
+    const origin = req.headers.origin
+    if (origins.size) return origins.has(origin)
+    if (!URL.canParse(origin) || !req.headers.host) return false
+    const url = new URL(origin)
+    if (url.origin !== origin || !['http:', 'https:'].includes(url.protocol)) return false
+    if (req.socket.encrypted && url.protocol !== 'https:') return false
+    const authority = req.headers.host.toLowerCase()
+    const defaultPort = url.protocol === 'https:' ? '443' : '80'
+    if (url.host === authority || (!url.port && authority === url.host + ':' + defaultPort)) return true
+    // The Vite page opens sockets directly on the backend port.
+    return env.NODE_ENV === 'development' &&
+      url.port === String(env.DEV_PORT || 5570) &&
+      authority === url.hostname + ':' + env.PORT
   }
 
   function login (req, res) {
@@ -124,20 +141,26 @@ export function createBrowserAuth (env, basePath, { idleMs = 30 * minute, lifeti
     revoke(sessionId(req))
     const id = randomBytes(32).toString('hex')
     const now = Date.now()
-    const session = { expires: now + lifetimeMs, lastUsed: now, sockets: new Set() }
+    const session = { origin: req.headers.origin, expires: now + lifetimeMs, lastUsed: now, sockets: new Set() }
     sessions.set(id, session)
     scheduleExpiry(id, session)
-    res.cookie(cookieName, id, cookie).json({ ok: true })
+    res.cookie(cookieName, id, cookieOptions(req)).json({ ok: true })
+  }
+
+  function matchesSessionOrigin (req) {
+    const session = sessions.get(sessionId(req))
+    return !session || session.origin === req.headers.origin
   }
 
   function logout (req, res) {
-    if (!validOrigin(req)) return res.sendStatus(403)
+    if (!validOrigin(req) || !matchesSessionOrigin(req)) return res.sendStatus(403)
     revoke(sessionId(req))
-    res.clearCookie(cookieName, cookie).set('Cache-Control', 'no-store').sendStatus(204)
+    res.clearCookie(cookieName, cookieOptions(req)).set('Cache-Control', 'no-store').sendStatus(204)
   }
 
   function requireSession (req, res, next) {
-    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && !validOrigin(req)) return res.sendStatus(403)
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+      (!validOrigin(req) || !matchesSessionOrigin(req))) return res.sendStatus(403)
     if (!lookup(req)) return res.sendStatus(401)
     req.auth = { id: env.SERVER_USER || 'default_user' }
     res.set('Cache-Control', 'no-store')
@@ -145,7 +168,7 @@ export function createBrowserAuth (env, basePath, { idleMs = 30 * minute, lifeti
   }
 
   function verifyClient ({ req }, done) {
-    if (!validOrigin(req)) return done(false, 403)
+    if (!validOrigin(req) || !matchesSessionOrigin(req)) return done(false, 403)
     done(!!lookup(req), 401)
   }
 
