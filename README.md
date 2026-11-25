@@ -210,9 +210,9 @@ DISABLE_LOCAL_TERMINAL=1
 
 For remote access, terminate TLS at the proxy and restrict access to the backend. By default the app checks the browser origin against the request Host. Configure the proxy to preserve the external host and port, or set `PUBLIC_ORIGIN` to pin the browser-facing HTTPS origin.
 
-Sessions live in the server process. They expire after 30 minutes of inactivity or 12 hours total. Logout ends the session and closes its WebSockets. Restarting the process signs everyone out. After upgrading, sign in again and remove the obsolete `SERVER_SECRET` and `TOKEN_EXPIRED_TIME` settings.
+Sessions live in the server process. They expire after 30 minutes of inactivity or 12 hours total. Logout ends the session and closes its WebSockets. Restarting the process signs everyone out. After upgrading, reload the page and sign in with your existing `SERVER_PASS`. Keep your existing data directory and configuration. The app ignores `SERVER_SECRET` and `TOKEN_EXPIRED_TIME`, so you can leave them in place. If your old installation had no password, set one before upgrading or choose the local mode below. Clients using the former JWT API need to adopt cookie sessions.
 
-For passwordless local use, explicitly set `ENABLE_AUTH=0`, bind both listeners to loopback, and leave `PUBLIC_ORIGIN` unset. Keep this mode off reverse proxies.
+For passwordless local use, unset `ENABLE_AUTH`, set `ALLOW_PASSWORDLESS_LOCAL=1`, bind both listeners to loopback, and leave `PUBLIC_ORIGIN` unset. Keep this mode off reverse proxies.
 
 ## License
 

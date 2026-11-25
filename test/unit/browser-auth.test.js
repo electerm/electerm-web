@@ -56,15 +56,33 @@ async function fixture (t, options, overrides) {
 }
 
 test('configuration defaults to password authentication and fails closed', () => {
-  for (const password of [undefined, '', ' ', 'some-login-pass-word']) {
+  for (const password of [undefined, '', ' ']) {
     assert.throws(() => createBrowserAuth({ ...env, SERVER_PASS: password }), /SERVER_PASS/)
   }
   for (const overrides of [
-    { ENABLE_AUTH: '0' },
-    { ENABLE_AUTH: '0', PUBLIC_ORIGIN: '', HOST: '0.0.0.0' },
-    { ENABLE_AUTH: '0', PUBLIC_ORIGIN: '', NODE_ENV: 'development', DEV_HOST: '0.0.0.0' },
+    { ALLOW_PASSWORDLESS_LOCAL: '1' },
+    { ALLOW_PASSWORDLESS_LOCAL: '1', PUBLIC_ORIGIN: '', HOST: '0.0.0.0' },
+    { ALLOW_PASSWORDLESS_LOCAL: '1', PUBLIC_ORIGIN: '', NODE_ENV: 'development', DEV_HOST: '0.0.0.0' },
     { PUBLIC_ORIGIN: 'http://terminal.example' }
   ]) assert.throws(() => createBrowserAuth({ ...env, ...overrides }))
+})
+
+test('legacy configurations keep their password and ignore retired JWT settings', async t => {
+  for (const flag of [undefined, '1', 'true', 'false', '0']) {
+    const legacy = {
+      ENABLE_AUTH: flag,
+      SERVER_PASS: 'some-login-pass-word',
+      SERVER_SECRET: 'retired fixture key',
+      TOKEN_EXPIRED_TIME: '120y',
+      PUBLIC_ORIGIN: ''
+    }
+    const f = await fixture(t, undefined, legacy)
+    const headers = { origin: f.origin }
+    assert.equal((await f.post('/login', {}, headers)).status, 401)
+    const res = await f.post('/login', { password: legacy.SERVER_PASS }, headers)
+    assert.equal(res.status, 200)
+    assert.equal(await f.status(res.headers.get('set-cookie').split(';')[0]), 200)
+  }
 })
 
 test('remote login without a pinned origin checks host and port and sets Secure for HTTPS', async t => {
@@ -89,7 +107,7 @@ test('remote login without a pinned origin checks host and port and sets Secure 
 })
 
 test('passwordless login requires explicit local mode and a local origin and host', async t => {
-  const f = await fixture(t, undefined, { ENABLE_AUTH: '0', PUBLIC_ORIGIN: '' })
+  const f = await fixture(t, undefined, { ALLOW_PASSWORDLESS_LOCAL: '1', PUBLIC_ORIGIN: '' })
   const headers = { origin: f.origin }
   assert.equal((await f.post('/login', {}, headers)).status, 200)
   assert.equal((await f.post('/login', {}, { ...headers, 'x-forwarded-for': '192.0.2.1' })).status, 403)

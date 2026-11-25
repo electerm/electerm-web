@@ -1,3 +1,4 @@
+import { passwordlessLocal } from '../../src/app/lib/browser-auth.js'
 import logger from 'morgan'
 import {
   viewPath,
@@ -64,7 +65,7 @@ const base = {
   iconServePath: bp('/api/icon/'),
   iconDir: getIconDir(),
   sessionLogPath: logDir,
-  localOnly: process.env.ENABLE_AUTH === '0'
+  localOnly: passwordlessLocal(process.env)
 }
 let needMigrate
 function checkNeedMigrate () {

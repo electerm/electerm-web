@@ -13,17 +13,20 @@ function digest (value) {
   return createHash('sha256').update(value).digest()
 }
 
+// Earlier releases treated every nonempty ENABLE_AUTH value as requiring a
+// password, including "0" and "false". Keep that guarantee on upgrade.
+export function passwordlessLocal (env) {
+  return !env.ENABLE_AUTH && env.ALLOW_PASSWORDLESS_LOCAL === '1'
+}
+
 export function createBrowserAuth (env, basePath, { idleMs = 30 * minute, lifetimeMs = 12 * 60 * minute } = {}) {
   const host = env.HOST
-  const localOnly = env.ENABLE_AUTH === '0'
-  if (!['0', '1', undefined, ''].includes(env.ENABLE_AUTH)) {
-    throw new Error('ENABLE_AUTH must be 0 or 1')
-  }
+  const localOnly = passwordlessLocal(env)
   if (localOnly && (!loopback(host) || env.PUBLIC_ORIGIN ||
     (env.NODE_ENV === 'development' && !loopback(env.DEV_HOST || '127.0.0.1')))) {
     throw new Error('Passwordless mode requires a loopback host and no PUBLIC_ORIGIN')
   }
-  if (!localOnly && (!env.SERVER_PASS?.trim() || env.SERVER_PASS === 'some-login-pass-word')) {
+  if (!localOnly && !env.SERVER_PASS?.trim()) {
     throw new Error('Set a unique SERVER_PASS before starting electerm-web')
   }
   const origins = new Set()

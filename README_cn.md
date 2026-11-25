@@ -209,7 +209,7 @@ DISABLE_LOCAL_TERMINAL=1
 # 上面 BASE_PATH 的配置参考 examples/nginx-subpath.conf。
 ```
 
-浏览器会话在空闲 30 分钟或累计 12 小时后过期。退出登录或重启服务器会使会话失效，并断开对应的 WebSocket。升级后，原 JWT 将失效，可移除 SERVER_SECRET 和 TOKEN_EXPIRED_TIME。仅在本机免密使用时，显式设置 ENABLE_AUTH=0，将两个监听地址绑定到回环地址，并留空 PUBLIC_ORIGIN。请勿代理免密模式。远程使用时，在反向代理启用 TLS，并限制后端访问。默认按请求的 Host 校验浏览器来源。请让代理保留外部主机名和端口，或通过可选的 `PUBLIC_ORIGIN` 指定浏览器使用的 HTTPS 来源。
+浏览器会话在空闲 30 分钟或累计 12 小时后过期。退出登录或重启服务器会使会话失效，并断开对应的 WebSocket。升级后，刷新页面并使用原有 SERVER_PASS 重新登录。保留原有数据目录和配置即可，旧的 SERVER_SECRET 和 TOKEN_EXPIRED_TIME 可以留在配置中。原先未设置密码的用户应先设置密码或选择本机免密模式。使用旧 JWT 接口的客户端需要改用 Cookie 会话。仅在本机免密使用时，取消设置 ENABLE_AUTH 并设置 ALLOW_PASSWORDLESS_LOCAL=1，将两个监听地址绑定到回环地址，并留空 PUBLIC_ORIGIN。请勿代理免密模式。远程使用时，在反向代理启用 TLS，并限制后端访问。默认按请求的 Host 校验浏览器来源。请让代理保留外部主机名和端口，或通过可选的 `PUBLIC_ORIGIN` 指定浏览器使用的 HTTPS 来源。
 
 ## 许可证
 
