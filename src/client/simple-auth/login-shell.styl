@@ -6,6 +6,9 @@
 // the project footer at the bottom. Their own styles are in login-hero.styl /
 // login-footer.styl / login-bg.styl / login-lang-switch.styl.
 .login-page
+  --login-bg: var(--main-light)
+  color var(--text)
+  color-scheme light
   box-sizing border-box
   position relative
   // own stacking context, so .login-bg (z-index -1) can hide behind the content
@@ -56,3 +59,13 @@
   .login-form-title
     font-size 1.25rem
     margin-bottom 14px
+
+.login-page[data-theme='dark']
+  --login-bg: var(--main)
+  color-scheme dark
+
+  .login-logo
+    filter invert(1)
+
+  .site-footer-watermark
+    filter brightness(0) invert(1)

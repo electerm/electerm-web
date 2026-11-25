@@ -1,9 +1,4 @@
-// Footer of the pre-login screens, ported from electerm.org
-// (src/css/parts/footer.styl). Layout, type scale and spacing are electerm.org's;
-// the palette is not - that site puts a near-black slab at the bottom, which
-// reads as a hole under this white starfield page. Here it is a light grey band
-// using the app's own light surface (--main) and text tokens, so it separates
-// from the page without darkening it.
+// Project footer on the pre-login screen.
 .site-footer
   position relative
   // flex none for the same reason as .login-hero - a 4-column footer is the
@@ -27,7 +22,6 @@
   background-position center
   background-size 150px auto
   background-repeat no-repeat
-  // the wordmark is dark ink here, not white - it sits on a light band
   opacity .07
   pointer-events none
   filter brightness(0)
@@ -88,7 +82,7 @@
 
 .footer-bottom
   padding-top 24px
-  border-top 1px solid rgba(15, 23, 42, .08)
+  border-top 1px solid var(--main-dark)
   display flex
   flex-direction column
   gap 12px
