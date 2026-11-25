@@ -8,7 +8,7 @@ import WebSocket from 'ws'
 import pug from 'pug'
 import { createBrowserAuth } from '../../src/app/lib/browser-auth.js'
 
-const env = { HOST: '127.0.0.1', PORT: '5577', SERVER_PASS: '1', PUBLIC_ORIGIN: 'https://terminal.example' }
+const env = { ENABLE_AUTH: '1', HOST: '127.0.0.1', PORT: '5577', SERVER_PASS: '1', PUBLIC_ORIGIN: 'https://terminal.example' }
 
 async function fixture (t, options, overrides) {
   const app = express()
@@ -55,20 +55,15 @@ async function fixture (t, options, overrides) {
   return { post, login, socket, status, origin }
 }
 
-test('configuration defaults to password authentication and fails closed', () => {
+test('enabled authentication requires a password and validates the configured origin', () => {
   for (const password of [undefined, '', ' ']) {
     assert.throws(() => createBrowserAuth({ ...env, SERVER_PASS: password }), /SERVER_PASS/)
   }
-  for (const overrides of [
-    { ALLOW_PASSWORDLESS_LOCAL: '1' },
-    { ALLOW_PASSWORDLESS_LOCAL: '1', PUBLIC_ORIGIN: '', HOST: '0.0.0.0' },
-    { ALLOW_PASSWORDLESS_LOCAL: '1', PUBLIC_ORIGIN: '', NODE_ENV: 'development', DEV_HOST: '0.0.0.0' },
-    { PUBLIC_ORIGIN: 'http://terminal.example' }
-  ]) assert.throws(() => createBrowserAuth({ ...env, ...overrides }))
+  assert.throws(() => createBrowserAuth({ ...env, PUBLIC_ORIGIN: 'http://terminal.example' }))
 })
 
 test('legacy configurations keep their password and ignore retired JWT settings', async t => {
-  for (const flag of [undefined, '1', 'true', 'false', '0']) {
+  for (const flag of ['1', 'true', 'false', '0']) {
     const legacy = {
       ENABLE_AUTH: flag,
       SERVER_PASS: 'some-login-pass-word',
@@ -106,12 +101,17 @@ test('remote login without a pinned origin checks host and port and sets Secure 
   }
 })
 
-test('passwordless login requires explicit local mode and a local origin and host', async t => {
-  const f = await fixture(t, undefined, { ALLOW_PASSWORDLESS_LOCAL: '1', PUBLIC_ORIGIN: '' })
-  const headers = { origin: f.origin }
-  assert.equal((await f.post('/login', {}, headers)).status, 200)
-  assert.equal((await f.post('/login', {}, { ...headers, 'x-forwarded-for': '192.0.2.1' })).status, 403)
-  assert.equal((await f.post('/login', {}, { ...headers, origin: 'null' })).status, 403)
+test('unset or empty ENABLE_AUTH opens HTTP and WebSockets without login', async t => {
+  for (const flag of [undefined, '']) {
+    const f = await fixture(t, undefined, { ENABLE_AUTH: flag, HOST: '0.0.0.0', SERVER_PASS: '', PUBLIC_ORIGIN: '' })
+    assert.equal(await f.status(''), 200)
+    const ws = await f.socket('', f.origin)
+    const echo = once(ws, 'message')
+    ws.send('open')
+    assert.equal((await echo)[0].toString(), 'open')
+    ws.close()
+    await assert.rejects(f.socket('', 'https://other.example'), /403/)
+  }
 })
 
 test('logout revokes only its session across HTTP, upgrades and open sockets', async t => {

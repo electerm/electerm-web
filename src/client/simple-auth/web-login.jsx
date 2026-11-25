@@ -89,11 +89,7 @@ export default auto(function Login ({ store }) {
 
   useEffect(() => {
     window.localStorage.removeItem('tokenElecterm')
-    if (window.et.localOnly) {
-      store.login().then(setError)
-    } else {
-      store.getConstants()
-    }
+    store.getConstants()
   }, [])
 
   const handleLangChange = (next) => {
@@ -117,7 +113,7 @@ export default auto(function Login ({ store }) {
   }
 
   const handleSubmit = async () => {
-    if (!pass && !window.et.localOnly) {
+    if (!pass) {
       return setError('passwordRequired')
     } else if (submitting.current) {
       return
@@ -201,7 +197,13 @@ export default auto(function Login ({ store }) {
   if (!store.authChecked) {
     return withLoginTheme(renderLoading(), mode)
   } else if (!store.logined) {
-    return withLoginTheme(renderLogin(), mode)
+    if (window.et.authEnabled) return withLoginTheme(renderLogin(), mode)
+    return withLoginTheme(
+      <div className='login-plain'>
+        <p role='alert'>{t.loadFailed}</p>
+        <Button onClick={() => store.getConstants()} disabled={store.fetchingUser}>{t.retry}</Button>
+      </div>, mode
+    )
   }
 
   return (

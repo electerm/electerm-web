@@ -2,7 +2,6 @@
  * simple login with password only
  */
 
-import { passwordlessLocal } from './browser-auth.js'
 import {
   isDev,
   isMac,
@@ -102,7 +101,7 @@ export async function index (req, res) {
     defaultAIPreset,
     fsFunctions,
     isWebApp: true,
-    localOnly: passwordlessLocal(process.env),
+    authEnabled: !!process.env.ENABLE_AUTH,
     disableUpgradeCheck: true,
     extIconPath: cdn + extIconPath,
     basePath,

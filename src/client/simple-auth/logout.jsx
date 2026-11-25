@@ -13,11 +13,7 @@ export default auto(function Logout (props) {
     if (ok) window.location.reload()
   }
 
-  // Only meaningful when there is a session to end. The pre-login screens
-  // render this component too, and there the icon just sits in the corner of
-  // an otherwise empty page. With auth disabled the server starts a local session
-  // and there is nothing to log out of either.
-  if (!props.store.logined || window.et.localOnly) {
+  if (!props.store.logined || !window.et.authEnabled) {
     return null
   }
 
