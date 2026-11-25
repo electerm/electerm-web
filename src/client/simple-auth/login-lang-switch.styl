@@ -1,21 +1,37 @@
-// Top-right language picker of the pre-login screens
-// (simple-auth/login-lang-switch.jsx).
-.login-lang-switch
+.login-controls
   position fixed
   top 12px
   right 14px
   z-index 10
   display flex
   align-items center
+  gap 6px
+
+.login-theme-toggle,
+.login-lang-switch
+  display flex
+  align-items center
+  background var(--main-light)
+  border 1px solid var(--main-dark)
+  border-radius 100px
+
+.login-theme-toggle
+  justify-content center
+  width 34px
+  height 34px
+  color var(--text)
+  cursor pointer
+
+.login-theme-toggle:hover
+  color var(--primary)
+
+.login-theme-toggle:focus-visible
+  outline 2px solid var(--primary)
+  outline-offset 2px
+
+.login-lang-switch
   gap 2px
   padding 3px
-  border-radius 100px
-  // the pill sits over the white hero and over the light grey footer, so it
-  // carries its own surface plus a hairline rather than relying on what is under it
-  background rgba(255, 255, 255, .82)
-  border 1px solid rgba(15, 23, 42, .1)
-  box-shadow 0 2px 10px rgba(15, 23, 42, .1)
-  backdrop-filter blur(10px)
 
 .login-lang-btn
   appearance none
@@ -41,6 +57,6 @@
   color var(--primary-contrast)
 
 @media screen and (max-width 479px)
-  .login-lang-switch
+  .login-controls
     top 8px
     right 10px

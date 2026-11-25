@@ -15,8 +15,7 @@ import Main from '../electerm-react/components/main/main.jsx'
 import UiTheme from '../electerm-react/components/main/ui-theme'
 import LoginSceneBoundary from './login-scene-boundary.jsx'
 import { loginLang, loginText, setLoginLang } from './login-i18n'
-import { defaultThemeLight } from '../electerm-react/common/theme-defaults'
-import isColorDark from '../electerm-react/common/is-color-dark'
+import { defaultTheme, defaultThemeLight } from '../electerm-react/common/theme-defaults'
 import './web-login.styl'
 
 // Everything decorative about this screen - starfield, hero (and with it the
@@ -26,41 +25,51 @@ import './web-login.styl'
 // downloading the scene: no three.js, no .glb, no starfield canvas.
 const LoginShell = lazy(() => import('./login-shell.jsx'))
 
-// Login screen renders before the user's config (thus their theme) is loaded,
-// and outside of Main's ConfigProvider/UiTheme, so nothing writes the electerm
-// css variables (--main, --primary, ...) and antd would fall back to its own
-// default theme. Wrap the pre-login screens in a static theme - the default
-// light one - so they stay consistent; once logged in, Main mounts and applies
-// the real user theme on top of it.
-const loginThemeConfig = defaultThemeLight().uiThemeConfig
-const loginAntdTheme = {
-  token: {
-    borderRadius: 3,
-    colorPrimary: loginThemeConfig.primary,
-    colorBgBase: loginThemeConfig.main,
-    // the form floats on the animated background, so the input needs a solid
-    // surface of its own instead of blending into it
-    colorBgContainer: '#fff',
-    colorError: loginThemeConfig.error,
-    colorInfo: loginThemeConfig.info,
-    colorSuccess: loginThemeConfig.success,
-    colorWarning: loginThemeConfig.warn,
-    colorTextBase: loginThemeConfig.text,
-    colorLink: loginThemeConfig['text-light'],
-    motion: false
-  },
-  algorithm: isColorDark(loginThemeConfig.main)
-    ? antdTheme.darkAlgorithm
-    : antdTheme.defaultAlgorithm
+const themeKey = 'electermWebLoginTheme'
+
+function readLoginTheme () {
+  try {
+    return window.localStorage.getItem(themeKey) === 'light' ? 'light' : 'dark'
+  } catch {
+    return 'dark'
+  }
 }
 
-function withStaticTheme (node) {
+function withLoginTheme (node, mode) {
+  const { config, antd } = loginThemes[mode]
   return (
-    <ConfigProvider theme={loginAntdTheme}>
-      <UiTheme themeConfig={loginThemeConfig} />
+    <ConfigProvider theme={antd}>
+      <UiTheme themeConfig={config} />
       {node}
     </ConfigProvider>
   )
+}
+
+function makeLoginTheme (config, algorithm) {
+  return {
+    config,
+    antd: {
+      algorithm,
+      token: {
+        borderRadius: 3,
+        colorPrimary: config.primary,
+        colorBgBase: config.main,
+        colorBgContainer: config['main-light'],
+        colorError: config.error,
+        colorInfo: config.info,
+        colorSuccess: config.success,
+        colorWarning: config.warn,
+        colorTextBase: config.text,
+        colorLink: config['text-light'],
+        motion: false
+      }
+    }
+  }
+}
+
+const loginThemes = {
+  dark: makeLoginTheme(defaultTheme().uiThemeConfig, antdTheme.darkAlgorithm),
+  light: makeLoginTheme(defaultThemeLight().uiThemeConfig, antdTheme.defaultAlgorithm)
 }
 
 // window.translate() would be en_us on this screen whatever the visitor reads
@@ -70,6 +79,7 @@ function withStaticTheme (node) {
 export default auto(function Login ({ store }) {
   const [pass, setPass] = useState('')
   const [lang, setLang] = useState(loginLang)
+  const [mode, setMode] = useState(readLoginTheme)
   const submitting = useRef(false)
 
   const t = loginText(lang)
@@ -81,6 +91,16 @@ export default auto(function Login ({ store }) {
   const handleLangChange = (next) => {
     setLoginLang(next)
     setLang(next)
+  }
+
+  const toggleTheme = () => {
+    const next = mode === 'dark' ? 'light' : 'dark'
+    setMode(next)
+    try {
+      window.localStorage.setItem(themeKey, next)
+    } catch {
+      // Storage may be unavailable. Keep the choice for this visit.
+    }
   }
 
   const handlePassChange = e => {
@@ -152,7 +172,7 @@ export default auto(function Login ({ store }) {
     return (
       <LoginSceneBoundary fallback={<div className='login-plain'>{renderForm()}</div>}>
         <Suspense fallback={renderLoading()}>
-          <LoginShell lang={lang} onLangChange={handleLangChange}>
+          <LoginShell lang={lang} onLangChange={handleLangChange} mode={mode} onToggleTheme={toggleTheme}>
             {renderForm()}
           </LoginShell>
         </Suspense>
@@ -161,9 +181,9 @@ export default auto(function Login ({ store }) {
   }
 
   if (!store.authChecked) {
-    return withStaticTheme(renderLoading())
+    return withLoginTheme(renderLoading(), mode)
   } else if (!store.logined) {
-    return withStaticTheme(renderLogin())
+    return withLoginTheme(renderLogin(), mode)
   }
 
   return (
