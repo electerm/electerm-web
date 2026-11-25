@@ -18,7 +18,10 @@ const en = {
   version: 'Version',
   signIn: 'Sign in',
   password: 'Password',
-  passwordRequired: 'password required',
+  passwordRequired: 'Enter your password.',
+  incorrectPassword: 'Incorrect password. Try again.',
+  tooManyAttempts: 'Too many sign-in attempts. Wait a moment and try again.',
+  loginFailed: 'Could not complete sign-in. Please try again.',
 
   brandDesc: 'Free and open-source terminal/SSH/SFTP/Telnet/Serial port/RDP/VNC/Spice client for Linux, macOS, Windows, and Android.',
   product: 'Product',
@@ -50,7 +53,10 @@ const zh = {
   version: '版本',
   signIn: '登录',
   password: '密码',
-  passwordRequired: '请输入密码',
+  passwordRequired: '请输入密码。',
+  incorrectPassword: '密码错误，请重试。',
+  tooManyAttempts: '登录尝试过于频繁，请稍后再试。',
+  loginFailed: '登录未成功，请重试。',
 
   brandDesc: '适用于 Linux、macOS、Windows 和 Android 的终端/SSH/SFTP/Telnet/串口/RDP/VNC/Spice 客户端。',
   product: '产品',

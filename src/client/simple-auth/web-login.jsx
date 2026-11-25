@@ -6,9 +6,9 @@ import {
   Input,
   Space,
   Spin,
+  Typography,
   theme as antdTheme
 } from 'antd'
-import message from '../electerm-react/components/common/message'
 import {
   ArrowRightOutlined,
   Loading3QuartersOutlined
@@ -80,6 +80,7 @@ const loginThemes = {
 // scene's.
 export default auto(function Login ({ store }) {
   const [pass, setPass] = useState('')
+  const [error, setError] = useState('')
   const [lang, setLang] = useState(loginLang)
   const [mode, setMode] = useState(readLoginTheme)
   const submitting = useRef(false)
@@ -89,7 +90,7 @@ export default auto(function Login ({ store }) {
   useEffect(() => {
     window.localStorage.removeItem('tokenElecterm')
     if (window.et.localOnly) {
-      store.login()
+      store.login().then(setError)
     } else {
       store.getConstants()
     }
@@ -112,17 +113,22 @@ export default auto(function Login ({ store }) {
 
   const handlePassChange = e => {
     setPass(e.target.value)
+    setError('')
   }
 
   const handleSubmit = async () => {
-    if (!pass) {
-      return message.warning(t.passwordRequired)
+    if (!pass && !window.et.localOnly) {
+      return setError('passwordRequired')
     } else if (submitting.current) {
       return
     }
     submitting.current = true
-    await store.login(pass)
-    submitting.current = false
+    setError('')
+    try {
+      setError(await store.login(pass))
+    } finally {
+      submitting.current = false
+    }
   }
 
   // Shown while the auth check is in flight, and while the scene chunk is on
@@ -150,6 +156,8 @@ export default auto(function Login ({ store }) {
           <Space.Compact block>
             <Input.Password
               value={pass}
+              aria-describedby={error ? 'login-error' : undefined}
+              aria-invalid={error === 'passwordRequired' || error === 'incorrectPassword'}
               readOnly={logining || fetchingUser}
               onChange={handlePassChange}
               placeholder={t.password}
@@ -162,6 +170,11 @@ export default auto(function Login ({ store }) {
               onClick={handleSubmit}
             />
           </Space.Compact>
+          {error && (
+            <div id='login-error' role='alert'>
+              <Typography.Text type='danger'>{t[error]}</Typography.Text>
+            </div>
+          )}
         </div>
 
         <div>
