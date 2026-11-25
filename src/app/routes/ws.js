@@ -1,7 +1,7 @@
 import log from '../common/log.js'
 import expressWs from 'express-ws'
 import { normalizeExitStatus } from '../common/exit-status.js'
-import { verifyWs, initWs } from '../server/dispatch-center.js'
+import { initWs } from '../server/dispatch-center.js'
 import {
   terminals
 } from '../server/remote-common.js'
@@ -46,9 +46,10 @@ function hasIncompleteTrailingUtf8 (bufs) {
   return cont < needed
 }
 
-export function wsRoutes (app) {
+export function wsRoutes (app, auth) {
   const wsInstance = expressWs(app, undefined, {
     wsOptions: {
+      verifyClient: auth.verifyClient,
       perMessageDeflate: false
     }
   })
@@ -57,9 +58,9 @@ export function wsRoutes (app) {
   // listener gets a chance to run. Keep the instance reachable so a failed
   // listen can be handled instead of turning into an uncaughtException.
   app.getWss = wsInstance.getWss
+  app.getWss().prependListener('connection', auth.trackSocket)
   app.ws('/spice/:pid', function (ws, req) {
     const { query } = req
-    verifyWs(req)
     const { pid } = req.params
     const term = terminals(pid)
     log.debug('ws: connected to spice session ->', pid)
@@ -69,7 +70,6 @@ export function wsRoutes (app) {
     })
   })
   app.ws('/terminals/:pid', function (ws, req) {
-    verifyWs(req)
     const term = terminals(req.params.pid)
     const { pid } = term
     log.debug('ws: connected to terminal ->', pid)
@@ -462,7 +462,6 @@ export function wsRoutes (app) {
   })
   app.ws('/rdp/:pid', function (ws, req) {
     const { width, height } = req.query
-    verifyWs(req)
     const term = terminals(req.params.pid)
     term.ws = ws
     term.start(width, height)
@@ -472,7 +471,6 @@ export function wsRoutes (app) {
   })
   app.ws('/vnc/:pid', function (ws, req) {
     const { query } = req
-    verifyWs(req)
     const { pid } = req.params
     const term = terminals(pid)
     term.ws = ws

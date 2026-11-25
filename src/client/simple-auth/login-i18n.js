@@ -1,6 +1,6 @@
 /**
  * Copy for the pre-login screens (hero + footer ported from electerm.org, plus
- * the login form's own two strings).
+ * the login form's own strings).
  *
  * The login screen renders before the user's config - and therefore before
  * their language preference - is loaded, so window.translate() would resolve
@@ -16,8 +16,14 @@ const en = {
   heroSupports: 'Besides mainstream Windows/macOS/Linux/Android/HarmonyOS/iOS, electerm also supports older systems — Ubuntu 18, Windows 7, macOS 10+, and special Chinese Linux distributions such as UOS, Kylin, and LoongArch (both old-world and new-world), as well as RISC-V (riscv64) and PowerPC 64-bit little-endian (ppc64le) Linux.',
   darkMode: 'Dark mode',
   version: 'Version',
+  loadFailed: 'Could not load the app.',
+  retry: 'Retry',
+  signIn: 'Sign in',
   password: 'Password',
-  passwordRequired: 'password required',
+  passwordRequired: 'Enter your password.',
+  incorrectPassword: 'Incorrect password. Try again.',
+  tooManyAttempts: 'Too many sign-in attempts. Wait a moment and try again.',
+  loginFailed: 'Could not complete sign-in. Please try again.',
 
   brandDesc: 'Free and open-source terminal/SSH/SFTP/Telnet/Serial port/RDP/VNC/Spice client for Linux, macOS, Windows, and Android.',
   product: 'Product',
@@ -47,8 +53,14 @@ const zh = {
   heroSupports: '除主流的 Windows/macOS/Linux/Android/HarmonyOS/iOS 外，electerm 还支持较旧的系统 —— Ubuntu 18、Windows 7、macOS 10+，以及统信 UOS、银河麒麟等国产 Linux 发行版和龙芯 LoongArch（新旧世界均支持），以及 RISC-V（riscv64）和 PowerPC 64 位小端（ppc64le）Linux。',
   darkMode: '深色模式',
   version: '版本',
+  loadFailed: '无法加载应用。',
+  retry: '重试',
+  signIn: '登录',
   password: '密码',
-  passwordRequired: '请输入密码',
+  passwordRequired: '请输入密码。',
+  incorrectPassword: '密码错误，请重试。',
+  tooManyAttempts: '登录尝试过于频繁，请稍后再试。',
+  loginFailed: '登录未成功，请重试。',
 
   brandDesc: '适用于 Linux、macOS、Windows 和 Android 的终端/SSH/SFTP/Telnet/串口/RDP/VNC/Spice 客户端。',
   product: '产品',

@@ -45,10 +45,7 @@ html
       .morph-shape.iblock.pd3
         img.iblock.logo-filter(src=basePath + '/images/electerm.png', alt='', height=80)
     script.
-      window.et = !{JSON.stringify(_global)}
-    - if (tokenElecterm)
-      script.
-        window.localStorage.setItem('tokenElecterm', window.et.tokenElecterm)
+      window.et = !{JSON.stringify(_global).replace(/</g, '\\u003c')}
     - var url = basePath + '/src/client/entry-web/basic.js'
     - if (isDev)
       //- script(src=basePath + '/external/react.development.js?' + version)

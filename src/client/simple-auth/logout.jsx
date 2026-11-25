@@ -1,3 +1,4 @@
+import Fetch from '../electerm-react/common/fetch.jsx'
 import { auto } from 'manate/react'
 import {
   LogoutOutlined
@@ -5,16 +6,14 @@ import {
 import './logout.styl'
 
 export default auto(function Logout (props) {
-  const handleLogout = () => {
-    window.localStorage.removeItem('tokenElecterm')
-    props.store.logined = false
+  const handleLogout = async () => {
+    const ok = await Fetch.post(window.et.url('/api/logout'), {}, {
+      handleResponse: () => true
+    })
+    if (ok) window.location.reload()
   }
 
-  // Only meaningful when there is a session to end. The pre-login screens
-  // render this component too, and there the icon just sits in the corner of
-  // an otherwise empty page. With auth disabled the server injects a token
-  // and there is nothing to log out of either.
-  if (!props.store.logined || window.et.tokenElecterm) {
+  if (!props.store.logined || !window.et.authEnabled) {
     return null
   }
 

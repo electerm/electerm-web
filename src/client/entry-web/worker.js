@@ -37,10 +37,9 @@ function createWs (
   config
 ) {
   // init gloabl ws
-  const { tokenElecterm } = config
   const { origin, path, secure } = wsTarget(config)
   const pre = secure ? 'wss' : 'ws'
-  const wsUrl = `${pre}://${origin}${path}/${type}/${id}?sftpId=${sftpId}&token=${tokenElecterm}`
+  const wsUrl = `${pre}://${origin}${path}/${type}/${id}?sftpId=${sftpId}`
   const ws = new WebSocket(wsUrl)
   ws.s = msg => {
     ws.send(JSON.stringify(msg))
@@ -97,7 +96,11 @@ function createWs (
     ws.addEventListener('message', func)
     return dispose
   }
-  ws.onclose = () => {
+  ws.onclose = event => {
+    if (event.code === 4001) {
+      send({ action: 'session-ended' })
+      return
+    }
     if (ws.onceDisposers) {
       for (const dispose of [...ws.onceDisposers.values()]) {
         dispose()

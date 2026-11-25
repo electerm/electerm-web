@@ -34,18 +34,22 @@ export default Store => {
   Store.prototype.login = async function (password) {
     const { store } = window
     store.logining = true
-    const res = await Fetch.post(window.et.url('/api/login'), {
-      password
-    })
-    if (res) {
-      store.updateConfig({
-        tokenElecterm: res
+    try {
+      const res = await window.fetch(window.et.url('/api/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
       })
-      window.localStorage.setItem('tokenElecterm', res)
-      store.getConstants()
+      if (res.status === 401) return 'incorrectPassword'
+      if (res.status === 429) return 'tooManyAttempts'
+      if (!res.ok || !await store.getConstants()) return 'loginFailed'
+      return ''
+    } catch {
+      return 'loginFailed'
+    } finally {
+      store.logining = false
+      store.fetchingUser = false
+      store.authChecked = true
     }
-    Object.assign(store, {
-      logining: false
-    })
   }
 }

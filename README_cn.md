@@ -153,6 +153,7 @@ cmd.exe /c ".\one-line-web.bat"
 git clone git@github.com:electerm/electerm-web.git
 cd electerm-web
 cp .sample.env .env
+# 如需登录，在 .env 中设置 ENABLE_AUTH=1 和独立的 SERVER_PASS。
 # 编辑 DB_PATH 设置数据库路径，默认路径 ./database
 # 若要使用与桌面版 electerm 相同的数据库数据
 # 对于 Mac OS，DB_PATH="/Users/<your-user-name>/Library/Application Support/electerm"
@@ -194,11 +195,10 @@ npm run prod
 ## 在服务器上运行
 
 ```sh
-# 编辑 .env，设置以下参数：
-ENABLE_AUTH=1 # 如果未启用，每个人都可以无需登录使用它。
-DISABLE_LOCAL_TERMINAL=1 # 禁用本地终端以提高安全性
-SERVER_SECRET=some-server-secret
-SERVER_PASS=some-login-pass-word
+# 在 .env 中将 SERVER_PASS 设置为独立密码
+ENABLE_AUTH=1
+# PUBLIC_ORIGIN=https://electerm.example.org
+DISABLE_LOCAL_TERMINAL=1
 # 让整个应用运行在子路径下，例如 https://host/electerm/
 # BASE_PATH=electerm
 
@@ -208,6 +208,8 @@ SERVER_PASS=some-login-pass-word
 # 查看 examples/nginx.conf 和 examples/nginx-ssl.conf 以获取域名绑定的 nginx 配置示例。
 # 上面 BASE_PATH 的配置参考 examples/nginx-subpath.conf。
 ```
+
+浏览器会话在空闲 30 分钟或累计 12 小时后过期。退出登录或重启服务器会使会话失效，并断开对应的 WebSocket。已启用登录的用户升级后，刷新页面并使用原有 SERVER_PASS 重新登录。保留原有数据目录和配置即可，旧的 SERVER_SECRET 和 TOKEN_EXPIRED_TIME 可以留在配置中。使用旧 JWT 接口的客户端需要改用 Cookie 会话。不设置 ENABLE_AUTH 或留空时，任何能访问应用的人都可以直接使用。任何非空值（包括 0 和 false）均启用密码登录，与旧版本一致。远程使用时，在反向代理启用 TLS，并限制后端访问。默认按请求的 Host 校验浏览器来源。请让代理保留外部主机名和端口，或通过可选的 `PUBLIC_ORIGIN` 指定浏览器使用的 HTTPS 来源。
 
 ## 许可证
 

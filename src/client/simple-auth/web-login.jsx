@@ -1,12 +1,14 @@
 import { auto } from 'manate/react'
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import {
+  Button,
   ConfigProvider,
   Input,
+  Space,
   Spin,
+  Typography,
   theme as antdTheme
 } from 'antd'
-import message from '../electerm-react/components/common/message'
 import {
   ArrowRightOutlined,
   Loading3QuartersOutlined
@@ -78,6 +80,7 @@ const loginThemes = {
 // scene's.
 export default auto(function Login ({ store }) {
   const [pass, setPass] = useState('')
+  const [error, setError] = useState('')
   const [lang, setLang] = useState(loginLang)
   const [mode, setMode] = useState(readLoginTheme)
   const submitting = useRef(false)
@@ -85,6 +88,7 @@ export default auto(function Login ({ store }) {
   const t = loginText(lang)
 
   useEffect(() => {
+    window.localStorage.removeItem('tokenElecterm')
     store.getConstants()
   }, [])
 
@@ -105,17 +109,22 @@ export default auto(function Login ({ store }) {
 
   const handlePassChange = e => {
     setPass(e.target.value)
+    setError('')
   }
 
   const handleSubmit = async () => {
     if (!pass) {
-      return message.warning(t.passwordRequired)
+      return setError('passwordRequired')
     } else if (submitting.current) {
       return
     }
     submitting.current = true
-    await store.login(pass)
-    submitting.current = false
+    setError('')
+    try {
+      setError(await store.login(pass))
+    } finally {
+      submitting.current = false
+    }
   }
 
   // Shown while the auth check is in flight, and while the scene chunk is on
@@ -126,15 +135,6 @@ export default auto(function Login ({ store }) {
       <Loading3QuartersOutlined spin />
     </div>
   )
-
-  const renderAfter = () => {
-    return (
-      <ArrowRightOutlined
-        className='mg1x pointer'
-        onClick={handleSubmit}
-      />
-    )
-  }
 
   // The form itself, kept separate from the scene around it: if the scene chunk
   // fails to load, this is what the fallback renders, so a password can still
@@ -149,14 +149,28 @@ export default auto(function Login ({ store }) {
       <>
         <h2 className='login-form-title'>electerm-web</h2>
         <div className='pd2x aligncenter'>
-          <Input.Password
-            value={pass}
-            readOnly={logining || fetchingUser}
-            onChange={handlePassChange}
-            placeholder={t.password}
-            addonAfter={renderAfter()}
-            onPressEnter={handleSubmit}
-          />
+          <Space.Compact block>
+            <Input.Password
+              value={pass}
+              aria-describedby={error ? 'login-error' : undefined}
+              aria-invalid={error === 'passwordRequired' || error === 'incorrectPassword'}
+              readOnly={logining || fetchingUser}
+              onChange={handlePassChange}
+              placeholder={t.password}
+              onPressEnter={handleSubmit}
+            />
+            <Button
+              aria-label={t.signIn}
+              icon={<ArrowRightOutlined />}
+              disabled={logining || fetchingUser}
+              onClick={handleSubmit}
+            />
+          </Space.Compact>
+          {error && (
+            <div id='login-error' role='alert'>
+              <Typography.Text type='danger'>{t[error]}</Typography.Text>
+            </div>
+          )}
         </div>
 
         <div>
@@ -183,7 +197,13 @@ export default auto(function Login ({ store }) {
   if (!store.authChecked) {
     return withLoginTheme(renderLoading(), mode)
   } else if (!store.logined) {
-    return withLoginTheme(renderLogin(), mode)
+    if (window.et.authEnabled) return withLoginTheme(renderLogin(), mode)
+    return withLoginTheme(
+      <div className='login-plain'>
+        <p role='alert'>{t.loadFailed}</p>
+        <Button onClick={() => store.getConstants()} disabled={store.fetchingUser}>{t.retry}</Button>
+      </div>, mode
+    )
   }
 
   return (

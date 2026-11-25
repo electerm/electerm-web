@@ -18,7 +18,6 @@ import fs from './fs.js'
 import log from '../common/log.js'
 import fetch from './fetch.js'
 import sync from './sync.js'
-import { verify } from '../lib/jwt.js'
 import { runSync } from '../lib/run-sync.js'
 import {
   createTerm,
@@ -32,10 +31,6 @@ import {
   startTerminalLogFile
 } from './terminal-api.js'
 import globalState from './global-state.js'
-
-const {
-  SERVER_USER
-} = process.env
 
 /**
  * add ws.s function
@@ -67,18 +62,9 @@ const wsDec = (ws) => {
   ws._socket.setKeepAlive(true, 30 * 1000)
 }
 
-export function verifyWs (req) {
-  const { token } = req.query
-  const data = verify(token)
-  if (SERVER_USER !== data.id) {
-    throw new Error('not valid request')
-  }
-}
-
 export function initWs (app) {
   // sftp function
   app.ws('/sftp/:id', (ws, req) => {
-    verifyWs(req)
     wsDec(ws)
     const { id } = req.params
     ws.on('close', () => {
@@ -138,7 +124,6 @@ export function initWs (app) {
 
   // transfer function
   app.ws('/transfer/:id', (ws, req) => {
-    verifyWs(req)
     wsDec(ws)
     const { id } = req.params
     const { sftpId } = req.query
@@ -184,8 +169,7 @@ export function initWs (app) {
   // upgrade todo
 
   // common functions
-  app.ws('/common/s', (ws, req) => {
-    verifyWs(req)
+  app.ws('/common/s', (ws) => {
     wsDec(ws)
     globalState.setCommonWs(ws)
     ws.on('message', async (message) => {

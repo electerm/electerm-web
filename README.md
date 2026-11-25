@@ -152,6 +152,7 @@ Check [electerm-web-docker](https://github.com/electerm/electerm-web-docker)
 git clone git@github.com:electerm/electerm-web.git
 cd electerm-web
 cp .sample.env .env
+# To require login, set ENABLE_AUTH=1 and a unique SERVER_PASS in .env.
 # edit DB_PATH to set db path, default path ./database
 # to use same data as desktop electerm
 # for Mac OS DB_PATH="/Users/<your-user-name>/Library/Application Support/electerm"
@@ -193,11 +194,10 @@ npm run prod
 ## Run in server
 
 ```sh
-# Edit .env, set
-ENABLE_AUTH=1 # if not enabled, everyone can use it without login
-DISABLE_LOCAL_TERMINAL=1 # disable local terminal for safety
-SERVER_SECRET=some-server-secret
-SERVER_PASS=some-login-pass-word
+# Set SERVER_PASS to a unique password in .env
+ENABLE_AUTH=1
+# PUBLIC_ORIGIN=https://electerm.example.org
+DISABLE_LOCAL_TERMINAL=1
 # serve the whole app under a sub-path, e.g. https://host/electerm/
 # BASE_PATH=electerm
 
@@ -207,6 +207,12 @@ SERVER_PASS=some-login-pass-word
 # Check examples/nginx.conf examples/nginx-ssl.conf  for domain binding nginx conf example
 # examples/nginx-subpath.conf for the BASE_PATH setup above
 ```
+
+For remote access, terminate TLS at the proxy and restrict access to the backend. By default the app checks the browser origin against the request Host. Configure the proxy to preserve the external host and port, or set `PUBLIC_ORIGIN` to pin the browser-facing HTTPS origin.
+
+Sessions live in the server process. They expire after 30 minutes of inactivity or 12 hours total. Logout ends the session and closes its WebSockets. Restarting the process signs everyone out. When login is enabled, reload the page and sign in with your existing `SERVER_PASS`. Keep your existing data directory and configuration. The app ignores `SERVER_SECRET` and `TOKEN_EXPIRED_TIME`, so you can leave them in place. Clients using the former JWT API need to adopt cookie sessions.
+
+Leave `ENABLE_AUTH` unset or empty for open access. Anyone who can reach the app can use it without signing in. Any nonempty value (including `0` or `false`) enables password login, as in previous releases.
 
 ## License
 

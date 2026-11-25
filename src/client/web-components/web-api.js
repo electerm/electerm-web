@@ -115,11 +115,7 @@ try {
 
 window.api = {
   fetch: (url, options = {}) => {
-    const headers = {
-      token: window.store?.config.tokenElecterm,
-      ...options.headers
-    }
-    return window.fetch(window.et.url(url), { ...options, headers })
+    return window.fetch(window.et.url(url), options)
       .then(res => {
         if (res.status > 304) {
           return res.json()
@@ -197,8 +193,8 @@ window.api = {
   runGlobalAsync: async (func, ...args) => {
     if (func === 'initCommandLine') {
       try {
-        const { init } = window.et.query
-        return init ? JSON.parse(window.et.query.init) : null
+        const init = new URLSearchParams(window.location.search).get('init')
+        return init ? JSON.parse(init) : null
       } catch (err) {
         console.log('initCommandLine error:', err)
       }
@@ -217,7 +213,6 @@ window.api = {
         args,
         func
       })
-      d.config.tokenElecterm = window.localStorage.getItem('tokenElecterm') || ''
       // No `language` in the stored config means nobody has picked one yet, so
       // the browser answers for itself -- works the same whether the page was
       // rendered by the server or is a prebuilt static index.html. The picked

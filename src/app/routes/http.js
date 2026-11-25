@@ -1,5 +1,4 @@
 import express from 'express'
-import { login } from '../lib/login.js'
 import { index } from '../lib/view.js'
 import { getConstants } from '../lib/get-constants.js'
 import { resolve } from 'path'
@@ -7,19 +6,16 @@ import {
   cwd,
   isDev
 } from '../common/runtime-constants.js'
-import {
-  jwtAuth,
-  errHandler
-} from '../lib/jwt.js'
 import { fileTransferRoutes } from './file-transfer.js'
 import { widgetUIRoutes } from './widget-ui.js'
 import { iconRoutes } from './icon.js'
 
-export function httpRoutes (app) {
+export function httpRoutes (app, auth) {
   app.get('/', index)
-  app.post('/api/login', login)
-  app.get('/api/get-constants', jwtAuth, errHandler, getConstants)
-  fileTransferRoutes(app)
+  app.post('/api/login', auth.login)
+  app.post('/api/logout', auth.logout)
+  app.get('/api/get-constants', auth.requireSession, getConstants)
+  fileTransferRoutes(app, auth.requireSession)
   // downloaded bookmark icons, `<data dir>/icons`; an <img> is the client, so
   // no token — see the notes in the file
   iconRoutes(app)

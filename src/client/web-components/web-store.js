@@ -19,9 +19,7 @@ class Store extends StateStore {
         fetchingUser: false,
         logining: false,
         height: window.innerHeight,
-        _config: {
-          tokenElecterm: window.localStorage.getItem('tokenElecterm') || ''
-        }
+        _config: {}
       }
     )
   }

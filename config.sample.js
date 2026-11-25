@@ -55,11 +55,11 @@ export class Db {
 /*
 export const extensions = [
   {
-    appExtend: (app, jwtMiddleWare, jwtErrorHandler) => {
+    appExtend: (app, requireSession) => {
       app.get('/hello', (req, res) => {
         res.send('hello world')
       })
-      app.get('/api/api-need-login', jwtMiddleWare, jwtErrorHandle, (req, res) => {
+      app.get('/api/api-need-login', requireSession, (req, res) => {
         res.send('hello api')
       })
     }
