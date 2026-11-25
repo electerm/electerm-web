@@ -38,11 +38,7 @@ export default Store => {
       password
     })
     if (res) {
-      store.updateConfig({
-        tokenElecterm: res
-      })
-      window.localStorage.setItem('tokenElecterm', res)
-      store.getConstants()
+      await store.getConstants()
     }
     Object.assign(store, {
       logining: false

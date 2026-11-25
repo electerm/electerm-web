@@ -85,7 +85,12 @@ export default auto(function Login ({ store }) {
   const t = loginText(lang)
 
   useEffect(() => {
-    store.getConstants()
+    window.localStorage.removeItem('tokenElecterm')
+    if (window.et.localOnly) {
+      store.login()
+    } else {
+      store.getConstants()
+    }
   }, [])
 
   const handleLangChange = (next) => {

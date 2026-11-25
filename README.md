@@ -152,6 +152,7 @@ Check [electerm-web-docker](https://github.com/electerm/electerm-web-docker)
 git clone git@github.com:electerm/electerm-web.git
 cd electerm-web
 cp .sample.env .env
+# Set a unique SERVER_PASS in .env before starting.
 # edit DB_PATH to set db path, default path ./database
 # to use same data as desktop electerm
 # for Mac OS DB_PATH="/Users/<your-user-name>/Library/Application Support/electerm"
@@ -193,11 +194,10 @@ npm run prod
 ## Run in server
 
 ```sh
-# Edit .env, set
-ENABLE_AUTH=1 # if not enabled, everyone can use it without login
-DISABLE_LOCAL_TERMINAL=1 # disable local terminal for safety
-SERVER_SECRET=some-server-secret
-SERVER_PASS=some-login-pass-word
+# Set SERVER_PASS to a unique password in .env
+ENABLE_AUTH=1
+PUBLIC_ORIGIN=https://electerm.example.org
+DISABLE_LOCAL_TERMINAL=1
 # serve the whole app under a sub-path, e.g. https://host/electerm/
 # BASE_PATH=electerm
 
@@ -207,6 +207,12 @@ SERVER_PASS=some-login-pass-word
 # Check examples/nginx.conf examples/nginx-ssl.conf  for domain binding nginx conf example
 # examples/nginx-subpath.conf for the BASE_PATH setup above
 ```
+
+For remote access, terminate TLS at the proxy, set `PUBLIC_ORIGIN` to the browser-facing HTTPS origin (scheme, host, and optional port), and restrict access to the backend.
+
+Sessions live in the server process. They expire after 30 minutes of inactivity or 12 hours total. Logout ends the session and closes its WebSockets. Restarting the process signs everyone out. After upgrading, sign in again and remove the obsolete `SERVER_SECRET` and `TOKEN_EXPIRED_TIME` settings.
+
+For passwordless local use, explicitly set `ENABLE_AUTH=0`, bind both listeners to loopback, and leave `PUBLIC_ORIGIN` unset. Keep this mode off reverse proxies.
 
 ## License
 

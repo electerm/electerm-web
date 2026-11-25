@@ -17,7 +17,6 @@ import { bp } from '../server/base-path.js'
 import { migrationNotice } from './fancy-console.js'
 import fsFunctions from '../common/fs-functions.js'
 import copy from 'json-deep-copy'
-import { createToken } from './jwt.js'
 import { logDir } from '../server/session-log.js'
 import { getLogDir } from '../widgets/instance-log.js'
 import { getIconDir } from './icon-download.js'
@@ -92,6 +91,7 @@ export async function index (req, res) {
   // onCheckUpdate, restart, close
   const data = {
     isDev,
+    serverPort: isDev ? process.env.PORT : undefined,
     isMac,
     isWin,
     packInfo,
@@ -101,6 +101,7 @@ export async function index (req, res) {
     defaultAIPreset,
     fsFunctions,
     isWebApp: true,
+    localOnly: process.env.ENABLE_AUTH === '0',
     disableUpgradeCheck: true,
     extIconPath: cdn + extIconPath,
     basePath,
@@ -120,7 +121,6 @@ export async function index (req, res) {
     // straight off disk (see widgets/instance-log.js).
     // Exposed as window.et.widgetLogPath, mirroring sessionLogPath above.
     widgetLogPath: getLogDir(),
-    query: req.query,
     server,
     hasNodePty,
     needMigrate,
@@ -136,12 +136,6 @@ export async function index (req, res) {
       'zoom',
       'reload'
     ]
-  }
-  const {
-    ENABLE_AUTH
-  } = process.env
-  if (!ENABLE_AUTH) {
-    data.tokenElecterm = createToken()
   }
   data._global = copy(data)
   res.render('index', data)

@@ -6,10 +6,6 @@ import multer from 'multer'
 import fs from 'fs'
 import path, { resolve } from 'path'
 import { spawn } from 'child_process'
-import {
-  jwtAuth,
-  errHandler
-} from '../lib/jwt.js'
 
 const uploadDir = resolve(process.env.DB_PATH || resolve(process.cwd(), 'data'), 'uploads')
 fs.mkdirSync(uploadDir, { recursive: true })
@@ -31,8 +27,8 @@ function dispositionHeader (name) {
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`
 }
 
-export function fileTransferRoutes (app) {
-  app.get('/api/download', jwtAuth, errHandler, (req, res) => {
+export function fileTransferRoutes (app, requireSession) {
+  app.get('/api/download', requireSession, (req, res) => {
     const filePath = req.query.path
     if (!filePath) {
       return res.status(400).json({ error: 'path is required' })
@@ -68,7 +64,7 @@ export function fileTransferRoutes (app) {
     }
   })
 
-  app.post('/api/upload', jwtAuth, errHandler, upload.single('file'), (req, res) => {
+  app.post('/api/upload', requireSession, upload.single('file'), (req, res) => {
     const targetDir = req.body.path
     if (!targetDir || !req.file) {
       return res.status(400).json({ error: 'path and file are required' })

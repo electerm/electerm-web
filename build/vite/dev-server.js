@@ -16,7 +16,6 @@ import os from 'os'
 import copy from 'json-deep-copy'
 import proxy from 'express-http-proxy'
 import fsFunctions from '../../src/app/common/fs-functions.js'
-import { createToken } from '../../src/app/lib/jwt.js'
 import { logDir } from '../../src/app/server/session-log.js'
 import { getIconDir } from '../../src/app/lib/icon-download.js'
 import { resolve } from 'path'
@@ -65,7 +64,7 @@ const base = {
   iconServePath: bp('/api/icon/'),
   iconDir: getIconDir(),
   sessionLogPath: logDir,
-  tokenElecterm: process.env.ENABLE_AUTH ? '' : createToken()
+  localOnly: process.env.ENABLE_AUTH === '0'
 }
 let needMigrate
 function checkNeedMigrate () {
@@ -109,7 +108,6 @@ async function handleIndex (req, res) {
   }
   const data = {
     ...base,
-    query: req.query,
     hasNodePty,
     needMigrate
   }
@@ -182,8 +180,9 @@ async function createServer () {
     console.log(`server started at ${h || `http://${devHost}:${devPort}`}`)
   })
   app.use(
-    '/api/login',
+    ['/api/login', '/api/logout'],
     proxy(tar, {
+      preserveHostHdr: true,
       proxyReqPathResolver: function (req) {
         return req.originalUrl
       }

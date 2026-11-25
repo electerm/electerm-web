@@ -40,7 +40,6 @@ const data = {
   cdn: '',
   // the template interpolates this; a static build always sits at the root
   basePath: '',
-  tokenElecterm: '',
   defaultAIPreset
 }
 const htmlContent = pug.render(pugContent, {

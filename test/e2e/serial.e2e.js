@@ -36,7 +36,6 @@ const BAUD = Number(process.env.SERIAL_BAUD || 9600)
 const DATA_DIR = resolve(tmpdir(), 'electerm-web-serial-e2e')
 const USER = 'e2e'
 const PASS = 'e2e-pass'
-const SECRET = 'e2e-secret'
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -197,9 +196,9 @@ class Terminal {
   }
 }
 
-function open (url) {
+function open (url, cookie, origin) {
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket(url)
+    const ws = new WebSocket(url, { origin, headers: { cookie } })
     ws.on('open', () => resolve(ws))
     ws.on('error', reject)
   })
@@ -281,11 +280,13 @@ async function main () {
         PORT: String(port),
         SERVER_USER: USER,
         SERVER_PASS: PASS,
-        SERVER_SECRET: SECRET,
+        ENABLE_AUTH: '1',
+        PUBLIC_ORIGIN: '',
         DB_PATH: DATA_DIR
       }
     })
 
+    let cookie
     await step('server is listening', async () => {
       await waitFor(
         () => server.out.includes('server runs on http://'),
@@ -293,24 +294,19 @@ async function main () {
       )
       const res = await fetch(`${base}/api/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Origin: base },
         body: JSON.stringify({ password: PASS })
       })
       assert.equal(res.status, 200, 'login should succeed')
+      cookie = res.headers.get('set-cookie').split(';')[0]
       return `port ${port}`
     })
-
-    const token = await (await fetch(`${base}/api/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: PASS })
-    })).text()
 
     // ---- a serial session, created the way the client creates one ------
     let pid
 
     await step('create a serial session', async () => {
-      common = new Common(await open(`${wss}/common/s?token=${token}`))
+      common = new Common(await open(`${wss}/common/s`, cookie, base))
       const res = await common.request({
         action: 'create-terminal',
         body: {
@@ -335,7 +331,7 @@ async function main () {
     let mark = 0
 
     await step('terminal socket attaches', async () => {
-      terminal = new Terminal(await open(`${wss}/terminals/${pid}?token=${token}`))
+      terminal = new Terminal(await open(`${wss}/terminals/${pid}`, cookie, base))
       // what the device wrote before the socket existed was written into a pty
       // nobody held open yet, so a CR is the reliable first exchange
       mark = terminal.bytes
@@ -558,7 +554,7 @@ async function main () {
       })
       assert.ok(res.data && res.data.pid, `no pid: ${JSON.stringify(res)}`)
       pid = res.data.pid
-      terminal = new Terminal(await open(`${wss}/terminals/${pid}?token=${token}`))
+      terminal = new Terminal(await open(`${wss}/terminals/${pid}`, cookie, base))
       mark = terminal.bytes
       terminal.type('\r')
       await terminal.waitText('shell>', mark)

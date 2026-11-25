@@ -153,6 +153,7 @@ cmd.exe /c ".\one-line-web.bat"
 git clone git@github.com:electerm/electerm-web.git
 cd electerm-web
 cp .sample.env .env
+# 启动前在 .env 中设置独立的 SERVER_PASS。
 # 编辑 DB_PATH 设置数据库路径，默认路径 ./database
 # 若要使用与桌面版 electerm 相同的数据库数据
 # 对于 Mac OS，DB_PATH="/Users/<your-user-name>/Library/Application Support/electerm"
@@ -194,11 +195,10 @@ npm run prod
 ## 在服务器上运行
 
 ```sh
-# 编辑 .env，设置以下参数：
-ENABLE_AUTH=1 # 如果未启用，每个人都可以无需登录使用它。
-DISABLE_LOCAL_TERMINAL=1 # 禁用本地终端以提高安全性
-SERVER_SECRET=some-server-secret
-SERVER_PASS=some-login-pass-word
+# 在 .env 中将 SERVER_PASS 设置为独立密码
+ENABLE_AUTH=1
+PUBLIC_ORIGIN=https://electerm.example.org
+DISABLE_LOCAL_TERMINAL=1
 # 让整个应用运行在子路径下，例如 https://host/electerm/
 # BASE_PATH=electerm
 
@@ -208,6 +208,8 @@ SERVER_PASS=some-login-pass-word
 # 查看 examples/nginx.conf 和 examples/nginx-ssl.conf 以获取域名绑定的 nginx 配置示例。
 # 上面 BASE_PATH 的配置参考 examples/nginx-subpath.conf。
 ```
+
+浏览器会话在空闲 30 分钟或累计 12 小时后过期。退出登录或重启服务器会使会话失效，并断开对应的 WebSocket。升级后，原 JWT 将失效，可移除 SERVER_SECRET 和 TOKEN_EXPIRED_TIME。仅在本机免密使用时，显式设置 ENABLE_AUTH=0，将两个监听地址绑定到回环地址，并留空 PUBLIC_ORIGIN。请勿代理免密模式。远程使用时，在反向代理启用 TLS，并限制后端访问。
 
 ## 许可证
 
