@@ -242,6 +242,7 @@ class ElectermMCPServer {
     this.httpServer = null
     this.mcpServer = null
     this.ipcHandler = null
+    this.boundWs = null
     this.pendingRequests = new Map()
     this.transports = {}
     this.taskManager = null
@@ -353,9 +354,30 @@ class ElectermMCPServer {
   }
 
   // Send request to renderer process via IPC
+  // The common socket is replaced every time a page connects or reconnects
+  // (dispatch-center calls `globalState.setCommonWs(ws)` per upgrade), while
+  // the response listener set up in `start()` was bound to whatever socket
+  // existed at that moment. Without a re-bind, `mcp-response-back` from a
+  // later page lands on a dead socket and every call times out. Bind (and
+  // re-bind) against the current socket instead.
+  bindResponseListener () {
+    const commonWs = globalState.getCommonWs()
+    if (!commonWs || commonWs === this.boundWs) {
+      return
+    }
+    if (this.boundWs && this.ipcHandler) {
+      this.boundWs.removeListener('message', this.ipcHandler)
+    }
+    if (this.ipcHandler) {
+      commonWs.on('message', this.ipcHandler)
+    }
+    this.boundWs = commonWs
+  }
+
   sendToRenderer (action, data, timeoutMs = 30000) {
     return new Promise((resolve, reject) => {
       const requestId = uid()
+      this.bindResponseListener()
       const commonWs = globalState.getCommonWs()
 
       if (!commonWs) {
@@ -1214,7 +1236,13 @@ class ElectermMCPServer {
 
     // Set up IPC response handler
     this.ipcHandler = (message) => {
-      const msg = JSON.parse(message)
+      let msg
+      try {
+        msg = JSON.parse(message)
+      } catch (err) {
+        // foreign traffic on the shared socket must not break other listeners
+        return
+      }
       const { requestId, result, error, type } = msg
       if (type !== 'mcp-response-back') {
         return
@@ -1230,8 +1258,7 @@ class ElectermMCPServer {
         }
       }
     }
-    const commonWs = globalState.getCommonWs()
-    commonWs.on('message', this.ipcHandler)
+    this.bindResponseListener()
 
     // Create MCP task manager (SEP-2663) when the tasks extension is enabled
     if (this.config.enableTasks) {
@@ -1483,8 +1510,10 @@ class ElectermMCPServer {
   async stop () {
     // Remove IPC handler
     if (this.ipcHandler) {
-      const commonWs = globalState.getCommonWs()
-      commonWs.removeListener('message', this.ipcHandler)
+      if (this.boundWs) {
+        this.boundWs.removeListener('message', this.ipcHandler)
+        this.boundWs = null
+      }
       this.ipcHandler = null
     }
 
