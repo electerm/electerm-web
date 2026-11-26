@@ -241,7 +241,6 @@ class ElectermMCPServer {
     this.instanceId = uid()
     this.httpServer = null
     this.mcpServer = null
-    this.ipcHandler = null
     this.pendingRequests = new Map()
     this.transports = {}
     this.taskManager = null
@@ -352,33 +351,45 @@ class ElectermMCPServer {
     return { allowed: true }
   }
 
-  // Send request to renderer process via IPC
-  sendToRenderer (action, data, timeoutMs = 30000) {
-    return new Promise((resolve, reject) => {
-      const requestId = uid()
-      const commonWs = globalState.getCommonWs()
-
-      if (!commonWs) {
-        reject(new Error('No commonWs connection available'))
-        return
+  onMcpResponse = (ws, { requestId, result, error }) => {
+    const pending = this.pendingRequests.get(requestId)
+    if (pending && pending.ws === ws) {
+      if (error) {
+        pending.reject(new Error(error))
+      } else {
+        pending.resolve(result)
       }
+    }
+  }
 
-      // Set up response handler
-      const timeout = setTimeout(() => {
-        this.pendingRequests.delete(requestId)
-        reject(new Error('Request timeout'))
-      }, timeoutMs)
+  onPageClose = ws => {
+    for (const pending of this.pendingRequests.values()) {
+      if (pending.ws === ws) {
+        pending.reject(new Error('Electerm page disconnected before responding'))
+      }
+    }
+  }
 
-      this.pendingRequests.set(requestId, { resolve, reject, timeout })
+  async sendToRenderer (action, data, timeoutMs = 30000) {
+    const ws = globalState.getCommonWs()
+    if (!ws) {
+      throw new Error('No Electerm page connected. Open Electerm in a browser and try again.')
+    }
 
-      // Send to renderer
-      commonWs.s({
-        type: 'mcp-request',
-        requestId,
-        action,
-        data
+    const requestId = uid()
+    let timeout
+    try {
+      return await new Promise((resolve, reject) => {
+        this.pendingRequests.set(requestId, { ws, resolve, reject })
+        timeout = setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
+        ws.send(JSON.stringify({ type: 'mcp-request', requestId, action, data }), err => {
+          if (err) reject(err)
+        })
       })
-    })
+    } finally {
+      clearTimeout(timeout)
+      this.pendingRequests.delete(requestId)
+    }
   }
 
   // ==================== MCP Tasks lifecycle (SEP-2663) ====================
@@ -1212,27 +1223,6 @@ class ElectermMCPServer {
   async start () {
     const { host, port } = this.config
 
-    // Set up IPC response handler
-    this.ipcHandler = (message) => {
-      const msg = JSON.parse(message)
-      const { requestId, result, error, type } = msg
-      if (type !== 'mcp-response-back') {
-        return
-      }
-      const pending = this.pendingRequests.get(requestId)
-      if (pending) {
-        clearTimeout(pending.timeout)
-        this.pendingRequests.delete(requestId)
-        if (error) {
-          pending.reject(new Error(error))
-        } else {
-          pending.resolve(result)
-        }
-      }
-    }
-    const commonWs = globalState.getCommonWs()
-    commonWs.on('message', this.ipcHandler)
-
     // Create MCP task manager (SEP-2663) when the tasks extension is enabled
     if (this.config.enableTasks) {
       this.taskManager = new TaskManager({
@@ -1454,6 +1444,8 @@ class ElectermMCPServer {
           return
         }
 
+        globalState.on('mcp-response', this.onMcpResponse)
+        globalState.on('common-ws-close', this.onPageClose)
         const serverInfo = {
           // the key rides in the URL so that "copy the URL" is the whole
           // client setup: paste it, done, no header to find a field for
@@ -1481,12 +1473,8 @@ class ElectermMCPServer {
 
   // Stop the MCP server
   async stop () {
-    // Remove IPC handler
-    if (this.ipcHandler) {
-      const commonWs = globalState.getCommonWs()
-      commonWs.removeListener('message', this.ipcHandler)
-      this.ipcHandler = null
-    }
+    globalState.off('mcp-response', this.onMcpResponse)
+    globalState.off('common-ws-close', this.onPageClose)
 
     // Destroy task manager (stops the TTL sweep timer)
     if (this.taskManager) {
@@ -1495,11 +1483,9 @@ class ElectermMCPServer {
     }
 
     // Clear pending requests
-    for (const [, pending] of this.pendingRequests) {
-      clearTimeout(pending.timeout)
+    for (const pending of this.pendingRequests.values()) {
       pending.reject(new Error('Server stopping'))
     }
-    this.pendingRequests.clear()
 
     // Close all transports
     for (const sessionId of Object.keys(this.transports)) {

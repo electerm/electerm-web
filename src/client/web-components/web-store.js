@@ -25,27 +25,10 @@ class Store extends StateStore {
   }
 }
 
-Store.prototype.initMcpHandler = function () {
-  // Listen for MCP requests from main process
-  window.et.commonWs.addEventListener('message', (e) => {
-    if (e &&
-      e.data &&
-      typeof e.data === 'string' &&
-      e.data.startsWith('{') &&
-      e.data.endsWith('}') &&
-      JSON.parse(e.data).type === 'mcp-request'
-    ) {
-      const { requestId, action, data } = JSON.parse(e.data)
-      if (action === 'tool-call') {
-        window.store.handleMcpToolCall(requestId, data.toolName, data.args)
-      }
-    }
-  })
-}
-
 loginExtend(Store)
 
 const store = manage(new Store())
 
 window.store = store
+store.initMcpHandler()
 export default store

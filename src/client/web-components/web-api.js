@@ -17,9 +17,6 @@ window.et.url = (url = '') => {
 // Server -> client events: the web counterpart of the desktop app's ipc
 // listeners. The desktop main process pushes on `ipcOnEvent(name, cb)`; here the
 // same name arrives as a {type: name, payload} message on the common socket.
-// Nothing else in the web app needs it yet, only the widget css push (see
-// common/widget-style-host.js), so only named messages are dispatched and
-// everything else on that socket is left to its own handler.
 const ipcHandlers = new Map()
 let commonWs = null
 

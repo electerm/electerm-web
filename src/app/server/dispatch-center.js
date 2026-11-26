@@ -172,7 +172,7 @@ export function initWs (app) {
   // common functions
   app.ws('/common/s', (ws) => {
     wsDec(ws)
-    globalState.setCommonWs(ws)
+    globalState.addCommonWs(ws)
     const sendAssets = payload => ws.s({ type: 'widget-assets', payload })
     clientAssetEvents.on('change', sendAssets)
     ws.on('close', () => clientAssetEvents.off('change', sendAssets))
@@ -180,6 +180,10 @@ export function initWs (app) {
       try {
         const msg = JSON.parse(message)
         const { action, body = {}, id } = msg
+        if (msg.type === 'mcp-response-back') {
+          globalState.emit('mcp-response', ws, msg)
+          return
+        }
         if (action === 'fetch') {
           fetch(ws, msg)
         } else if (action === 'sync') {
