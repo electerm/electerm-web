@@ -408,10 +408,10 @@ async function main () {
     })
 
     await step('rx view: hex / dec / bin redraw what came before', async () => {
-      // a marker of our own, so the dump has bytes we know the hex of
+      // Five identical bytes leave at least three together even across a dump row boundary.
       mark = terminal.bytes
-      terminal.type('echo zzz999\r')
-      await terminal.waitEchoAndAnswer('zzz999', mark)
+      terminal.type('echo zzzzz\r')
+      await terminal.waitEchoAndAnswer('zzzzz', mark)
       const patterns = {
         hex: /7A 7A 7A/,
         dec: /(?:\s122){3}/,
@@ -433,7 +433,7 @@ async function main () {
           `${mode}: redraw clears the screen first`
         )
         if (mode === 'hex') {
-          assert.match(terminal.since(from), /zzz999/, 'ascii column kept')
+          assert.match(terminal.since(from), /zzz/, 'ascii column kept')
         }
       }
       return 'three modes, all of the received bytes'

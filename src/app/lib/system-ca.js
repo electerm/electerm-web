@@ -2,7 +2,9 @@
  * Load system-trusted CA certificates for the main web app process.
  */
 
-import { execFileSync } from 'child_process'
+import { execFile, execFileSync } from 'child_process'
+import { promisify } from 'util'
+import tls from 'tls'
 import { existsSync, readdirSync, readFileSync } from 'fs'
 import https from 'https'
 import os from 'os'
@@ -54,13 +56,13 @@ export const WIN_CA_SCRIPT =
 /**
  * @returns {string[]}
  */
-export function buildWinArgs () {
+export function buildWinArgs (script = WIN_CA_SCRIPT) {
   return [
     '-NoLogo',
     '-NonInteractive',
     '-NoProfile',
     '-EncodedCommand',
-    Buffer.from(WIN_CA_SCRIPT, 'utf16le').toString('base64')
+    Buffer.from(script, 'utf16le').toString('base64')
   ]
 }
 
@@ -123,6 +125,35 @@ function loadLinux () {
   return ''
 }
 
+const run = promisify(execFile)
+// The native Windows trust store supplies roots. An incomplete server chain
+// may also need an issuer from one of the Intermediate Certification Authorities stores.
+const intermediateScript = `
+$ErrorActionPreference = 'Stop'
+foreach ($location in 'LocalMachine', 'CurrentUser') {
+  $store = [System.Security.Cryptography.X509Certificates.X509Store]::new('CA', $location)
+  try {
+    $store.Open('ReadOnly')
+    foreach ($cert in $store.Certificates) {
+      if ($cert.NotAfter -gt (Get-Date)) {
+        [Convert]::ToBase64String($cert.RawData)
+      }
+    }
+  } finally {
+    $store.Close()
+  }
+}`
+
+export async function readWindowsIntermediates () {
+  const { stdout } = await run('powershell.exe', buildWinArgs(intermediateScript), {
+    encoding: 'utf8',
+    windowsHide: true,
+    timeout: 10000,
+    maxBuffer: MAX_BUFFER
+  })
+  return new Set(stdout.trim().split(/\s+/).filter(Boolean))
+}
+
 function loadWindows () {
   try {
     return execFileSync('powershell.exe', buildWinArgs(), {
@@ -157,7 +188,12 @@ export function getSystemCAsPem () {
   return cachedPem
 }
 
+export function useNativeWindowsCAs () {
+  return os.platform() === 'win32' && typeof tls.setDefaultCACertificates === 'function'
+}
+
 export function getSystemCAsList () {
+  if (useNativeWindowsCAs()) return tls.getCACertificates('system')
   const pem = getSystemCAsPem()
   if (!pem) {
     return []
@@ -174,12 +210,26 @@ export function applySystemCAsToGlobalAgent () {
     return 0
   }
 
-  const existing = https.globalAgent.options.ca
-  const existingList = Array.isArray(existing)
-    ? existing
-    : (typeof existing === 'string' ? [existing] : [])
-  const merged = Array.from(new Set(existingList.concat(certs)))
+  if (useNativeWindowsCAs()) {
+    // The web app runs in one Node process. Install the roots here so direct
+    // TLS connections (including FTPS) and newly created agents share them.
+    tls.setDefaultCACertificates([...new Set([...tls.getCACertificates('default'), ...certs])])
+    globalApplied = true
+    return certs.length
+  }
+
+  const existing = https.globalAgent.options.ca ?? tls.getCACertificates('default')
+  const existingList = Array.isArray(existing) ? existing : [existing]
+  const merged = Array.from(new Set([...existingList, ...certs]))
   https.globalAgent.options.ca = merged
   globalApplied = true
   return certs.length
+}
+
+// An explicit agent CA list replaces Node's defaults. Share the same list with
+// proxy agents and FTPS on runtimes using the PEM fallback.
+export function getAgentCAOptions () {
+  applySystemCAsToGlobalAgent()
+  const { ca } = https.globalAgent.options
+  return ca ? { ca } : {}
 }

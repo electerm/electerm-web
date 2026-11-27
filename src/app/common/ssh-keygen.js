@@ -95,8 +95,7 @@ async function uniquePath (dir, fileName) {
 async function generateKeyPair (type, opts) {
   // imported lazily: ssh2 is heavy and only needed on this one click. `utils`
   // is only reachable through the CommonJS default export, not as a named one.
-  const ssh2 = await import('@electerm/ssh2')
-  const utils = (ssh2.default && ssh2.default.utils) || ssh2.utils
+  const { default: { utils } } = await import('../server/ssh2.js')
   return new Promise((resolve, reject) => {
     utils.generateKeyPair(type, opts, (err, keys) => {
       if (err) {

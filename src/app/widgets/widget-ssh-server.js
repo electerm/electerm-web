@@ -12,7 +12,7 @@ import { exec } from 'child_process'
 import pty from 'node-pty'
 // @electerm/ssh2 is CommonJS: only `Client` is statically detectable by
 // node's cjs-module-lexer, so grab `Server`/`utils` off the default export
-import ssh2 from '@electerm/ssh2'
+import ssh2 from '../server/ssh2.js'
 import uid from '../common/uid.js'
 
 const { Server, utils } = ssh2

@@ -51,7 +51,7 @@ Besides mainstream Windows/macOS/Linux/Android, electerm also supports HarmonyOS
 - Double click to directly edit (small) remote files.
 - All kind of auth methods: publicKey, password, ssh agent, certificates, otp, netbird etc.
 - Support Zmodem(rz, sz), and [Trzsz](https://github.com/trzsz/trzsz)(trz/tsz).
-- Support ssh related features: tunnel, connection hopping.
+- Manage SSH tunnels from the session toolbar. For jump-host connections, configure credentials for each host, use the SSH agent on the web server, or answer the login prompt.
 - Customizable UI: themes, background image.
 - Client-side widgets can style the app, listen for tab opens and status changes, and close tabs.
 - Global/session proxy.

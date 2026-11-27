@@ -1,7 +1,6 @@
 /**
  * all supported ssh2 algorithms config
  */
-
 import nodeCrypto from 'crypto'
 import browserDH from 'diffie-hellman/browser.js'
 import ssh2Constants from '@electerm/ssh2/lib/protocol/constants.js'
@@ -69,12 +68,16 @@ export const algDefault = () => ({
   ], SUPPORTED_COMPRESSION)
 })
 
-/**
- * the fallback list used by reTryAltAlg() when no algorithm could be
- * negotiated with algDefault(): a strict superset of algDefault() with the
- * pre-RFC 8332 stuff old servers/devices still use (CBC ciphers, ssh-rsa and
- * ssh-dss host keys)
- */
+const negotiationFailures = [
+  'no matching C->S cipher', 'no matching S->C cipher', 'no matching C->S MAC',
+  'no matching S->C MAC', 'no matching host key format'
+]
+
+export const canRetryWithAltAlgorithms = err =>
+  typeof err?.message === 'string' && negotiationFailures.some(message => err.message.includes(message))
+
+// A failed negotiation can be retried with the legacy CBC ciphers and
+// ssh-rsa/ssh-dss host keys that older devices still require.
 export const algAlt = () => ({
   ...algDefault(),
   cipher: onlySupported([

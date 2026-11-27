@@ -2,6 +2,7 @@
  * node fetch in server side
  */
 
+import loadWindowsIntermediates from '../lib/windows-intermediates.js'
 import rp from 'axios'
 import { createProxyAgent } from '../lib/proxy-agent.js'
 
@@ -20,6 +21,7 @@ function fetch (options) {
 }
 
 export default async function wsFetchHandler (ws, msg) {
+  await loadWindowsIntermediates()
   const { id, options, proxy } = msg
   const agent = createProxyAgent(proxy)
   if (agent) {

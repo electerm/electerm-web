@@ -92,12 +92,7 @@ class TerminalSpice extends TerminalBase {
     if (this.sessionLogger) {
       this.sessionLogger.destroy()
     }
-    const { pid } = this
-    const inst = globalState.getSession(pid)
-    if (!inst) {
-      return
-    }
-    globalState.removeSession(pid)
+    globalState.removeSession(this.pid, this)
   }
 }
 

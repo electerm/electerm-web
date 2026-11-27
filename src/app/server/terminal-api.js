@@ -53,6 +53,18 @@ export async function execCmd (ws, msg) {
   }
 }
 
+export async function manageTunnel (ws, { id, pid, request }) {
+  try {
+    const term = terminals(pid)
+    if (!term) throw new Error('SSH session disconnected')
+    if (!term.manageTunnel) throw new Error('SSH tunnels unavailable for this session')
+    const data = await term.manageTunnel(request)
+    ws.s({ id, data })
+  } catch (err) {
+    ws.s({ id, error: { message: err.message } })
+  }
+}
+
 export function resize (ws, msg) {
   const { id, pid, cols, rows } = msg
   const term = terminals(pid)

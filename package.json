@@ -1,6 +1,6 @@
 {
   "name": "electerm-web",
-  "version": "5.15.1",
+  "version": "5.20.0",
   "description": "Running electerm in as web app",
   "main": "src/app/app.js",
   "type": "module",
@@ -48,7 +48,7 @@
   "preferGlobal": true,
   "devDependencies": {
     "@ant-design/icons": "^6.2.5",
-    "@electerm/electerm-react": "5.15.0",
+    "@electerm/electerm-react": "5.20.0",
     "@electerm/electerm-resource": "2.2.1",
     "@fontsource/maple-mono": "^5.2.6",
     "@novnc/novnc": "^1.7.0",
@@ -89,10 +89,10 @@
     "vite": "^8.3.5"
   },
   "dependencies": {
-    "@electerm/electerm-locales": "2.3.43",
+    "@electerm/electerm-locales": "2.4.2",
     "@electerm/electerm-themes": "1.0.2",
     "@electerm/ftp-srv": "^1.1.0",
-    "@electerm/ssh2": "1.23.1",
+    "@electerm/ssh2": "1.23.2",
     "@xterm/headless": "6.1.0-beta.292",
     "axios": "1.20.0",
     "basic-ftp": "6.2.6",

@@ -1,6 +1,7 @@
 /**
  * AI integration with DeepSeek API
  */
+import loadWindowsIntermediates from './windows-intermediates.js'
 import {
   StringDecoder
 } from 'string_decoder'
@@ -64,6 +65,7 @@ const loadAxios = () => (axiosPromise || (axiosPromise = import('axios').then(d 
 
 // Initialize OpenAI with DeepSeek configuration
 const createAIClient = async (baseURL, apiKey, proxy, authHeaderName, extraHeaders) => {
+  await loadWindowsIntermediates()
   const axios = await loadAxios()
   const headerStr = authHeaderName || 'Authorization: Bearer'
   const parts = headerStr.split(': ')

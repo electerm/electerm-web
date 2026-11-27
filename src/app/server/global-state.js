@@ -26,8 +26,9 @@ class GlobalState extends EventEmitter {
     this.#sessions[id] = data
   }
 
-  removeSession (id) {
-    delete this.#sessions[id]
+  removeSession (id, owner) {
+    // A reconnect can register the next session before the old one closes.
+    if (owner === undefined || this.#sessions[id] === owner) delete this.#sessions[id]
   }
 
   get data () {

@@ -137,7 +137,7 @@ class TerminalVnc extends TerminalBase {
     if (this.sessionLogger) {
       this.sessionLogger.destroy()
     }
-    globalState.removeSession(this.pid)
+    globalState.removeSession(this.pid, this)
   }
 }
 

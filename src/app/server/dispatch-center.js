@@ -23,6 +23,7 @@ import { runSync } from '../lib/run-sync.js'
 import {
   createTerm,
   testTerm,
+  manageTunnel,
   resize,
   runCmd,
   execCmd,
@@ -167,8 +168,6 @@ export function initWs (app) {
     // end
   })
 
-  // upgrade todo
-
   // common functions
   app.ws('/common/s', (ws) => {
     wsDec(ws)
@@ -203,6 +202,8 @@ export function initWs (app) {
           createTerm(ws, msg)
         } else if (action === 'test-terminal') {
           testTerm(ws, msg)
+        } else if (action === 'manage-ssh-tunnel') {
+          manageTunnel(ws, msg)
         } else if (action === 'resize-terminal') {
           resize(ws, msg)
         } else if (action === 'toggle-terminal-log') {

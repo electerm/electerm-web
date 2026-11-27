@@ -1,4 +1,5 @@
 import log from '../common/log.js'
+import uid from '../common/uid.js'
 import expressWs from 'express-ws'
 import { normalizeExitStatus } from '../common/exit-status.js'
 import { initWs } from '../server/dispatch-center.js'
@@ -74,6 +75,8 @@ export function wsRoutes (app, auth) {
     const { pid } = term
     log.debug('ws: connected to terminal ->', pid)
 
+    // Tabs reuse their pid on reconnect. Transfers belong to this attachment.
+    const transferId = uid()
     const dataBuffer = []
     let sendTimeout = null
     // Time of the last actual flush. Lets a chunk arriving after an idle gap
@@ -121,21 +124,21 @@ export function wsRoutes (app, auth) {
       }
 
       // Check for zmodem escape sequence before sending to client
-      const zmodemConsumed = zmodemManager.handleData(pid, combinedData, term, ws)
+      const zmodemConsumed = zmodemManager.handleData(transferId, combinedData, term, ws)
       if (zmodemConsumed) {
         sendTimeout = null
         return
       }
 
       // Check for trzsz magic key before sending to client
-      const trzszConsumed = trzszManager.handleData(pid, combinedData, term, ws)
+      const trzszConsumed = trzszManager.handleData(transferId, combinedData, term, ws)
       if (trzszConsumed) {
         sendTimeout = null
         return
       }
 
       // Check for xmodem protocol before sending to client
-      const xmodemConsumed = xmodemManager.handleData(pid, combinedData, term, ws)
+      const xmodemConsumed = xmodemManager.handleData(transferId, combinedData, term, ws)
       if (xmodemConsumed) {
         sendTimeout = null
         return
@@ -151,52 +154,33 @@ export function wsRoutes (app, auth) {
       ws.send(JSON.stringify(data))
     }
 
-    // Detach listeners from a previous WS connection for the same term.
-    // Reconnects create a new WS but reuse the same term instance; without
-    // this each reconnect stacks another 'data' handler, duplicating output
-    // and pinning closed sockets/buffers in memory.
-    if (term._wsDataHandler && typeof term.off === 'function') {
-      try {
-        term.off('data', term._wsDataHandler)
-      } catch (_) {}
-    }
-    if (term._wsPortDataHandler && term.port) {
-      try {
-        term.port.removeListener('data', term._wsPortDataHandler)
-      } catch (_) {}
-    }
-    if (term._wsCloseHandler && typeof term.off === 'function') {
-      try {
-        term.off('close', term._wsCloseHandler)
-        term.off('exit', term._wsCloseHandler)
-      } catch (_) {}
-    }
+    term._detachTerminalSocket?.()
 
     const onTermData = function (data) {
       // Check if zmodem session is active and handle data
-      if (zmodemManager.isActive(pid)) {
+      if (zmodemManager.isActive(transferId)) {
         // Let zmodem handle the data, but still log it
         term.writeLog(data)
-        zmodemManager.handleData(pid, data, term, ws)
+        zmodemManager.handleData(transferId, data, term, ws)
         return
       }
 
       // Check if trzsz session is active and handle data
-      if (trzszManager.isActive(pid)) {
+      if (trzszManager.isActive(transferId)) {
         // Let trzsz handle the data, but still log it
         term.writeLog(data)
-        trzszManager.handleData(pid, data, term, ws)
+        trzszManager.handleData(transferId, data, term, ws)
         return
       }
 
       // Check if xmodem session is active and handle data.
       // For serial terminals (term.port exists) a raw port listener (registered below)
       // bypasses rxLineEnding transformation and feeds raw bytes to xmodem.
-      if (xmodemManager.isActive(pid)) {
+      if (xmodemManager.isActive(transferId)) {
         if (!term.port) {
           // Non-serial fallback (should not normally happen)
           term.writeLog(data)
-          xmodemManager.handleData(pid, data, term, ws)
+          xmodemManager.handleData(transferId, data, term, ws)
         }
         return
       }
@@ -220,15 +204,15 @@ export function wsRoutes (app, auth) {
           flushBufferedData()
         }
         term.writeLog(chunk)
-        const zmodemConsumed = zmodemManager.handleData(pid, chunk, term, ws)
+        const zmodemConsumed = zmodemManager.handleData(transferId, chunk, term, ws)
         if (zmodemConsumed) {
           return
         }
-        const trzszConsumed = trzszManager.handleData(pid, chunk, term, ws)
+        const trzszConsumed = trzszManager.handleData(transferId, chunk, term, ws)
         if (trzszConsumed) {
           return
         }
-        const xmodemConsumed = xmodemManager.handleData(pid, chunk, term, ws)
+        const xmodemConsumed = xmodemManager.handleData(transferId, chunk, term, ws)
         if (xmodemConsumed) {
           return
         }
@@ -271,7 +255,6 @@ export function wsRoutes (app, auth) {
         sendTimeout = setTimeout(flushBufferedData, flushIntervalMs - elapsed)
       }
     }
-    term._wsDataHandler = onTermData
     term.on('data', onTermData)
 
     // Serial UI output (hex view lines, a view redraw, the byte cursor) is
@@ -296,16 +279,13 @@ export function wsRoutes (app, auth) {
 
     // For serial terminals, register a raw data listener directly on the port to
     // feed binary XMODEM data to xmodemManager without rxLineEnding transformation.
-    if (term.port) {
-      const onPortData = function (rawData) {
-        if (xmodemManager.isActive(pid)) {
-          term.writeLog(rawData)
-          xmodemManager.handleData(pid, rawData, term, ws)
-        }
+    const onPortData = function (rawData) {
+      if (xmodemManager.isActive(transferId)) {
+        term.writeLog(rawData)
+        xmodemManager.handleData(transferId, rawData, term, ws)
       }
-      term._wsPortDataHandler = onPortData
-      term.port.on('data', onPortData)
     }
+    term.port?.on('data', onPortData)
 
     let onCloseCalled = false
     // How the pty / ssh channel ended. `null` until the backend reports it, and
@@ -321,76 +301,40 @@ export function wsRoutes (app, auth) {
       } catch (_) {}
     }
 
-    function onClose () {
+    const onClose = () => closeSocket(true)
+    function closeSocket (endSession) {
       if (onCloseCalled) return
       onCloseCalled = true
-      // Report the exit status while the socket can still carry it. The
-      // tab decides between "the user ended this session" and "the
-      // connection dropped" from this, not from the keystrokes it saw.
-      if (typeof ws.s === 'function' && ws.readyState === 1) {
+      // Deliver trailing output before the client handles the session exit.
+      clearTimeout(sendTimeout)
+      if (endSession && ws.readyState === 1) {
         try {
+          flushBufferedData()
           ws.s(Object.assign({ action: 'session-exit' },
             exitStatus || normalizeExitStatus(null, null)))
         } catch (_) {}
       }
-      // Detach this connection's listeners so a reconnect does not stack
-      // duplicates on the reused term instance.
-      if (typeof term.off === 'function') {
-        try {
-          term.off('exit', onTermExit)
-        } catch (_) {}
-      }
-      if (term._wsDataHandler && typeof term.off === 'function') {
-        try {
-          term.off('data', term._wsDataHandler)
-        } catch (_) {}
-      }
-      if (term._wsDataHandler === onTermData) {
-        term._wsDataHandler = null
-      }
-      if (term._wsUiHandler === onUiData) {
-        term._wsUiHandler = null
-      }
-      if (term._wsPortDataHandler && term.port) {
-        try {
-          term.port.removeListener('data', term._wsPortDataHandler)
-        } catch (_) {}
-        term._wsPortDataHandler = null
-      }
-      if (typeof term.off === 'function') {
-        try {
-          term.off('close', onClose)
-          term.off('exit', onClose)
-        } catch (_) {}
-      }
-      if (term._wsCloseHandler === onClose) {
-        term._wsCloseHandler = null
-      }
-      // Cancel any pending batched send
-      if (sendTimeout) {
-        clearTimeout(sendTimeout)
-        sendTimeout = null
-      }
+      term.off('exit', onTermExit)
+      term.off('data', onTermData)
+      term.off(term.isLocal ? 'exit' : 'close', onClose)
+      term.port?.removeListener('data', onPortData)
+      delete term._wsUiHandler
+      delete term._detachTerminalSocket
       dataBuffer.length = 0
       // Clean up zmodem session
-      zmodemManager.destroySession(pid)
+      zmodemManager.destroySession(transferId)
       // Clean up trzsz session
-      trzszManager.destroySession(pid)
+      trzszManager.destroySession(transferId)
       // Clean up xmodem session
-      xmodemManager.destroySession(pid)
-      term.kill()
-      log.debug('Closed terminal ' + pid)
-      // Clean things up
-      ws.close && ws.close()
-      // NOTE: only this session is killed above (term.kill()). Do not call
-      // cleanAllSessions() here: this handler fires when a single tab closes
-      // *or* when any one session drops (ssh error, network blip), and killing
-      // every entry in the global session map would disconnect all the other
-      // open tabs too. Each session type cleans up after itself from its own
-      // close handler; whole-process cleanup happens on app exit.
+      xmodemManager.destroySession(transferId)
+      if (endSession) {
+        term.kill()
+        log.debug('Closed terminal ' + pid)
+      }
+      ws.close()
     }
 
-    term._wsCloseHandler = onClose
+    term._detachTerminalSocket = () => closeSocket(false)
     // node-pty on unix emits 'close' *before* 'exit', so a local session that
     // also listened to 'close' would report "no exit status" for a clean
     // `exit` and fall back to guessing. The pty's own 'exit' is the
@@ -403,21 +347,22 @@ export function wsRoutes (app, auth) {
     }
 
     ws.on('message', function (msg) {
+      if (onCloseCalled) return
       try {
         // Check if message is a zmodem or trzsz control message (JSON)
         if (typeof msg === 'string') {
           try {
             const parsed = JSON.parse(msg)
             if (parsed.action === 'zmodem-event') {
-              zmodemManager.handleMessage(pid, parsed, term, ws)
+              zmodemManager.handleMessage(transferId, parsed, term, ws)
               return
             }
             if (parsed.action === 'trzsz-event') {
-              trzszManager.handleMessage(pid, parsed, term, ws)
+              trzszManager.handleMessage(transferId, parsed, term, ws)
               return
             }
             if (parsed.action === 'xmodem-event') {
-              xmodemManager.handleMessage(pid, parsed, term, ws)
+              xmodemManager.handleMessage(transferId, parsed, term, ws)
               return
             }
             if (parsed.action === 'serial-event') {

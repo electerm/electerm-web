@@ -205,6 +205,6 @@ export class TerminalBase {
     if (this.server && this.server.end) {
       this.server.end()
     }
-    globalState.removeSession(pid)
+    globalState.removeSession(pid, this)
   }
 }

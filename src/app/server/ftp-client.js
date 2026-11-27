@@ -1,3 +1,5 @@
+import loadWindowsIntermediates from '../lib/windows-intermediates.js'
+import { getAgentCAOptions } from '../lib/system-ca.js'
 import ftp from 'basic-ftp'
 import proxySock from './socks.js'
 import iconv from 'iconv-lite'
@@ -11,6 +13,10 @@ export class FtpClientWrapper {
 
   async access (options) {
     return this.enqueue(async () => {
+      if (options.secure) {
+        await loadWindowsIntermediates()
+        options = { ...options, secureOptions: { ...getAgentCAOptions(), ...options.secureOptions } }
+      }
       if (options.proxy) {
         return this._accessViaProxy(options)
       }

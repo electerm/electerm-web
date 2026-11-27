@@ -2,6 +2,7 @@
  * handle sync with github/gitee
  */
 
+import loadWindowsIntermediates from '../lib/windows-intermediates.js'
 import {
   electermSync
 } from 'electerm-sync'
@@ -13,6 +14,7 @@ import { doWebdavSync } from './webdav-sync.js'
 rp.defaults.proxy = false
 
 async function doSync (type, func, args, token, proxy) {
+  await loadWindowsIntermediates()
   // Handle WebDAV sync separately
   if (type === 'webdav') {
     return doWebdavSync(func, args, token, proxy)

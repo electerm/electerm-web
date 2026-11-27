@@ -53,7 +53,7 @@ Powered by [manate](https://github.com/tylerlong/manate)
 - 双击即可直接编辑（小）远程文件
 - 全类型认证方式: publicKey, password, ssh agent, 证书, otp, netbird 等
 - 支持 Zmodem（rz、sz），以及 [Trzsz](https://github.com/trzsz/trzsz)（trz/tsz）
-- 支持 ssh 相关特性: 隧道, 连接跳转
+- 可从会话工具栏管理 SSH 隧道。通过跳板机连接时，可为每台主机配置凭据、使用 Web 服务器上的 SSH agent，或在登录提示中输入凭据。
 - 可定制 UI: 主题, 背景图片
 - 客户端小组件可以自定义界面样式、监听标签页打开和状态变化，并关闭标签页。
 - 全局/会话级代理
